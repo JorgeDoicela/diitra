@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using diitra_application.Common.Notifications;
 using diitra_application.Feedback;
 using diitra_application.Feedback.DTOs;
 using diitra_infrastructure.data.models;
@@ -20,6 +21,7 @@ public class FeedbackService : IFeedbackService
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<FeedbackService> _logger;
+    private readonly INotificationService _notificationService;
     private readonly string _whatsAppNumber;
     private readonly long _maxImageSizeBytes;
     private readonly long _maxVideoSizeBytes;
@@ -31,12 +33,14 @@ public class FeedbackService : IFeedbackService
         DiitraContext context,
         IConfiguration configuration,
         IWebHostEnvironment environment,
-        ILogger<FeedbackService> logger)
+        ILogger<FeedbackService> logger,
+        INotificationService notificationService)
     {
         _context = context;
         _configuration = configuration;
         _environment = environment;
         _logger = logger;
+        _notificationService = notificationService;
 
         _whatsAppNumber = configuration["Support:DeveloperWhatsAppNumber"] ?? "593969677280";
         _maxImageSizeBytes = long.TryParse(configuration["Support:MaxImageSizeBytes"], out var maxImg) ? maxImg : 5 * 1024 * 1024;
@@ -151,6 +155,35 @@ public class FeedbackService : IFeedbackService
         _context.InvFeedbackReportes.Add(entidad);
         await _context.SaveChangesAsync();
 
+        // Notificación multicanal inmediata (SignalR tiempo real, Web Push, DB) al Super Administrador
+        try
+        {
+            var tipoLabel = entidad.Tipo == "ERROR" ? "Algo no funciona" : (entidad.Tipo == "DUDA" ? "Falta una opción" : "Incidencia");
+            var notifTitulo = $"Incidencia: {tipoLabel}";
+            var notifMensaje = $"{entidad.NombreUsuario} ({entidad.RolUsuario}) reportó: {entidad.Titulo}";
+            var notifUrl = "/admin/feedback";
+            var notifExtra = new Dictionary<string, string>
+            {
+                { "Categoria", "SOPORTE" },
+                { "Tipo", entidad.Tipo },
+                { "FeedbackId", entidad.IdFeedback.ToString() },
+                { "FeedbackUuid", entidad.Uuid }
+            };
+
+            await _notificationService.NotifyByRoleCodesAsync(
+                title: notifTitulo,
+                body: notifMensaje,
+                roleCodes: new[] { "DIITRA_SUPER_ADMIN", "SUPERADMIN" },
+                url: notifUrl,
+                extraData: notifExtra,
+                excludeUserId: idUsuario
+            );
+        }
+        catch (Exception exNotif)
+        {
+            _logger.LogWarning(exNotif, "No se pudo despachar la notificación de incidencia al Super Administrador para el reporte {IdFeedback}", entidad.IdFeedback);
+        }
+
         return MapToDto(entidad, adjuntos, dto.MetadataNavegador);
     }
 
@@ -223,6 +256,48 @@ public class FeedbackService : IFeedbackService
         entidad.FechaActualizacion = DateTime.Now;
 
         await _context.SaveChangesAsync();
+
+        // Notificar al autor de la incidencia si es un usuario registrado
+        if (entidad.IdUsuario.HasValue)
+        {
+            try
+            {
+                var estadoLabel = entidad.Estado switch
+                {
+                    "EN_REVISION" => "En revisión",
+                    "ATENDIDO" => "Resuelto",
+                    "DESCARTADO" => "Cerrado",
+                    _ => entidad.Estado
+                };
+
+                var notifTitulo = $"Incidencia actualizada: {entidad.Titulo}";
+                var notifMensaje = !string.IsNullOrWhiteSpace(entidad.ObservacionAdmin)
+                    ? $"Estado: {estadoLabel}. Respuesta de soporte: {entidad.ObservacionAdmin}"
+                    : $"Tu reporte ha cambiado al estado '{estadoLabel}'.";
+                var notifUrl = "/feedback";
+                var notifExtra = new Dictionary<string, string>
+                {
+                    { "Categoria", "SOPORTE" },
+                    { "Tipo", entidad.Tipo },
+                    { "FeedbackId", entidad.IdFeedback.ToString() },
+                    { "FeedbackUuid", entidad.Uuid }
+                };
+
+                await _notificationService.NotifyUserAsync(
+                    userId: entidad.IdUsuario.Value,
+                    title: notifTitulo,
+                    body: notifMensaje,
+                    category: "SOPORTE",
+                    url: notifUrl,
+                    extraData: notifExtra
+                );
+            }
+            catch (Exception exNotif)
+            {
+                _logger.LogWarning(exNotif, "No se pudo notificar al usuario {UserId} sobre la actualización de su incidencia {IdFeedback}", entidad.IdUsuario, entidad.IdFeedback);
+            }
+        }
+
         var (files, meta) = ParsePayload(entidad.ArchivosAdjuntosJson);
         return MapToDto(entidad, files, meta);
     }

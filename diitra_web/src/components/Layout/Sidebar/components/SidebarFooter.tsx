@@ -94,14 +94,14 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
                             <span>Configuración</span>
                         </Link>
                         <Link
-                            to={isSuperAdmin ? "/admin/feedback" : "/sugerencias"}
+                            to={isSuperAdmin ? "/admin/incidencias" : "/incidencias"}
                             onClick={() => {
                                 setIsUserMenuOpen(false);
                             }}
                             className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors no-underline"
                         >
                             <MessageSquarePlus size={14} />
-                            <span>{isSuperAdmin ? 'Bandeja de Incidencias' : 'Incidencias y Sugerencias'}</span>
+                            <span>{isSuperAdmin ? 'Bandeja de Incidencias' : 'Incidencias'}</span>
                         </Link>
                         {(isAdmin || user?.roles?.includes('DIITRA_DOCENTE')) && (
                             <Link

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { 
-    Lightbulb, Bug, HelpCircle, CheckCircle2, 
+    Bug, HelpCircle, CheckCircle2, 
     Clock, RefreshCw, ExternalLink, Image as ImageIcon, 
     Video, Plus, MessageSquare, X, ChevronLeft, ChevronRight, Play,
     Pencil, Trash2, AlertTriangle, Loader2
@@ -26,7 +26,7 @@ export const UserFeedbackPage: React.FC = () => {
 
     // Estados para Edición y Eliminación
     const [editingReport, setEditingReport] = useState<FeedbackReporte | null>(null);
-    const [editTipo, setEditTipo] = useState<string>('SUGERENCIA');
+    const [editTipo, setEditTipo] = useState<string>('ERROR');
     const [editTitulo, setEditTitulo] = useState<string>('');
     const [editDescripcion, setEditDescripcion] = useState<string>('');
     const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
@@ -47,7 +47,7 @@ export const UserFeedbackPage: React.FC = () => {
                 return data.find(r => (r.id_feedback || r.idFeedback) === prevId) || prev;
             });
         } catch (err) {
-            console.error('Error cargando sugerencias del usuario:', err);
+            console.error('Error cargando incidencias del usuario:', err);
         } finally {
             if (!isSilent) setIsLoading(false);
         }
@@ -77,6 +77,29 @@ export const UserFeedbackPage: React.FC = () => {
         setActiveMediaIndex(0);
     };
 
+    // Soporte de navegación por teclado para el visor de capturas
+    useEffect(() => {
+        if (!activeReport) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                handleCloseDrawer();
+            } else if (e.key === 'ArrowLeft') {
+                const total = activeReport.archivos?.length || 0;
+                if (total > 1) {
+                    setActiveMediaIndex(prev => (prev > 0 ? prev - 1 : total - 1));
+                }
+            } else if (e.key === 'ArrowRight') {
+                const total = activeReport.archivos?.length || 0;
+                if (total > 1) {
+                    setActiveMediaIndex(prev => (prev < total - 1 ? prev + 1 : 0));
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [activeReport]);
+
     const isEditable = (estado: string) => {
         const est = estado?.toUpperCase() || '';
         return est === 'PENDIENTE' || est === 'EN_ESPERA' || est === 'EN ESPERA';
@@ -84,7 +107,7 @@ export const UserFeedbackPage: React.FC = () => {
 
     const startEdit = (report: FeedbackReporte) => {
         setEditingReport(report);
-        setEditTipo(report.tipo || 'SUGERENCIA');
+        setEditTipo(report.tipo || 'ERROR');
         setEditTitulo(report.titulo || '');
         setEditDescripcion(report.descripcion || '');
         setEditError(null);
@@ -212,13 +235,6 @@ export const UserFeedbackPage: React.FC = () => {
                         <span>Falta una opción</span>
                     </span>
                 );
-            case 'SUGERENCIA':
-                return (
-                    <span className="text-text-main font-semibold text-[12.5px] flex items-center gap-1.5">
-                        <Lightbulb className="w-3.5 h-3.5 text-text-dim" />
-                        <span>Idea o sugerencia</span>
-                    </span>
-                );
             default:
                 return <span className="text-text-dim text-[12px] font-medium">{tipo}</span>;
         }
@@ -280,32 +296,32 @@ export const UserFeedbackPage: React.FC = () => {
             <PageHeader
                 kicker="Atención y Soporte · DIITRA"
                 icon={MessageSquare}
-                title="Buzón de Incidencias y Sugerencias"
-                description="Canal directo para reportar fallos en el sistema, datos u opciones faltantes o enviar sugerencias para mejorar la plataforma."
+                title="Buzón de Incidencias"
+                description="Canal directo para reportar fallos en el sistema, pantallas colgadas o datos y opciones faltantes en la plataforma."
             >
                 <button
                     onClick={handleOpenModal}
                     className="btn-vercel-primary w-full lg:w-auto shrink-0 flex items-center gap-2 cursor-pointer shadow-xs"
                 >
                     <Plus size={14} strokeWidth={3} />
-                    <span>Reportar Problema o Sugerencia</span>
+                    <span>Reportar Incidencia</span>
                 </button>
             </PageHeader>
 
             {/* Main Content: Full Width Container */}
             <div className="space-y-4 animate-fade-up [animation-delay:100ms] relative z-10">
-                {/* Listado de Mis Sugerencias o Empty State */}
+                {/* Listado de Mis Incidencias o Empty State */}
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-24 gap-3 text-text-dim bento-card static">
                         <RefreshCw size={24} className="animate-spin text-brand" />
-                        <span className="text-xs font-bold uppercase tracking-widest">Cargando tus reportes...</span>
+                        <span className="text-xs font-bold uppercase tracking-widest">Cargando tus incidencias...</span>
                     </div>
                 ) : reportes.length === 0 ? (
                     <div className="empty-state py-20 bg-surface">
                         <div className="icon-circle icon-circle-brand !p-4 mb-4">
                             <MessageSquare size={36} strokeWidth={1.5} />
                         </div>
-                        <p className="text-text-main font-bold uppercase tracking-widest text-sm">No tienes reportes registrados</p>
+                        <p className="text-text-main font-bold uppercase tracking-widest text-sm">No tienes incidencias registradas</p>
                         <p className="text-text-dim text-xs mt-2 max-w-md">
                             Si encuentras algo que no funciona bien, una pantalla que se queda colgada o un dato que no puedes ingresar, repórtalo aquí para revisarlo.
                         </p>
@@ -336,22 +352,24 @@ export const UserFeedbackPage: React.FC = () => {
                                         <div className="flex items-center gap-3">
                                             {getEstadoBadge(r.estado)}
                                             {isEditable(r.estado) && (
-                                                <div className="flex items-center gap-1 pl-2 border-l border-border-thin">
+                                                <div className="flex items-center gap-1.5 pl-2.5 border-l border-border-thin">
                                                     <button
                                                         type="button"
                                                         onClick={() => startEdit(r)}
-                                                        className="p-1.5 rounded-md text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+                                                        className="w-8 h-8 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover flex items-center justify-center transition-colors cursor-pointer"
                                                         title="Editar reporte"
+                                                        aria-label="Editar reporte"
                                                     >
-                                                        <Pencil size={13} />
+                                                        <Pencil size={16} />
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => setDeletingReport(r)}
-                                                        className="p-1.5 rounded-md text-text-dim hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                                        className="w-8 h-8 rounded-lg text-text-dim hover:text-red-500 hover:bg-red-500/10 flex items-center justify-center transition-colors cursor-pointer"
                                                         title="Eliminar reporte"
+                                                        aria-label="Eliminar reporte"
                                                     >
-                                                        <Trash2 size={13} />
+                                                        <Trash2 size={16} />
                                                     </button>
                                                 </div>
                                             )}
@@ -449,13 +467,13 @@ export const UserFeedbackPage: React.FC = () => {
                 )}
             </div>
 
-            {/* Panel Lateral Derecho (Drawer Vercel Geist) con Carrusel de Multimedia */}
-            {activeReport && createPortal(
+            {/* Panel Lateral Derecho: Visor Multimedia (Limpio, sin clonar la tarjeta ni botones externos) */}
+            {activeReport && currentMedia && createPortal(
                 <div 
                     className="fixed inset-0 z-[9999] flex justify-end"
                     role="dialog"
                     aria-modal="true"
-                    aria-label={`Detalle: ${activeReport.titulo}`}
+                    aria-label={`Visor de adjuntos: ${currentMedia.nombre_original || 'Captura'}`}
                 >
                     {/* Backdrop Blur Overlay */}
                     <div 
@@ -464,160 +482,128 @@ export const UserFeedbackPage: React.FC = () => {
                     />
 
                     {/* Panel Lateral Derecho */}
-                    <div className="relative w-full max-w-2xl lg:max-w-3xl h-full bg-surface border-l border-border-thin shadow-2xl flex flex-col z-10 animate-slide-in-right overflow-hidden">
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface shrink-0">
+                    <div className="relative w-full max-w-xl sm:max-w-2xl h-full bg-white dark:bg-zinc-950 border-l border-border-thin shadow-2xl flex flex-col z-10 animate-slide-in-right overflow-hidden">
+                        {/* Header del Panel */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-white dark:bg-zinc-950 shrink-0">
                             <div className="flex items-center gap-2.5 min-w-0 pr-4">
-                                {getTipoBadge(activeReport.tipo)}
+                                <div className="w-7 h-7 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0">
+                                    {isCurrentVideo ? <Video size={15} /> : <ImageIcon size={15} />}
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-[14.5px] font-bold text-text-main tracking-tight truncate">
+                                        {isCurrentVideo ? 'Video Adjunto' : 'Captura Adjunta'}
+                                    </h3>
+                                    {activeFiles.length > 1 && (
+                                        <p className="text-[11px] font-mono text-text-dim">
+                                            Archivo {activeMediaIndex + 1} de {activeFiles.length}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {isEditable(activeReport.estado) && (
+
+                            <button
+                                type="button"
+                                onClick={handleCloseDrawer}
+                                className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer shrink-0"
+                                title="Cerrar [ESC]"
+                                aria-label="Cerrar visor"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Body del Panel: Visualizador de Imagen / Video en fondo blanco (modo claro) y gris/oscuro (modo oscuro) */}
+                        <div className="flex-1 overflow-y-auto p-6 flex flex-col justify-between gap-4 bg-white dark:bg-zinc-950 custom-scrollbar">
+                            {/* Visualizador Principal */}
+                            <div className="relative flex-1 flex items-center justify-center min-h-[320px] rounded-xl border border-border-thin bg-white dark:bg-zinc-900/50 p-3 overflow-hidden shadow-xs">
+                                {isCurrentVideo ? (
+                                    <video 
+                                        src={currentMediaUrl} 
+                                        controls 
+                                        autoPlay 
+                                        className="max-h-[58vh] w-auto max-w-full rounded-lg object-contain" 
+                                    />
+                                ) : (
+                                    <img 
+                                        src={currentMediaUrl} 
+                                        alt={currentMedia.nombre_original || 'Captura'} 
+                                        className="max-h-[58vh] w-auto max-w-full rounded-lg object-contain select-none" 
+                                    />
+                                )}
+
+                                {/* Flechas de navegación del carrusel */}
+                                {activeFiles.length > 1 && (
                                     <>
                                         <button
                                             type="button"
-                                            onClick={() => startEdit(activeReport)}
-                                            className="btn-vercel-secondary text-[11.5px] px-2.5 py-1 flex items-center gap-1.5 cursor-pointer"
-                                            title="Editar reporte"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveMediaIndex(prev => (prev > 0 ? prev - 1 : activeFiles.length - 1));
+                                            }}
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 dark:bg-zinc-900/90 border border-border-thin text-text-main flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                            title="Anterior [←]"
                                         >
-                                            <Pencil size={12} />
-                                            <span>Editar</span>
+                                            <ChevronLeft size={18} />
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => setDeletingReport(activeReport)}
-                                            className="btn-vercel-secondary text-[11.5px] px-2.5 py-1 text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20 flex items-center gap-1.5 cursor-pointer"
-                                            title="Eliminar reporte"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveMediaIndex(prev => (prev < activeFiles.length - 1 ? prev + 1 : 0));
+                                            }}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 dark:bg-zinc-900/90 border border-border-thin text-text-main flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                            title="Siguiente [→]"
                                         >
-                                            <Trash2 size={12} />
-                                            <span>Eliminar</span>
+                                            <ChevronRight size={18} />
                                         </button>
                                     </>
                                 )}
-                                <button
-                                    onClick={handleCloseDrawer}
-                                    className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer shrink-0"
-                                    title="Cerrar [ESC]"
-                                    aria-label="Cerrar panel"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Body con Título, Descripción y Multimedia abajo */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-surface custom-scrollbar">
-                            {/* 1. Título y Descripción */}
-                            <div className="space-y-2">
-                                <h3 className="text-[16px] font-bold text-text-main tracking-tight">
-                                    {activeReport.titulo}
-                                </h3>
-                                <p className="text-[13.5px] text-text-dim whitespace-pre-wrap leading-relaxed">
-                                    {activeReport.descripcion}
-                                </p>
                             </div>
 
-                            {/* 2. Respuesta de Soporte si existe */}
-                            {activeReport.observacion_admin && (
-                                <div className="p-4 rounded-xl border border-brand/20 bg-brand/5 space-y-1.5">
-                                    <div className="flex items-center gap-1.5 text-[12px] font-semibold text-brand">
-                                        <CheckCircle2 className="w-4 h-4" />
-                                        <span>Respuesta del Equipo de Soporte:</span>
+                            {/* Tira inferior de miniaturas si hay más de 1 adjunto */}
+                            {activeFiles.length > 1 && (
+                                <div className="space-y-1.5 pt-1 shrink-0">
+                                    <span className="text-[11px] font-mono text-text-dim uppercase tracking-wider font-semibold">
+                                        Miniaturas ({activeFiles.length})
+                                    </span>
+                                    <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 custom-scrollbar">
+                                        {activeFiles.map((f, fIdx) => {
+                                            const isV = (f.tipo_mime || f.tipoMime || '').startsWith('video/');
+                                            const u = getFeedbackMediaUrl(f.url);
+                                            const isSelected = fIdx === activeMediaIndex;
+
+                                            return (
+                                                <button
+                                                    key={fIdx}
+                                                    type="button"
+                                                    onClick={() => setActiveMediaIndex(fIdx)}
+                                                    className={`h-16 w-auto min-w-[54px] rounded-lg overflow-hidden border-2 shrink-0 transition-all cursor-pointer relative bg-white dark:bg-zinc-900 ${
+                                                        isSelected ? 'border-brand ring-2 ring-brand/20 scale-105' : 'border-border-thin opacity-70 hover:opacity-100'
+                                                    }`}
+                                                    title={f.nombre_original || 'Adjunto'}
+                                                >
+                                                    {isV ? (
+                                                        <div className="w-full h-full flex items-center justify-center p-2 text-text-dim">
+                                                            <Video size={16} />
+                                                        </div>
+                                                    ) : (
+                                                        <img src={u} alt={f.nombre_original} className="h-full w-auto object-contain" />
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
-                                    <p className="text-[12.5px] text-text-main leading-relaxed pl-5">
-                                        {activeReport.observacion_admin}
-                                    </p>
                                 </div>
                             )}
 
-                            {/* 3. Multimedia (Imágenes o Video) debajo de la descripción con tamaño proporcionado */}
-                            {activeFiles.length > 0 && (
-                                <div className="space-y-3 pt-1">
-                                    {activeFiles.length > 1 && (
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[11px] font-mono font-semibold text-text-dim uppercase tracking-wider">
-                                                {isCurrentVideo ? 'Video' : 'Captura'} ({activeMediaIndex + 1} de {activeFiles.length})
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* Visualizador Multimedia directo sin marco exterior sobrante */}
-                                    <div className="relative flex items-center justify-center">
-                                        {isCurrentVideo ? (
-                                            <video 
-                                                src={currentMediaUrl} 
-                                                controls 
-                                                autoPlay 
-                                                className="max-h-[380px] sm:max-h-[420px] w-auto max-w-full rounded-xl border border-border-thin shadow-sm object-contain" 
-                                            />
-                                        ) : (
-                                            <img 
-                                                src={currentMediaUrl} 
-                                                alt={currentMedia?.nombre_original || 'Captura'} 
-                                                className="max-h-[380px] sm:max-h-[420px] w-auto max-w-full rounded-xl border border-border-thin shadow-sm object-contain select-none" 
-                                            />
-                                        )}
-
-                                        {/* Flechas de carrusel flotando sobre los lados si hay más de 1 archivo */}
-                                        {activeFiles.length > 1 && (
-                                            <>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveMediaIndex(prev => (prev > 0 ? prev - 1 : activeFiles.length - 1))}
-                                                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-surface/90 border border-border-thin flex items-center justify-center text-text-main shadow-lg hover:bg-surface hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                                                    title="Anterior [←]"
-                                                >
-                                                    <ChevronLeft size={18} />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveMediaIndex(prev => (prev < activeFiles.length - 1 ? prev + 1 : 0))}
-                                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-surface/90 border border-border-thin flex items-center justify-center text-text-main shadow-lg hover:bg-surface hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                                                    title="Siguiente [→]"
-                                                >
-                                                    <ChevronRight size={18} />
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-
-                                    {/* Tira inferior de miniaturas */}
-                                    {activeFiles.length > 1 && (
-                                        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 custom-scrollbar">
-                                            {activeFiles.map((f, fIdx) => {
-                                                const isV = (f.tipo_mime || f.tipoMime || '').startsWith('video/');
-                                                const u = getFeedbackMediaUrl(f.url);
-                                                const isSelected = fIdx === activeMediaIndex;
-
-                                                return (
-                                                    <button
-                                                        key={fIdx}
-                                                        type="button"
-                                                        onClick={() => setActiveMediaIndex(fIdx)}
-                                                        className={`h-16 w-auto min-w-[48px] rounded-lg overflow-hidden border-2 shrink-0 transition-all cursor-pointer relative ${
-                                                            isSelected ? 'border-brand ring-2 ring-brand/20 scale-105' : 'border-border-thin opacity-70 hover:opacity-100'
-                                                        }`}
-                                                    >
-                                                        {isV ? (
-                                                            <div className="w-full h-full bg-bg-deep flex items-center justify-center p-2">
-                                                                <Video size={14} className="text-text-dim" />
-                                                            </div>
-                                                        ) : (
-                                                            <img src={u} alt={f.nombre_original} className="h-full w-auto object-contain" />
-                                                        )}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                            {/* Nombre del archivo original */}
+                            <div className="text-[11.5px] font-mono text-text-dim truncate px-1 shrink-0">
+                                Archivo: <span className="text-text-main font-medium">{currentMedia.nombre_original || 'Sin nombre'}</span>
+                            </div>
                         </div>
 
-                        {/* Footer */}
-                        <div className="p-4 border-t border-border-thin bg-surface shrink-0 flex items-center justify-between">
-                            <span className="text-[11px] font-mono text-text-dim">
-                                Estado: <strong className="text-text-main">{getEstadoLabel(activeReport.estado)}</strong>
-                            </span>
+                        {/* Footer del Panel */}
+                        <div className="p-4 border-t border-border-thin bg-white dark:bg-zinc-950 shrink-0 flex items-center justify-end">
                             <button
                                 type="button"
                                 onClick={handleCloseDrawer}
@@ -627,9 +613,8 @@ export const UserFeedbackPage: React.FC = () => {
                             </button>
                         </div>
                     </div>
-                </div>,
-                document.body
-            )}
+                </div>
+            , document.body)}
 
             {/* Panel Lateral Derecho (Drawer Vercel Geist) de Edición */}
             {editingReport && createPortal(
@@ -646,20 +631,20 @@ export const UserFeedbackPage: React.FC = () => {
                     />
 
                     {/* Panel Lateral Derecho */}
-                    <div className="relative w-full max-w-lg sm:max-w-xl h-full bg-surface border-l border-border-thin shadow-2xl flex flex-col z-10 animate-slide-in-right overflow-hidden">
+                    <div className="relative w-full max-w-lg sm:max-w-xl h-full bg-white dark:bg-zinc-950 border-l border-border-thin shadow-2xl flex flex-col z-10 animate-slide-in-right overflow-hidden">
                         {/* Header del Drawer */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface shrink-0">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-white dark:bg-zinc-950 shrink-0">
                             <div className="flex items-center gap-2">
                                 <Pencil className="w-4 h-4 text-brand" />
                                 <h3 id="edit-feedback-title" className="text-[15px] font-bold text-text-main tracking-tight">
-                                    Editar Reporte
+                                    Editar Incidencia
                                 </h3>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setEditingReport(null)}
                                 disabled={isSavingEdit}
-                                className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
                                 aria-label="Cerrar panel"
                                 title="Cerrar [ESC]"
                             >
@@ -668,7 +653,7 @@ export const UserFeedbackPage: React.FC = () => {
                         </div>
 
                         {/* Body del Drawer con Scroll */}
-                        <form id="edit-feedback-form" onSubmit={handleSaveEdit} className="flex-1 overflow-y-auto p-6 space-y-6 bg-surface custom-scrollbar">
+                        <form id="edit-feedback-form" onSubmit={handleSaveEdit} className="flex-1 overflow-y-auto p-6 space-y-6 bg-white dark:bg-zinc-950 custom-scrollbar">
                             {editError && (
                                 <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs flex items-center gap-2.5">
                                     <AlertTriangle size={16} className="shrink-0" />
@@ -676,29 +661,66 @@ export const UserFeedbackPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Selector de tipo */}
+                            {/* Selector de tipo - Vercel Choice Cards */}
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold text-text-dim uppercase tracking-wider block">
-                                    Tipo de reporte
+                                    Tipo de incidencia
                                 </label>
-                                <div className="grid grid-cols-3 gap-2.5">
+                                <div className="grid grid-cols-2 gap-2.5">
                                     {[
-                                        { value: 'ERROR', label: 'Algo no funciona', icon: Bug, color: 'text-red-500' },
-                                        { value: 'DUDA', label: 'Falta una opción', icon: HelpCircle, color: 'text-amber-500' },
-                                        { value: 'SUGERENCIA', label: 'Idea o sugerencia', icon: Lightbulb, color: 'text-emerald-500' },
+                                        {
+                                            value: 'ERROR',
+                                            label: 'Algo no funciona',
+                                            desc: 'Error, pantalla rota o bloqueo al guardar.',
+                                            icon: Bug,
+                                            activeColor: 'text-red-500',
+                                            activeBorder: 'border-red-500',
+                                            activeBg: 'bg-white dark:bg-red-950/20',
+                                            activeText: 'text-red-600 dark:text-red-400',
+                                            activeDesc: 'text-text-main/80',
+                                            activeRadio: 'border-red-500 bg-red-500'
+                                        },
+                                        {
+                                            value: 'DUDA',
+                                            label: 'Falta una opción',
+                                            desc: 'Falta un campo, opción o dato en el formulario.',
+                                            icon: HelpCircle,
+                                            activeColor: 'text-amber-500',
+                                            activeBorder: 'border-amber-500',
+                                            activeBg: 'bg-white dark:bg-amber-950/20',
+                                            activeText: 'text-amber-600 dark:text-amber-400',
+                                            activeDesc: 'text-text-main/80',
+                                            activeRadio: 'border-amber-500 bg-amber-500'
+                                        },
                                     ].map(t => (
                                         <button
                                             key={t.value}
                                             type="button"
                                             onClick={() => setEditTipo(t.value)}
-                                            className={`p-3 rounded-xl border text-xs font-medium flex flex-col items-center gap-2 transition-all cursor-pointer ${
+                                            className={`group p-3 rounded-lg border text-left transition-all cursor-pointer outline-none focus:outline-none ${
                                                 editTipo === t.value
-                                                    ? 'border-brand bg-brand/10 text-text-main shadow-xs ring-1 ring-brand/30'
-                                                    : 'border-border-thin bg-bg-deep hover:bg-surface-hover text-text-dim hover:text-text-main'
+                                                    ? `${t.activeBorder} ${t.activeBg} shadow-xs`
+                                                    : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 hover:border-zinc-300 dark:hover:border-zinc-700'
                                             }`}
                                         >
-                                            <t.icon size={18} className={t.color} />
-                                            <span className="text-[11px] text-center font-semibold leading-tight">{t.label}</span>
+                                            <div className="flex items-center justify-between gap-2 mb-1">
+                                                <div className="flex items-center gap-2">
+                                                    <t.icon size={16} className={editTipo === t.value ? t.activeColor : 'text-text-dim'} />
+                                                    <span className={`text-[12.5px] font-semibold ${editTipo === t.value ? t.activeText : 'text-text-dim group-hover:text-text-main'}`}>
+                                                        {t.label}
+                                                    </span>
+                                                </div>
+                                                <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                                                    editTipo === t.value
+                                                        ? t.activeRadio
+                                                        : 'border-zinc-200 dark:border-zinc-700 group-hover:border-text-dim'
+                                                }`}>
+                                                    {editTipo === t.value && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                </span>
+                                            </div>
+                                            <p className={`text-[11px] leading-snug ${editTipo === t.value ? t.activeDesc : 'text-text-dim'}`}>
+                                                {t.desc}
+                                            </p>
                                         </button>
                                     ))}
                                 </div>
@@ -713,9 +735,9 @@ export const UserFeedbackPage: React.FC = () => {
                                     type="text"
                                     value={editTitulo}
                                     onChange={(e) => setEditTitulo(e.target.value)}
-                                    placeholder="Breve resumen del problema o idea..."
+                                    placeholder="Breve resumen del problema o incidencia..."
                                     required
-                                    className="w-full px-3.5 py-2.5 text-[13px] bg-bg-deep border border-border-thin rounded-xl text-text-main focus:outline-none focus:border-brand transition-colors"
+                                    className="w-full px-3.5 py-2.5 text-[13px] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-text-main focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100 transition-colors shadow-2xs"
                                 />
                             </div>
 
@@ -727,10 +749,10 @@ export const UserFeedbackPage: React.FC = () => {
                                 <textarea
                                     value={editDescripcion}
                                     onChange={(e) => setEditDescripcion(e.target.value)}
-                                    placeholder="Explica qué estabas haciendo o qué te gustaría mejorar..."
+                                    placeholder="Explica qué estabas haciendo y qué problema ocurrió..."
                                     rows={6}
                                     required
-                                    className="w-full px-3.5 py-2.5 text-[13px] bg-bg-deep border border-border-thin rounded-xl text-text-main focus:outline-none focus:border-brand transition-colors resize-none custom-scrollbar leading-relaxed"
+                                    className="w-full px-3.5 py-2.5 text-[13px] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg text-text-main focus:outline-none focus:border-zinc-900 dark:focus:border-zinc-100 transition-colors resize-none custom-scrollbar leading-relaxed shadow-2xs"
                                 />
                             </div>
 
@@ -745,7 +767,7 @@ export const UserFeedbackPage: React.FC = () => {
                                             const isV = (adj.tipo_mime || adj.tipoMime || '').startsWith('video/');
                                             const u = getFeedbackMediaUrl(adj.url);
                                             return (
-                                                <div key={aIdx} className="h-16 w-auto min-w-[56px] rounded-lg overflow-hidden border border-border-thin shrink-0 bg-bg-deep flex items-center justify-center">
+                                                <div key={aIdx} className="h-16 w-auto min-w-[56px] rounded-lg overflow-hidden border border-border-thin shrink-0 bg-white dark:bg-zinc-900 flex items-center justify-center">
                                                     {isV ? (
                                                         <Video size={16} className="text-text-dim" />
                                                     ) : (
@@ -760,7 +782,7 @@ export const UserFeedbackPage: React.FC = () => {
                         </form>
 
                         {/* Footer del Drawer con Botones de Acción */}
-                        <div className="p-4 px-6 border-t border-border-thin bg-surface shrink-0 flex items-center justify-between">
+                        <div className="p-4 px-6 border-t border-border-thin bg-white dark:bg-zinc-950 shrink-0 flex items-center justify-between">
                             <span className="text-[11px] text-text-dim font-mono">
                                 Estado: <strong>En espera</strong>
                             </span>
@@ -804,22 +826,22 @@ export const UserFeedbackPage: React.FC = () => {
                     />
 
                     {/* Panel Lateral Derecho */}
-                    <div className="relative w-full max-w-md sm:max-w-lg h-full bg-surface border-l border-border-thin shadow-2xl flex flex-col z-10 animate-slide-in-right overflow-hidden">
+                    <div className="relative w-full max-w-md sm:max-w-lg h-full bg-white dark:bg-zinc-950 border-l border-border-thin shadow-2xl flex flex-col z-10 animate-slide-in-right overflow-hidden">
                         {/* Header del Drawer */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface shrink-0">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-white dark:bg-zinc-950 shrink-0">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-7 h-7 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center">
                                     <Trash2 size={15} />
                                 </div>
                                 <h3 id="delete-feedback-title" className="text-[15px] font-bold text-text-main tracking-tight">
-                                    Eliminar Reporte
+                                    Eliminar Incidencia
                                 </h3>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setDeletingReport(null)}
                                 disabled={isDeleting}
-                                className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg text-text-dim hover:text-text-main hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
                                 aria-label="Cerrar panel"
                                 title="Cerrar [ESC]"
                             >
@@ -828,7 +850,7 @@ export const UserFeedbackPage: React.FC = () => {
                         </div>
 
                         {/* Body del Drawer */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-surface custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-white dark:bg-zinc-950 custom-scrollbar">
                             {/* Alerta Destructiva */}
                             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 space-y-2">
                                 <div className="flex items-center gap-2 text-red-500 font-semibold text-xs uppercase tracking-wider">
@@ -836,7 +858,7 @@ export const UserFeedbackPage: React.FC = () => {
                                     <span>Acción irreversible</span>
                                 </div>
                                 <p className="text-xs text-text-dim leading-relaxed">
-                                    ¿Estás seguro de que deseas eliminar este reporte? Se borrarán permanentemente sus datos y los archivos adjuntos asociados.
+                                    ¿Estás seguro de que deseas eliminar esta incidencia? Se borrarán permanentemente sus datos y los archivos adjuntos asociados.
                                 </p>
                             </div>
 
@@ -859,11 +881,40 @@ export const UserFeedbackPage: React.FC = () => {
                                 </div>
 
                                 {deletingReport.archivos && deletingReport.archivos.length > 0 && (
-                                    <div className="pt-2 border-t border-border-thin flex items-center gap-2 text-[11px] font-mono text-text-dim">
-                                        <span>Adjuntos:</span>
-                                        <span className="text-text-main font-semibold">
-                                            {deletingReport.archivos.length} {deletingReport.archivos.length === 1 ? 'archivo' : 'archivos'}
-                                        </span>
+                                    <div className="pt-2.5 border-t border-border-thin space-y-2">
+                                        <div className="flex items-center justify-between text-[11px] font-mono text-text-dim">
+                                            <span>Archivos adjuntos:</span>
+                                            <span className="text-text-main font-semibold">
+                                                {deletingReport.archivos.length} {deletingReport.archivos.length === 1 ? 'archivo' : 'archivos'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 custom-scrollbar">
+                                            {deletingReport.archivos.map((adj, idx) => {
+                                                const isVideo = (adj.tipo_mime || adj.tipoMime || '').startsWith('video/');
+                                                const mediaUrl = getFeedbackMediaUrl(adj.url);
+                                                const fileName = adj.nombre_original || adj.nombreOriginal || 'Adjunto';
+
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        className="h-16 w-auto min-w-[54px] rounded-lg overflow-hidden border border-border-thin bg-white dark:bg-zinc-900 shrink-0 relative flex items-center justify-center p-0.5"
+                                                        title={fileName}
+                                                    >
+                                                        {isVideo ? (
+                                                            <div className="w-full h-full flex items-center justify-center p-2 text-text-dim">
+                                                                <Video size={16} />
+                                                            </div>
+                                                        ) : (
+                                                            <img
+                                                                src={mediaUrl}
+                                                                alt={fileName}
+                                                                className="h-full w-auto object-contain rounded"
+                                                            />
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -876,7 +927,7 @@ export const UserFeedbackPage: React.FC = () => {
                         </div>
 
                         {/* Footer del Drawer */}
-                        <div className="p-4 px-6 border-t border-border-thin bg-surface shrink-0 flex items-center justify-between">
+                        <div className="p-4 px-6 border-t border-border-thin bg-white dark:bg-zinc-950 shrink-0 flex items-center justify-between">
                             <span className="text-[11px] text-text-dim font-mono">
                                 Confirmar eliminación
                             </span>

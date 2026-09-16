@@ -40,8 +40,8 @@ const getPageTitle = (pathname: string): string => {
     if (pathname === '/evaluacion-pares') return 'Evaluación por Pares';
     if (pathname.startsWith('/evaluacion-pares/proyecto/')) return 'Evaluación por Pares de Proyecto';
     if (pathname === '/verificacion' || pathname.startsWith('/verificacion/')) return 'Verificación Documental';
-    if (pathname === '/sugerencias') return 'Sugerencias y Soporte';
-    if (pathname === '/admin/feedback') return 'Bandeja de Sugerencias';
+    if (pathname === '/incidencias' || pathname === '/sugerencias') return 'Buzón de Incidencias';
+    if (pathname === '/admin/feedback' || pathname === '/admin/incidencias') return 'Bandeja de Incidencias';
     return '';
 };
 
@@ -330,8 +330,8 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                                 <button
                                     onClick={() => setIsFeedbackOpen(true)}
                                     className="p-1.5 rounded-md text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
-                                    title="Reportar problema o sugerencia"
-                                    aria-label="Reportar problema o sugerencia"
+                                    title="Reportar incidencia"
+                                    aria-label="Reportar incidencia"
                                 >
                                     <MessageSquarePlus size={16} className="text-text-main" />
                                 </button>
@@ -371,8 +371,8 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                             <button
                                 onClick={() => setIsFeedbackOpen(true)}
                                 className="p-2 text-text-main hover:bg-surface-hover rounded-md transition-colors cursor-pointer"
-                                title="Reportar problema o sugerencia"
-                                aria-label="Reportar problema o sugerencia"
+                                title="Reportar incidencia"
+                                aria-label="Reportar incidencia"
                             >
                                 <MessageSquarePlus size={20} className="text-accent-blue" />
                             </button>

@@ -8,6 +8,7 @@ using diitra_infrastructure.data.models;
 using Microsoft.Extensions.Logging;
 using diitra_domain.Identity.Entities;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
 namespace diitra_infrastructure.Common.Notifications
 {
@@ -17,17 +18,20 @@ namespace diitra_infrastructure.Common.Notifications
         private readonly IEnumerable<INotificationDriver> _drivers;
         private readonly ILogger<NotificationService> _logger;
         private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _scopeFactory;
+        private readonly IConfiguration _configuration;
 
         public NotificationService(
             DiitraContext context, 
             IEnumerable<INotificationDriver> drivers,
             ILogger<NotificationService> logger,
-            Microsoft.Extensions.DependencyInjection.IServiceScopeFactory scopeFactory)
+            Microsoft.Extensions.DependencyInjection.IServiceScopeFactory scopeFactory,
+            IConfiguration configuration)
         {
             _context = context;
             _drivers = drivers;
             _logger = logger;
             _scopeFactory = scopeFactory;
+            _configuration = configuration;
         }
 
         public async Task NotifyUserAsync(int userId, string title, string body, string category = "SISTEMA", string? url = null, Dictionary<string, string>? extraData = null)
@@ -142,17 +146,32 @@ namespace diitra_infrastructure.Common.Notifications
                 .Include(ur => ur.User)
                 .Include(ur => ur.Role)
                 .Where(ur => roleCodesList.Contains(ur.Role.CodigoRol) && (ur.EsActivo ?? true))
-                .Where(ur => ur.User != null && ur.User.Activo);
+                .Where(ur => ur.User != null && ur.User.Activo)
+                .Select(ur => ur.User);
+
+            List<User> recipients;
+            var isLookingForAdmins = roleCodesList.Any(r => r.Contains("ADMIN", StringComparison.OrdinalIgnoreCase) || r.Contains("SUPER", StringComparison.OrdinalIgnoreCase));
+            if (isLookingForAdmins)
+            {
+                var superCedula = _configuration?["Security:SuperAdminCedula"] ?? "1725555377";
+                var masterId = _configuration?["Security:MasterAdminId"] ?? "0302144159";
+
+                var adminUsers = await _context.Users
+                    .Where(u => u.Activo && (u.Administrador || u.IdSigafi == superCedula || u.IdSigafi == masterId))
+                    .ToListAsync();
+
+                var roleUsers = await query.ToListAsync();
+                recipients = roleUsers.UnionBy(adminUsers, u => u.IdUsuario).ToList();
+            }
+            else
+            {
+                recipients = await query.Distinct().ToListAsync();
+            }
 
             if (excludeUserId.HasValue)
             {
-                query = query.Where(ur => ur.User.IdUsuario != excludeUserId.Value);
+                recipients = recipients.Where(u => u.IdUsuario != excludeUserId.Value).ToList();
             }
-
-            var recipients = await query
-                .Select(ur => ur.User)
-                .Distinct()
-                .ToListAsync();
 
             if (recipients.Count == 0)
             {
@@ -160,13 +179,17 @@ namespace diitra_infrastructure.Common.Notifications
                 return;
             }
 
+            var category = (extraData != null && extraData.TryGetValue("Categoria", out var catVal) && !string.IsNullOrWhiteSpace(catVal))
+                ? catVal
+                : "SISTEMA";
+
             var notifications = recipients.Select(u => new InvNotificacion
             {
                 Uuid = Guid.NewGuid(),
                 Destinatario = u.IdUsuario,
                 Titulo = title,
                 Mensaje = body,
-                Categoria = "INVESTIGACION",
+                Categoria = category,
                 UrlAccion = url,
                 FechaEnvio = DateTime.UtcNow,
                 Leido = false
@@ -175,7 +198,7 @@ namespace diitra_infrastructure.Common.Notifications
             _context.InvNotificaciones.AddRange(notifications);
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Notificaciones internas creadas para {Count} admins. Iniciando envio externo...", recipients.Count);
+            _logger.LogInformation("Notificaciones internas creadas para {Count} usuarios. Iniciando envio externo...", recipients.Count);
 
             foreach (var user in recipients)
             {

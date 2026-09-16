@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
-    Lightbulb, Bug, HelpCircle, 
+    Bug, HelpCircle, 
     Clock, RefreshCw, Filter, ExternalLink, 
     Video, MessageSquare, X, ChevronLeft, ChevronRight, Play,
     CheckCircle2, Monitor, Wifi,
@@ -17,8 +17,7 @@ import { GeistSelect } from '../../../components/Common/GeistSelect';
 const TIPO_OPTIONS = [
     { value: 'TODOS', label: 'Todos los tipos' },
     { value: 'ERROR', label: 'Algo no funciona' },
-    { value: 'DUDA', label: 'Falta una opción' },
-    { value: 'SUGERENCIA', label: 'Ideas o sugerencias' }
+    { value: 'DUDA', label: 'Falta una opción' }
 ];
 
 const ESTADO_OPTIONS = [
@@ -225,13 +224,6 @@ export const AdminFeedbackPage: React.FC = () => {
                         <span>Falta una opción</span>
                     </span>
                 );
-            case 'SUGERENCIA':
-                return (
-                    <span className="text-text-main font-semibold text-[12.5px] flex items-center gap-1.5">
-                        <Lightbulb className="w-3.5 h-3.5 text-text-dim" />
-                        <span>Idea o sugerencia</span>
-                    </span>
-                );
             default:
                 return <span className="text-text-dim text-[12px] font-medium">{tipo}</span>;
         }
@@ -260,8 +252,8 @@ export const AdminFeedbackPage: React.FC = () => {
             <PageHeader
                 kicker="Administración · DIITRA"
                 icon={MessageSquare}
-                title="Bandeja de Incidencias y Sugerencias"
-                description="Registro centralizado de problemas reportados por los usuarios, datos u opciones faltantes y sugerencias para mejorar el sistema."
+                title="Bandeja de Incidencias"
+                description="Registro centralizado de problemas reportados por los usuarios y datos u opciones faltantes para su revisión y solución."
             />
 
             {/* Main Content: Full Width Container */}
@@ -294,16 +286,16 @@ export const AdminFeedbackPage: React.FC = () => {
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-24 gap-3 text-text-dim bento-card static">
                         <RefreshCw size={24} className="animate-spin text-brand" />
-                        <span className="text-xs font-bold uppercase tracking-widest">Cargando reportes...</span>
+                        <span className="text-xs font-bold uppercase tracking-widest">Cargando incidencias...</span>
                     </div>
                 ) : reportes.length === 0 ? (
                     <div className="empty-state py-20 bg-surface">
                         <div className="icon-circle icon-circle-brand !p-4 mb-4">
                             <MessageSquare size={36} strokeWidth={1.5} />
                         </div>
-                        <p className="text-text-main font-bold uppercase tracking-widest text-sm">No se encontraron reportes</p>
+                        <p className="text-text-main font-bold uppercase tracking-widest text-sm">No se encontraron incidencias</p>
                         <p className="text-text-dim text-xs mt-2 max-w-sm">
-                            Cuando los usuarios envíen reportes de problemas o sugerencias aparecerán en este panel.
+                            Cuando los usuarios reporten problemas o datos faltantes aparecerán en este panel.
                         </p>
                     </div>
                 ) : (
@@ -439,10 +431,11 @@ export const AdminFeedbackPage: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => setDeletingReport(r)}
-                                                className="p-1.5 rounded-md text-text-dim hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                                className="w-8 h-8 rounded-lg text-text-dim hover:text-red-500 hover:bg-red-500/10 flex items-center justify-center transition-colors cursor-pointer"
                                                 title="Eliminar reporte permanentemente"
+                                                aria-label="Eliminar reporte permanentemente"
                                             >
-                                                <Trash2 size={13} />
+                                                <Trash2 size={16} />
                                             </button>
                                         </div>
                                     </div>
@@ -683,7 +676,7 @@ export const AdminFeedbackPage: React.FC = () => {
                                     )}
                                 </div>
                                 <p className="text-[11.5px] text-text-dim leading-relaxed">
-                                    Esta respuesta será visible para el usuario en su buzón de sugerencias e incidencias.
+                                    Esta respuesta será visible para el usuario en su buzón de incidencias.
                                 </p>
                                 <textarea
                                     value={adminResponseText}
@@ -747,7 +740,7 @@ export const AdminFeedbackPage: React.FC = () => {
                                     <Trash2 size={15} />
                                 </div>
                                 <h3 id="admin-delete-feedback-title" className="text-[15px] font-bold text-text-main tracking-tight">
-                                    Eliminar Reporte
+                                    Eliminar Incidencia
                                 </h3>
                             </div>
                             <button
@@ -793,10 +786,42 @@ export const AdminFeedbackPage: React.FC = () => {
                                     </p>
                                 </div>
 
-                                <div className="pt-2 border-t border-border-thin space-y-1 text-[11px] font-mono text-text-dim">
+                                <div className="pt-2 border-t border-border-thin space-y-2 text-[11px] font-mono text-text-dim">
                                     <div>Usuario: <span className="text-text-main font-semibold">{deletingReport.nombre_usuario || deletingReport.nombreUsuario}</span></div>
                                     {deletingReport.archivos && deletingReport.archivos.length > 0 && (
-                                        <div>Archivos adjuntos: <span className="text-text-main font-semibold">{deletingReport.archivos.length}</span></div>
+                                        <div className="space-y-1.5 pt-1">
+                                            <div className="flex items-center justify-between">
+                                                <span>Archivos adjuntos:</span>
+                                                <span className="text-text-main font-semibold">{deletingReport.archivos.length}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 custom-scrollbar">
+                                                {deletingReport.archivos.map((adj, idx) => {
+                                                    const isVideo = (adj.tipo_mime || adj.tipoMime || '').startsWith('video/');
+                                                    const mediaUrl = getFeedbackMediaUrl(adj.url);
+                                                    const fileName = adj.nombre_original || adj.nombreOriginal || 'Adjunto';
+
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className="h-16 w-auto min-w-[54px] rounded-lg overflow-hidden border border-border-thin bg-white dark:bg-zinc-900 shrink-0 relative flex items-center justify-center p-0.5"
+                                                            title={fileName}
+                                                        >
+                                                            {isVideo ? (
+                                                                <div className="w-full h-full flex items-center justify-center p-2 text-text-dim">
+                                                                    <Video size={16} />
+                                                                </div>
+                                                            ) : (
+                                                                <img
+                                                                    src={mediaUrl}
+                                                                    alt={fileName}
+                                                                    className="h-full w-auto object-contain rounded"
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -829,7 +854,7 @@ export const AdminFeedbackPage: React.FC = () => {
                                     className="px-4 py-1.5 rounded-lg text-xs font-medium bg-red-500 hover:bg-red-600 text-white flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
                                 >
                                     {isDeleting && <Loader2 size={12} className="animate-spin" />}
-                                    <span>Sí, eliminar reporte</span>
+                                    <span>Sí, eliminar incidencia</span>
                                 </button>
                             </div>
                         </div>

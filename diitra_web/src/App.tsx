@@ -55,7 +55,7 @@ const UserFeedbackPage        = lazy(() => import('./pages/Feedback/UserFeedback
 
 const FeedbackPageRouter = () => {
     const { isSuperAdmin } = useAuth();
-    return isSuperAdmin ? <Navigate to="/admin/feedback" replace /> : <UserFeedbackPage />;
+    return isSuperAdmin ? <Navigate to="/admin/incidencias" replace /> : <UserFeedbackPage />;
 };
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
@@ -296,8 +296,11 @@ function App() {
                             <Route path="/grupos" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE']}><GroupsPage /></RoleRoute>} />
                             <Route path="/parametros-normativos" element={<Navigate to="/configuracion?tab=parametros" replace />} />
                              <Route path="/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
-                             <Route path="/admin/feedback" element={<SuperAdminRoute><AdminFeedbackPage /></SuperAdminRoute>} />
-                             <Route path="/sugerencias" element={<ProtectedRoute><FeedbackPageRouter /></ProtectedRoute>} />
+                              <Route path="/admin/incidencias" element={<SuperAdminRoute><AdminFeedbackPage /></SuperAdminRoute>} />
+                              <Route path="/admin/feedback" element={<Navigate to="/admin/incidencias" replace />} />
+                              <Route path="/admin/sugerencias" element={<Navigate to="/admin/incidencias" replace />} />
+                              <Route path="/incidencias" element={<ProtectedRoute><FeedbackPageRouter /></ProtectedRoute>} />
+                              <Route path="/sugerencias" element={<Navigate to="/incidencias" replace />} />
                              <Route path="/admin/documentos" element={<AdminRoute><DocumentMaintenancePage /></AdminRoute>} />
                              <Route path="/plantillas" element={<AdminRoute><DocumentTemplatesPage /></AdminRoute>} />
                              <Route path="/admin/plantillas" element={<RedirectPreserveSearch to="/plantillas" />} />

@@ -459,9 +459,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                 newConnection.on('ReceiveNotification', (payload?: any) => {
                     fetchNotifications();
                     
-                    // Dispatch custom event to notify components that projects or emails state might have changed
+                    // Dispatch custom event to notify components that projects, emails or feedback state might have changed
                     window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                     window.dispatchEvent(new CustomEvent('diitra-emails-changed'));
+                    window.dispatchEvent(new CustomEvent('diitra-feedback-changed', { detail: payload }));
 
                     if (payload && payload.title && payload.body) {
                         // Mapear categoría si viene en el payload o usar 'default'
@@ -496,6 +497,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
         newConnection.onreconnected(() => {
             setIsConnected(true);
+            fetchNotifications();
+            window.dispatchEvent(new CustomEvent('diitra-feedback-changed'));
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
+            window.dispatchEvent(new CustomEvent('diitra-emails-changed'));
         });
 
         setConnection(newConnection);
