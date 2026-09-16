@@ -365,7 +365,7 @@ namespace diitra_infrastructure.Common.Notifications
 
                     var titulo = $"¡Bienvenido a DIITRA, {primerNombre}!";
                     var mensaje = "Este es tu centro oficial de notificaciones. Aquí recibirás avisos sobre convocatorias, estados de tus proyectos, asignaciones de arbitraje y fechas límite institucionales.";
-                    var url = "/notificaciones";
+                    string? url = null;
 
                     var extraData = new Dictionary<string, string>
                     {
@@ -442,7 +442,7 @@ namespace diitra_infrastructure.Common.Notifications
                     categoria = n.Categoria,
                     fecha_envio = n.FechaEnvio,
                     leido = n.Leido,
-                    url_accion = n.UrlAccion
+                    url_accion = (n.Categoria == "SISTEMA" && n.Titulo.StartsWith("¡Bienvenido a DIITRA")) ? null : n.UrlAccion
                 })
                 .ToListAsync();
         }

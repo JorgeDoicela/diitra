@@ -11,10 +11,12 @@ namespace diitra_api.Controllers
     public class NotificationsController : ControllerBase
     {
         private readonly INotificationService _notificationService;
+        private readonly ILogger<NotificationsController> _logger;
 
-        public NotificationsController(INotificationService notificationService)
+        public NotificationsController(INotificationService notificationService, ILogger<NotificationsController> logger)
         {
             _notificationService = notificationService;
+            _logger = logger;
         }
 
         [HttpGet("my")]
@@ -119,8 +121,16 @@ namespace diitra_api.Controllers
                 return BadRequest("Device token is required.");
             }
 
-            await _notificationService.SubscribeUserAsync(userId, request.DeviceToken, request.Plataforma);
-            return Ok(new { message = "Subscribed successfully" });
+            try
+            {
+                await _notificationService.SubscribeUserAsync(userId, request.DeviceToken, request.Plataforma);
+                return Ok(new { message = "Subscribed successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[NOTIFICATIONS] Error al suscribir dispositivo web push para el usuario {UserId}", userId);
+                return StatusCode(500, new { message = "Error interno al procesar la suscripción push", details = ex.Message });
+            }
         }
 
         [HttpPost("unsubscribe")]
@@ -137,8 +147,16 @@ namespace diitra_api.Controllers
                 return BadRequest("Device token is required.");
             }
 
-            await _notificationService.UnsubscribeUserAsync(userId, request.DeviceToken);
-            return Ok(new { message = "Unsubscribed successfully" });
+            try
+            {
+                await _notificationService.UnsubscribeUserAsync(userId, request.DeviceToken);
+                return Ok(new { message = "Unsubscribed successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[NOTIFICATIONS] Error al desuscribir dispositivo para el usuario {UserId}", userId);
+                return StatusCode(500, new { message = "Error interno al procesar la desuscripción", details = ex.Message });
+            }
         }
     }
 

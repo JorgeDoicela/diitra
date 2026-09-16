@@ -13,6 +13,8 @@ interface NotificationPanelProps {
     notifications: NotificationItem[];
     markAllAsRead: () => Promise<void>;
     handleNotificationClick: (n: NotificationItem) => Promise<void>;
+    navigate?: (path: string) => void;
+    isSuperAdmin?: boolean;
 }
 
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({
@@ -22,7 +24,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     unreadCount,
     notifications,
     markAllAsRead,
-    handleNotificationClick
+    handleNotificationClick,
+    isSuperAdmin = false
 }) => {
     if (!isNotificationsOpen) return null;
 
@@ -72,49 +75,55 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                             <p className="text-[9px] text-text-dim uppercase font-semibold tracking-widest">Todo en orden</p>
                         </div>
                     ) : (
-                        notifications.map((n) => (
-                            <div
-                                key={n.uuid}
-                                className={`p-3 border-b border-border-thin last:border-0 hover:bg-surface/50 transition-colors cursor-pointer group ${!n.leido ? 'bg-surface/30' : 'opacity-70'}`}
-                                onClick={() => handleNotificationClick(n)}
-                            >
-                                <div className="flex gap-2.5">
-                                    <div className="mt-0.5 shrink-0">
-                                        {getNotificationIcon(n.categoria)}
-                                    </div>
-                                    <div className="space-y-0.5 flex-1 min-w-0 overflow-hidden">
-                                        <div className="flex justify-between items-start gap-1">
-                                            <h5 className="text-[11px] font-semibold text-text-main leading-tight truncate">{stripHtmlToText(n.titulo)}</h5>
-                                            <span className="text-[8px] font-mono text-text-dim shrink-0">{new Date(n.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        notifications.map((n) => {
+                            const isWelcome = n.titulo?.includes('¡Bienvenido a DIITRA') || n.titulo?.toLowerCase().includes('bienvenido a diitra');
+                            const hasActionUrl = Boolean(n.url_accion && !isWelcome);
+
+                            return (
+                                <div
+                                    key={n.uuid}
+                                    className={`p-3 border-b border-border-thin last:border-0 hover:bg-surface/50 transition-colors cursor-pointer group ${!n.leido ? 'bg-surface/30' : 'opacity-70'}`}
+                                    onClick={() => handleNotificationClick(n)}
+                                >
+                                    <div className="flex gap-2.5">
+                                        <div className="mt-0.5 shrink-0">
+                                            {getNotificationIcon(n.categoria)}
                                         </div>
-                                        <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2 break-words">{stripHtmlToText(n.mensaje)}</p>
-                                        {n.url_accion ? (
-                                            <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-text-main uppercase mt-1 hover:underline cursor-pointer">
-                                                Ver estado actual
-                                                <ExternalLink size={9} className="opacity-60" />
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center text-[8.5px] font-medium text-text-dim/60 uppercase mt-1 tracking-wider">
-                                                Informativo
-                                            </span>
+                                        <div className="space-y-0.5 flex-1 min-w-0 overflow-hidden">
+                                            <div className="flex justify-between items-start gap-1">
+                                                <h5 className="text-[11px] font-semibold text-text-main leading-tight truncate">{stripHtmlToText(n.titulo)}</h5>
+                                                <span className="text-[8px] font-mono text-text-dim shrink-0">{new Date(n.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                            <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2 break-words">{stripHtmlToText(n.mensaje)}</p>
+                                            {hasActionUrl ? (
+                                                <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-text-main uppercase mt-1 hover:underline cursor-pointer">
+                                                    Ver estado actual
+                                                    <ExternalLink size={9} className="opacity-60" />
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center text-[8.5px] font-medium text-text-dim/60 uppercase mt-1 tracking-wider">
+                                                    Informativo
+                                                </span>
+                                            )}
+                                        </div>
+                                        {!n.leido && (
+                                            <div className="w-1.5 h-1.5 bg-text-main rounded-full mt-1 shrink-0" />
                                         )}
                                     </div>
-                                    {!n.leido && (
-                                        <div className="w-1.5 h-1.5 bg-text-main rounded-full mt-1 shrink-0" />
-                                    )}
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
 
                 <footer className="p-2 border-t border-border-thin bg-surface/30 text-center">
                     <Link
                         to="/notificaciones"
+                        state={{ from: typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : undefined }}
                         onClick={() => { setIsNotificationsOpen(false); }}
                         className="text-[9px] font-semibold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors bg-transparent border-0 cursor-pointer no-underline inline-block"
                     >
-                        Ver todo el historial
+                        Ver todas las notificaciones
                     </Link>
                 </footer>
             </div>

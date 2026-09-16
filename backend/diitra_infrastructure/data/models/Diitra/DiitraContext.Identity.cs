@@ -286,8 +286,7 @@ public partial class DiitraContext
             entity.ToTable("inv_dispositivos_tokens");
             entity.Property(e => e.IdToken).HasColumnName("idToken");
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
-            entity.Property(e => e.DeviceToken).HasColumnName("deviceToken").HasMaxLength(512).IsRequired();
-            entity.HasIndex(e => e.DeviceToken).IsUnique();
+            entity.Property(e => e.DeviceToken).HasColumnName("deviceToken").HasColumnType("text").IsRequired();
             entity.Property(e => e.Plataforma).HasColumnName("plataforma").HasMaxLength(20).HasDefaultValueSql("'Web'");
             entity.Property(e => e.UltimaSincronizacion).HasColumnName("ultimaSincronizacion").HasDefaultValueSql("CURRENT_TIMESTAMP").ValueGeneratedOnAddOrUpdate();
 

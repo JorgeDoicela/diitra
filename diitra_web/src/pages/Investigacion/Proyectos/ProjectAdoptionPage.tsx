@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
@@ -198,17 +198,23 @@ const ProjectAdoptionPage: React.FC = () => {
             <div className="max-w-[1400px] mx-auto">
 
                 {/* Breadcrumb / Back Button */}
-                <div className="flex items-center gap-2 mb-6 animate-fade-up text-xs select-none">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="flex items-center gap-1.5 text-text-dim hover:text-text-main transition-colors group cursor-pointer"
+                <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-6 animate-fade-up text-xs select-none text-text-dim">
+                    <Link
+                        to="/solicitudes"
+                        className="p-1 -ml-1 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors inline-flex items-center justify-center no-underline"
+                        title="Volver a Solicitudes"
                     >
-                        <ArrowLeft size={12} className="group-hover:-translate-x-0.5 transition-transform" />
-                        <span>Mis Investigaciones</span>
-                    </button>
-                    <span className="text-text-dim/30">/</span>
-                    <span className="text-text-main/80 font-medium">Adopción de Proyectos</span>
-                </div>
+                        <ArrowLeft size={14} />
+                    </Link>
+                    <Link
+                        to="/solicitudes"
+                        className="hover:text-text-main cursor-pointer transition-colors font-medium no-underline text-inherit"
+                    >
+                        Solicitudes
+                    </Link>
+                    <ChevronRight size={12} className="opacity-50 shrink-0" />
+                    <span className="text-text-main font-semibold">Adopción de Proyectos</span>
+                </nav>
 
                 <PageHeader
                     kicker="Centro de Adopciones DIITRA"

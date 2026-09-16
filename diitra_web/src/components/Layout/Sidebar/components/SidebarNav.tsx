@@ -11,7 +11,9 @@ import {
     TrendingUp, 
     ShieldCheck, 
     ClipboardList, 
-    Loader2 
+    Loader2,
+    Award,
+    MessageSquarePlus
 } from 'lucide-react';
 import type { MenuItem, SidebarProject } from '../types';
 
@@ -62,6 +64,8 @@ interface SidebarNavProps {
     setIsMisProyectosOpen: (v: boolean) => void;
     isInnovacionOpen: boolean;
     setIsInnovacionOpen: (v: boolean) => void;
+    isSolicitudesOpen: boolean;
+    setIsSolicitudesOpen: (v: boolean) => void;
     isAnalyticsOpen: boolean;
     setIsAnalyticsOpen: (v: boolean) => void;
     isUsersOpen: boolean;
@@ -89,6 +93,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     setIsMisProyectosOpen,
     isInnovacionOpen,
     setIsInnovacionOpen,
+    isSolicitudesOpen,
+    setIsSolicitudesOpen,
     isAnalyticsOpen,
     setIsAnalyticsOpen,
     isUsersOpen,
@@ -279,6 +285,96 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                     )}
                                 </>
                             )}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (item.name === 'Solicitudes') {
+            const isMenuOpen = isSolicitudesOpen;
+            return (
+                <div key={item.name} className="flex flex-col gap-0.5">
+                    <div
+                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${isActive
+                            ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                            : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                            }`}
+                    >
+                        <Link
+                            to="/solicitudes"
+                            onClick={(e) => {
+                                if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+                                    setIsSolicitudesOpen(true);
+                                    if (onClose) onClose();
+                                }
+                            }}
+                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left no-underline"
+                        >
+                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
+                                ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                }`}>
+                                <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
+                            </div>
+                            <span className={`text-[14px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
+                                }`}>
+                                {item.name}
+                            </span>
+                        </Link>
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsSolicitudesOpen(!isSolicitudesOpen);
+                            }}
+                            className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
+                            title="Expandir"
+                        >
+                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${isMenuOpen ? 'rotate-90' : ''
+                                } ${isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                                }`} />
+                        </button>
+                    </div>
+
+                    {isMenuOpen && (
+                        <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
+                            {[
+                                { name: 'Grupos de Investigación', path: '/grupos', icon: Users },
+                                { name: 'Adopción de Proyectos', path: '/investigacion/adopcion', icon: Award },
+                                { name: 'Buzón de Incidencias', path: '/incidencias', icon: MessageSquarePlus }
+                            ].map((subItem) => {
+                                const isSubActive = subItem.path === '/incidencias'
+                                    ? (location.pathname.startsWith('/incidencias') || location.pathname.startsWith('/admin/incidencias'))
+                                    : location.pathname.startsWith(subItem.path);
+
+                                return (
+                                    <Link
+                                        key={subItem.name}
+                                        to={subItem.path}
+                                        onClick={() => {
+                                            if (onClose) onClose();
+                                        }}
+                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${isSubActive
+                                            ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                            : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isSubActive
+                                                ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                                : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                                }`}>
+                                                <subItem.icon size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
+                                            </div>
+                                            <span className={`text-[13px] tracking-tight truncate ${isSubActive ? 'font-semibold text-text-main' : 'font-medium'
+                                                }`}>
+                                                {subItem.name}
+                                            </span>
+                                        </div>
+                                    </Link>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

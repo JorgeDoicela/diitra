@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
     Bell, ExternalLink, Mail, Info, AlertTriangle,
-    CheckCheck, Search, Inbox, Trash2
+    CheckCheck, Search, Inbox, Trash2, ArrowLeft
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import { stripHtmlToText } from '../../utils/notificationText';
@@ -29,6 +29,19 @@ const getCategoryConfig = (cat: string) => categoryConfig[cat] || { icon: Mail, 
 
 const NotificationsPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const returnPath = (location.state as any)?.from;
+
+    const handleGoBack = () => {
+        if (returnPath && returnPath !== '/notificaciones') {
+            navigate(returnPath);
+        } else if (window.history.length > 1) {
+            navigate(-1);
+        } else {
+            navigate('/dashboard');
+        }
+    };
+
     const { notifications, markAsRead, markAllAsRead, fetchNotifications, deleteNotification, clearReadNotifications, addToast } = useNotifications();
     const [allNotifications, setAllNotifications] = useState<NotificationItem[]>([]);
     const [filter, setFilter] = useState<'all' | 'unread' | 'investigacion' | 'sistema' | 'urgente'>('all');
@@ -255,6 +268,18 @@ const NotificationsPage = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto custom-scrollbar">
+            {/* Navegación de retorno al menú/página anterior */}
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-4 animate-fade-in text-xs text-text-dim select-none">
+                <button
+                    onClick={handleGoBack}
+                    className="flex items-center gap-1.5 p-1 -ml-1 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors border-0 bg-transparent cursor-pointer group"
+                    title="Regresar a la página anterior"
+                >
+                    <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="font-medium">Volver</span>
+                </button>
+            </nav>
+
             {/* Header */}
             <PageHeader
                 kicker="Centro de Notificaciones"

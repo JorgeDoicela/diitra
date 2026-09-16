@@ -52,6 +52,7 @@ const InnovationPage          = lazy(() => import('./pages/Innovacion/Innovation
 const InnovationWorkspace     = lazy(() => import('./pages/Innovacion/Workspace/InnovationWorkspace'));
 const AdminFeedbackPage       = lazy(() => import('./pages/Admin/Feedback/AdminFeedbackPage').then(m => ({ default: m.AdminFeedbackPage })));
 const UserFeedbackPage        = lazy(() => import('./pages/Feedback/UserFeedbackPage').then(m => ({ default: m.UserFeedbackPage })));
+const SolicitudesPage         = lazy(() => import('./pages/Solicitudes/SolicitudesPage'));
 
 const FeedbackPageRouter = () => {
     const { isSuperAdmin } = useAuth();
@@ -292,8 +293,9 @@ function App() {
                             <Route path="/analiticas" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
                             <Route path="/notificaciones" element={<NotificationsPage />} />
                             <Route path="/usuarios" element={<PermissionRoute module="USUARIOS" op="VER"><UsersPage /></PermissionRoute>} />
-                            <Route path="/auditoria" element={<AdminRoute><AuditPage /></AdminRoute>} />
-                            <Route path="/grupos" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE']}><GroupsPage /></RoleRoute>} />
+                            <Route path="/auditoria" element={<SuperAdminRoute><AuditPage /></SuperAdminRoute>} />
+                            <Route path="/solicitudes" element={<ProtectedRoute><SolicitudesPage /></ProtectedRoute>} />
+                            <Route path="/grupos" element={<RoleRoute allowedRoles={['ANY']}><GroupsPage /></RoleRoute>} />
                             <Route path="/parametros-normativos" element={<Navigate to="/configuracion?tab=parametros" replace />} />
                              <Route path="/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
                               <Route path="/admin/incidencias" element={<SuperAdminRoute><AdminFeedbackPage /></SuperAdminRoute>} />
@@ -308,7 +310,7 @@ function App() {
                              <Route path="/templates" element={<RedirectPreserveSearch to="/plantillas" />} />
                              <Route path="/admin" element={<Navigate to="/usuarios" replace />} />
                              <Route path="/admin/groups" element={<RedirectPreserveSearch to="/grupos" />} />
-                             <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />
+                             <Route path="/admin/audit" element={<SuperAdminRoute><Navigate to="/auditoria" replace /></SuperAdminRoute>} />
                              <Route path="/admin/configuracion" element={<RedirectPreserveSearch to="/parametros-normativos" />} />
                              <Route path="/admin/lopdp" element={<Navigate to="/lopdp" replace />} />
                              <Route path="/admin/emails" element={<Navigate to="/emails" replace />} />

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     TrendingUp, Briefcase, ClipboardList,
     Fingerprint, FileText, Layers, ExternalLink,
-    Activity, FileEdit, Inbox, HelpCircle, ArrowRight, AlertTriangle
+    Activity, FileEdit, Inbox, HelpCircle, ArrowRight, AlertTriangle, Sparkles
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -108,15 +108,22 @@ export const DocenteDashboard: React.FC = () => {
                 subtitle="Gestiona tus proyectos, carga horaria y productos científicos en un solo lugar."
                 roleName="Docente Investigador"
                 actions={
-                    <>
+                    <div className="flex items-center gap-2.5 w-full md:w-auto">
                         <Link
                             to="/investigacion/mis-proyectos"
                             className="btn-vercel-secondary flex-1 md:flex-none no-underline"
                         >
                             <ClipboardList size={14} />
-                            <span>Mis Proyectos</span>
+                            <span>Mis Investigaciones</span>
                         </Link>
-                    </>
+                        <Link
+                            to="/innovacion"
+                            className="btn-vercel-secondary flex-1 md:flex-none no-underline"
+                        >
+                            <Sparkles size={14} />
+                            <span>Mis Innovaciones</span>
+                        </Link>
+                    </div>
                 }
             />
 

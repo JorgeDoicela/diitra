@@ -36,6 +36,7 @@ import {
     FolderOpen,
     Sparkles,
     MessageSquarePlus,
+    Inbox,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -178,9 +179,17 @@ const HighlightedText = ({
 // ─── Role filter ──────────────────────────────────────────────────────────────
 
 function useRoleFilter() {
-    const { isAdmin, isDocente, isEstudiante, isRevisor, roles, hasPermission } = useAuth();
+    const { isAdmin, isSuperAdmin, isDocente, isEstudiante, isRevisor, roles, hasPermission, user } = useAuth();
     return useCallback((item: SearchItem): boolean => {
         if (item.id === 'derechos-arco' && isAdmin) return false;
+        if (item.path === '/auditoria' && !isSuperAdmin) return false;
+        if (item.path === '/admin/incidencias' && !isSuperAdmin) return false;
+        if (item.roles?.includes('DIITRA_SUPER_ADMIN') && !isSuperAdmin) return false;
+
+        // Ocultar revisiones y certificados si no es superadmin y no tienen registros (aplica también a Admin)
+        if (item.path === '/revisiones' && !isSuperAdmin && (user?.total_revisiones ?? 0) === 0) return false;
+        if (item.path === '/mis-certificados' && !isSuperAdmin && (user?.total_certificados ?? 0) === 0) return false;
+
         if (isAdmin) return true;
         if (item.permission) {
             const [module, op] = item.permission.split(':');
@@ -195,12 +204,12 @@ function useRoleFilter() {
             return item.roles.some(r => roles.includes(r.toUpperCase()));
         }
         return true;
-    }, [isAdmin, isDocente, isEstudiante, isRevisor, roles, hasPermission]);
+    }, [isAdmin, isSuperAdmin, isDocente, isEstudiante, isRevisor, roles, hasPermission]);
 }
 
 // ─── Static catalog ───────────────────────────────────────────────────────────
 
-function buildStaticItems(navigate: ReturnType<typeof useNavigate>, isAdmin: boolean, isDocente: boolean, isEstudiante: boolean, isRevisor: boolean): SearchItem[] {
+function buildStaticItems(navigate: ReturnType<typeof useNavigate>, isAdmin: boolean, isSuperAdmin: boolean, isDocente: boolean, isEstudiante: boolean, isRevisor: boolean): SearchItem[] {
     return [
         // ── Navegación ──────────────────────────────────────────────────
         { id: 'dashboard', label: 'Tablero Principal', description: 'Vista general con métricas y actividad reciente', category: 'Navegación', icon: LayoutDashboard, path: '/dashboard', shortcut: 'D', roles: ['ANY'], keywords: ['inicio', 'home', 'panel', 'resumen'], boost: 8 },
@@ -211,7 +220,9 @@ function buildStaticItems(navigate: ReturnType<typeof useNavigate>, isAdmin: boo
         { id: 'revisiones', label: 'Revisiones por Pares', description: 'Evaluaciones de proyectos asignadas para revisión académica', category: 'Navegación', icon: ShieldCheck, path: '/revisiones', shortcut: 'R', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'], keywords: ['revision', 'peer review', 'evaluar', 'pares', 'dictamen'], boost: isRevisor ? 10 : 6 },
         { id: 'notificaciones', label: 'Centro de Notificaciones', description: 'Historial completo de alertas y mensajes del sistema', category: 'Navegación', icon: Bell, path: '/notificaciones', roles: ['ANY'], keywords: ['notificacion', 'alertas', 'mensajes', 'inbox'], boost: 5 },
         { id: 'verificar', label: 'Verificar Documento', description: 'Comprueba la autenticidad con código QR o de verificación', category: 'Navegación', icon: ShieldCheck, path: '/verificacion', roles: ['ANY'], keywords: ['verificar', 'verificacion', 'documento', 'validar', 'hash', 'qr', 'trazabilidad'], boost: 4 },
-        { id: 'grupos', label: 'Grupos de Investigación', description: 'Equipos y colectivos de investigadores registrados', category: 'Navegación', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], keywords: ['grupos', 'equipos', 'colectivos', 'team'], boost: 6 },
+        { id: 'solicitudes', label: 'Centro de Solicitudes', description: 'Gestión y seguimiento de solicitudes institucionales y grupos de investigación', category: 'Navegación', icon: Inbox, path: '/solicitudes', shortcut: 'S', roles: ['ANY'], keywords: ['solicitudes', 'tramites', 'peticiones', 'grupos'], boost: 7 },
+        { id: 'grupos', label: 'Grupos de Investigación', description: 'Equipos y colectivos de investigadores registrados', category: 'Navegación', icon: Award, path: '/grupos', roles: ['ANY'], keywords: ['grupos', 'equipos', 'colectivos', 'team'], boost: 6 },
+        { id: 'adopcion', label: 'Adopción de Proyectos', description: 'Bandeja de proyectos inconclusos disponibles para reasignación y rescate', category: 'Navegación', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], keywords: ['adopcion', 'inconclusos', 'rescate', 'reasignacion', 'abandonados'], boost: 6 },
         // ── Administración ────────────────────────────────────────────
         { id: 'analiticas', label: 'Analíticas de Investigación', description: 'Métricas CACES, indicadores y producción académica', category: 'Administración', icon: BarChart3, path: '/analiticas', shortcut: 'A', roles: ['DIITRA_ADMIN'], keywords: ['analitica', 'metricas', 'estadisticas', 'caces', 'kpi', 'reporte'], boost: isAdmin ? 9 : 0 },
         { id: 'analiticas-general', label: 'Métricas Generales I+D', description: 'Indicadores y tendencias de producción investigativa', category: 'Administración', icon: TrendingUp, path: '/analiticas?tab=general', roles: ['DIITRA_ADMIN'], keywords: ['metricas', 'generales', 'tendencias'], boost: 4 },
@@ -221,11 +232,11 @@ function buildStaticItems(navigate: ReturnType<typeof useNavigate>, isAdmin: boo
         { id: 'usuarios-estudiantes', label: 'Usuarios: Estudiantes', description: 'Lista de estudiantes colaboradores', category: 'Administración', icon: Users, path: '/usuarios?type=ESTUDIANTE', permission: 'USUARIOS:VER', keywords: ['estudiantes', 'alumnos', 'colaboradores'], boost: 3 },
         { id: 'usuarios-externos', label: 'Usuarios: Externos', description: 'Revisores externos y usuarios fuera de la institución', category: 'Administración', icon: Globe, path: '/usuarios?type=EXTERNO', permission: 'USUARIOS:VER', keywords: ['externos', 'revisores', 'externo'], boost: 3 },
         { id: 'arbitraje', label: 'Evaluación por Pares', description: 'Gestión de evaluaciones por pares y resoluciones', category: 'Administración', icon: Gavel, path: '/evaluacion-pares', roles: ['DIITRA_ADMIN'], keywords: ['arbitraje', 'conflicto', 'disputa', 'apelacion', 'evaluacion', 'pares', 'evaluadores'], boost: isAdmin ? 6 : 0 },
-        { id: 'auditoria', label: 'Auditoría del Sistema', description: 'Registro de acciones y cambios en el sistema', category: 'Administración', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN'], keywords: ['auditoria', 'logs', 'forense', 'eventos', 'historial'], boost: isAdmin ? 7 : 0 },
+        { id: 'auditoria', label: 'Auditoría del Sistema', description: 'Registro de acciones y cambios en el sistema', category: 'Administración', icon: Activity, path: '/auditoria', roles: ['DIITRA_SUPER_ADMIN'], keywords: ['auditoria', 'logs', 'forense', 'eventos', 'historial'], boost: isSuperAdmin ? 7 : 0 },
         { id: 'lopdp-admin', label: 'Panel LOPDP', description: 'Gestión de consentimientos y cumplimiento de protección de datos', category: 'Administración', icon: ShieldCheck, path: '/lopdp', roles: ['DIITRA_ADMIN'], keywords: ['lopdp', 'proteccion datos', 'consentimiento', 'rgpd'], boost: 4 },
         { id: 'plantillas', label: 'Editor de Plantillas', description: 'Diseñar y maquetar plantillas de documentos oficiales', category: 'Administración', icon: FileCode2, path: '/plantillas', roles: ['DIITRA_ADMIN'], keywords: ['plantillas', 'templates', 'formatos', 'editor', 'documentos'], boost: isAdmin ? 6 : 0 },
         { id: 'correos', label: 'Correos institucionales', description: 'Administrar y enviar plantillas de correo del sistema', category: 'Administración', icon: Mail, path: '/emails', roles: ['DIITRA_ADMIN'], keywords: ['correos', 'emails', 'plantillas', 'smtp'], boost: 4 },
-        { id: 'sugerencias-admin', label: 'Bandeja de Incidencias', description: 'Consultar y atender incidencias reportadas por usuarios', category: 'Administración', icon: MessageSquarePlus, path: '/admin/incidencias', roles: ['DIITRA_ADMIN'], keywords: ['incidencias', 'soporte', 'problemas', 'errores', 'buzon', 'reportes', 'feedback'], boost: isAdmin ? 7 : 0 },
+        { id: 'sugerencias-admin', label: 'Bandeja de Incidencias', description: 'Consultar y atender incidencias reportadas por usuarios', category: 'Administración', icon: MessageSquarePlus, path: '/admin/incidencias', roles: ['DIITRA_SUPER_ADMIN'], keywords: ['incidencias', 'soporte', 'problemas', 'errores', 'buzon', 'reportes', 'feedback'], boost: isSuperAdmin ? 7 : 0 },
         // ── Parámetros Normativos ───────────────────────────────────────
         { id: 'parametros-normativos', label: 'Parámetros Normativos', description: 'Líneas de investigación, períodos académicos e indicadores CACES', category: 'Parámetros Normativos', icon: Settings, path: '/parametros-normativos', roles: ['DIITRA_ADMIN'], keywords: ['parametros', 'normativos', 'caces', 'lineas', 'periodos', 'catalogos'], boost: isAdmin ? 6 : 0 },
         { id: 'config-lineas', label: 'Líneas de Investigación', description: 'Administrar líneas y áreas del conocimiento', category: 'Parámetros Normativos', icon: BookOpen, path: '/parametros-normativos?tab=lineas', roles: ['DIITRA_ADMIN'], keywords: ['lineas', 'areas', 'conocimiento', 'tematica'], boost: 3 },
@@ -436,12 +447,12 @@ export const CommandPalette = () => {
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const abortRef = useRef<AbortController | null>(null);
-    const { isAdmin, isDocente, isEstudiante, isRevisor, roleDisplayName, hasPermission } = useAuth();
+    const { isAdmin, isSuperAdmin, isDocente, isEstudiante, isRevisor, roleDisplayName, hasPermission } = useAuth();
     const passesRoleFilter = useRoleFilter();
 
     const staticItems = React.useMemo(
-        () => buildStaticItems(navigate, isAdmin, isDocente, isEstudiante, isRevisor),
-        [navigate, isAdmin, isDocente, isEstudiante, isRevisor]
+        () => buildStaticItems(navigate, isAdmin, isSuperAdmin, isDocente, isEstudiante, isRevisor),
+        [navigate, isAdmin, isSuperAdmin, isDocente, isEstudiante, isRevisor]
     );
 
     // Ref keeps the current flatItems list accessible inside useEffect without

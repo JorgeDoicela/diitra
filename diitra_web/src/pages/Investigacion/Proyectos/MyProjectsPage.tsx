@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award, PenTool, FileText, Pin
+    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, PenTool, FileText, Pin
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -332,14 +332,6 @@ const MyProjectsPage: React.FC = () => {
                     >
                         <PenTool size={14} />
                         <span>Convocatorias</span>
-                    </Link>
-                    <Link
-                        to="/investigacion/adopcion"
-                        className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
-                        title="Adoptar proyectos de investigación inconclusos"
-                    >
-                        <Award size={14} />
-                        <span>Adopción de Proyectos</span>
                     </Link>
                     {!isDocente && (
                         <button

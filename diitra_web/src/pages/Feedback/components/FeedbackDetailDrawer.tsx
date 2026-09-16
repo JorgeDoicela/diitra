@@ -93,19 +93,19 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-[9999] flex justify-end"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6"
             role="dialog"
             aria-modal="true"
             aria-label={`Detalle de incidencia: ${report.titulo}`}
         >
             {/* Backdrop Blur Overlay */}
             <div
-                className="absolute inset-0 bg-bg-deep/80 backdrop-blur-sm cursor-pointer animate-fade-in"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer animate-fade-in"
                 onClick={onClose}
             />
 
-            {/* Panel Lateral Derecho */}
-            <div className="relative w-full max-w-xl sm:max-w-2xl lg:max-w-3xl h-full bg-surface border-l border-border-thin shadow-2xl flex flex-col z-10 animate-slide-in-right overflow-hidden">
+            {/* Modal Centrado */}
+            <div className="relative w-full max-w-2xl lg:max-w-3xl max-h-[88vh] bg-surface border border-border-thin rounded-2xl shadow-2xl flex flex-col z-10 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
                 {/* Header del Panel */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface shrink-0">
                     <div className="flex items-center gap-2.5 min-w-0 pr-4">
@@ -341,7 +341,7 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
                         onClick={onClose}
                         className="btn-vercel-secondary text-[12px] font-medium px-4 py-1.5 cursor-pointer"
                     >
-                        Cerrar Panel
+                        Cerrar
                     </button>
                 </div>
             </div>

@@ -14,6 +14,8 @@ interface User {
     id_usuario?: number;
     role_codes?: string[];
     acepto_lopdp?: boolean;
+    total_revisiones?: number;
+    total_certificados?: number;
 }
 
 interface AuthContextType {
@@ -54,7 +56,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const data = response.data;
             const normalized: User = {
                 ...data,
-                acepto_lopdp: data.acepto_lopdp !== undefined ? data.acepto_lopdp : data.aceptoLopdp
+                acepto_lopdp: data.acepto_lopdp !== undefined ? data.acepto_lopdp : data.aceptoLopdp,
+                total_revisiones: data.total_revisiones ?? 0,
+                total_certificados: data.total_certificados ?? 0
             };
             setUser(normalized);
         } catch (error: any) {

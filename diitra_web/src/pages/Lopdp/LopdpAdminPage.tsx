@@ -4,11 +4,13 @@ import { PageHeader } from '../../components/Common/PageHeader';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
+import { useAuth } from '../../api/AuthContext';
 import { ConsentDetailPanel, type ConsentimientoData } from './components/ConsentDetailPanel';
 
 const LopdpAdminPage: React.FC = () => {
     const navigate = useNavigate();
     const { addToast } = useNotifications();
+    const { isSuperAdmin } = useAuth();
 
     // Consentimientos State
     const [consents, setConsents] = useState<ConsentimientoData[]>([]);
@@ -37,11 +39,11 @@ const LopdpAdminPage: React.FC = () => {
             {/* Breadcrumb / Back Button */}
             <div className="flex items-center gap-2 text-xs select-none">
                 <button
-                    onClick={() => navigate('/auditoria')}
+                    onClick={() => navigate(isSuperAdmin ? '/auditoria' : '/dashboard')}
                     className="flex items-center gap-1.5 text-text-dim hover:text-text-main transition-colors group cursor-pointer bg-transparent border-0"
                 >
                     <ArrowLeft size={12} className="group-hover:-translate-x-0.5 transition-transform" />
-                    <span>Registro de Auditoría</span>
+                    <span>{isSuperAdmin ? 'Registro de Auditoría' : 'Inicio'}</span>
                 </button>
                 <span className="text-text-dim/30">/</span>
                 <span className="text-text-main/80 font-medium">Panel LOPDP</span>

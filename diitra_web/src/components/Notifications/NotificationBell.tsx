@@ -2,18 +2,26 @@ import { useState } from 'react';
 import { Bell, ExternalLink, Mail, Info, AlertTriangle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotifications } from '../../api/NotificationsContext';
+import { useAuth } from '../../api/AuthContext';
 import { stripHtmlToText } from '../../utils/notificationText';
 
 const NotificationBell = () => {
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+    const { isSuperAdmin } = useAuth();
 
     const handleNotificationClick = async (n: any) => {
         if (!n.leido) {
             await markAsRead(n.uuid);
         }
         
+        const isWelcome = n.titulo?.includes('¡Bienvenido a DIITRA') || n.titulo?.toLowerCase().includes('bienvenido a diitra');
+        if (isWelcome || (n.url_accion === '/notificaciones' && !isSuperAdmin)) {
+            setIsOpen(false);
+            return;
+        }
+
         if (n.url_accion) {
             if (n.url_accion.startsWith('http://') || n.url_accion.startsWith('https://')) {
                 try {
@@ -84,48 +92,59 @@ const NotificationBell = () => {
                                     <p className="text-[10px] text-text-dim uppercase font-semibold tracking-widest">Todo en orden</p>
                                 </div>
                             ) : (
-                                notifications.map((n) => (
-                                    <div 
-                                        key={n.uuid} 
-                                        className={`p-4 border-b border-border-thin last:border-0 hover:bg-surface/50 transition-colors cursor-pointer group ${!n.leido ? 'bg-surface/30' : 'opacity-70'}`}
-                                        onClick={() => handleNotificationClick(n)}
-                                    >
-                                        <div className="flex gap-3">
-                                            <div className="mt-1 shrink-0">
-                                                {getIcon(n.categoria)}
-                                            </div>
-                                            <div className="space-y-1 flex-1 min-w-0 overflow-hidden">
-                                                <div className="flex justify-between items-start gap-1">
-                                                    <h5 className="text-[11px] font-semibold text-text-main leading-tight truncate">{stripHtmlToText(n.titulo)}</h5>
-                                                    <span className="text-[8px] font-mono text-text-dim shrink-0">{new Date(n.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                notifications.map((n) => {
+                                    const isWelcome = n.titulo?.includes('¡Bienvenido a DIITRA') || n.titulo?.toLowerCase().includes('bienvenido a diitra');
+                                    const hasActionUrl = Boolean(n.url_accion && !isWelcome && (n.url_accion !== '/notificaciones' || isSuperAdmin));
+
+                                    return (
+                                        <div 
+                                            key={n.uuid} 
+                                            className={`p-4 border-b border-border-thin last:border-0 hover:bg-surface/50 transition-colors cursor-pointer group ${!n.leido ? 'bg-surface/30' : 'opacity-70'}`}
+                                            onClick={() => handleNotificationClick(n)}
+                                        >
+                                            <div className="flex gap-3">
+                                                <div className="mt-1 shrink-0">
+                                                    {getIcon(n.categoria)}
                                                 </div>
-                                                <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2 break-words">{stripHtmlToText(n.mensaje)}</p>
-                                                {n.url_accion && (
-                                                    <span 
-                                                        className="inline-flex items-center gap-1 text-[9px] font-semibold text-text-main uppercase mt-2 hover:underline cursor-pointer"
-                                                    >
-                                                        Ir al detalle <ExternalLink size={10} />
-                                                    </span>
+                                                <div className="space-y-1 flex-1 min-w-0 overflow-hidden">
+                                                    <div className="flex justify-between items-start gap-1">
+                                                        <h5 className="text-[11px] font-semibold text-text-main leading-tight truncate">{stripHtmlToText(n.titulo)}</h5>
+                                                        <span className="text-[8px] font-mono text-text-dim shrink-0">{new Date(n.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2 break-words">{stripHtmlToText(n.mensaje)}</p>
+                                                    {hasActionUrl ? (
+                                                        <span 
+                                                            className="inline-flex items-center gap-1 text-[9px] font-semibold text-text-main uppercase mt-2 hover:underline cursor-pointer"
+                                                        >
+                                                            Ir al detalle <ExternalLink size={10} />
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center text-[8.5px] font-medium text-text-dim/60 uppercase mt-2 tracking-wider">
+                                                            Informativo
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {!n.leido && (
+                                                    <div className="w-1.5 h-1.5 bg-text-main rounded-full mt-1 shrink-0" />
                                                 )}
                                             </div>
-                                            {!n.leido && (
-                                                <div className="w-1.5 h-1.5 bg-text-main rounded-full mt-1 shrink-0" />
-                                            )}
                                         </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             )}
                         </div>
 
-                        <footer className="p-3 border-t border-border-thin bg-surface/30 text-center">
-                            <Link 
-                                to="/notificaciones"
-                                onClick={() => { setIsOpen(false); }}
-                                className="text-[9px] font-semibold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors no-underline inline-block"
-                            >
-                                Ver todo el historial
-                            </Link>
-                        </footer>
+                        {isSuperAdmin && (
+                            <footer className="p-3 border-t border-border-thin bg-surface/30 text-center">
+                                <Link 
+                                    to="/notificaciones"
+                                    onClick={() => { setIsOpen(false); }}
+                                    className="text-[9px] font-semibold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors no-underline inline-block"
+                                >
+                                    Ver todo el historial
+                                </Link>
+                            </footer>
+                        )}
                     </div>
                 </>
             )}

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
-    getPendingReviews,
+    getMyReviews,
     ESTADO_REVISION_CONFIG
 } from '../../../services/peerReviewService';
 import type { PeerReviewDto } from '../../../services/peerReviewService';
@@ -33,7 +33,7 @@ const PeerReviewPage: React.FC = () => {
     const fetchReviews = async () => {
         setLoading(true);
         try {
-            const data = await getPendingReviews();
+            const data = await getMyReviews();
             setReviews(data);
             
             // Check for local drafts

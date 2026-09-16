@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Clock, X } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { GeistDatePicker } from '../../../components/Common/GeistDatePicker';
 import type { PlanificandoState } from '../types/calendarioTypes';
+import './KanbanView.css';
 
 const toISODate = (val?: string) => {
     if (!val) return '';
@@ -26,7 +27,23 @@ export const PlanificacionPopover: React.FC<PlanificacionPopoverProps> = ({
     onClose,
     handleConfirmPlanificacion,
 }) => {
+    useEffect(() => {
+        if (!planificando) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [planificando, onClose]);
+
     if (!planificando) return null;
+
+    const popoverWidth = 280;
+    const popoverHeight = 320;
+    const left = Math.max(16, Math.min(planificando.anchorPos.x - popoverWidth / 2, window.innerWidth - popoverWidth - 16));
+    const top = Math.max(16, Math.min(planificando.anchorPos.y, window.innerHeight - popoverHeight - 16));
 
     return createPortal(
         <>
@@ -35,16 +52,16 @@ export const PlanificacionPopover: React.FC<PlanificacionPopoverProps> = ({
                 onClick={onClose}
             />
             <div
-                className="kanban-popover-card animate-fade-in"
+                className="kanban-popover-planificacion kanban-popover-card animate-fade-in-up"
                 style={{
-                    left: Math.min(planificando.anchorPos.x, window.innerWidth - 260),
-                    top: planificando.anchorPos.y,
+                    left: `${left}px`,
+                    top: `${top}px`,
                 }}
             >
                 <div className="kanban-popover-header">
                     <Clock size={14} />
                     <span>¿Cuándo planificarla?</span>
-                    <button type="button" onClick={onClose} className="kanban-popover-close">
+                    <button type="button" onClick={onClose} className="kanban-popover-close" aria-label="Cerrar">
                         <X size={14} />
                     </button>
                 </div>

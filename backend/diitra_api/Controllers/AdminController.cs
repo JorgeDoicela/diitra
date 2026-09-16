@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using diitra_application.Security;
 using diitra_application.Security.DTOs;
 using diitra_domain.Identity.Enums;
@@ -27,6 +28,19 @@ public class AdminController : ControllerBase
         _backupService = backupService;
         _context = context;
         _configuration = configuration;
+    }
+
+    private bool IsCurrentUserSuperAdmin()
+    {
+        var roles = User.FindAll(ClaimTypes.Role)
+            .Select(c => c.Value)
+            .Union(User.FindAll("roles").Select(c => c.Value))
+            .Distinct()
+            .ToList();
+
+        return roles.Contains("DIITRA_SUPER_ADMIN") 
+            || User.FindFirst("es_super_admin")?.Value == "true" 
+            || User.FindFirst("es_superadmin")?.Value == "true";
     }
 
     [HttpGet("users")]
@@ -135,15 +149,20 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("audit")]
-    [Authorize(Roles = "DIITRA_ADMIN")]
+    [Authorize]
     public async Task<IActionResult> GetAuditLogs()
     {
+        if (!IsCurrentUserSuperAdmin())
+        {
+            return Forbid();
+        }
+
         var logs = await _adminService.GetRecentAuditLogsAsync();
         return Ok(logs);
     }
 
     [HttpGet("audit/advanced")]
-    [Authorize(Roles = "DIITRA_ADMIN")]
+    [Authorize]
     public async Task<IActionResult> GetAuditLogsAdvanced(
         [FromQuery] DateTime? from, 
         [FromQuery] DateTime? to, 
@@ -153,6 +172,11 @@ public class AdminController : ControllerBase
         [FromQuery] int page = 1, 
         [FromQuery] int pageSize = 20)
     {
+        if (!IsCurrentUserSuperAdmin())
+        {
+            return Forbid();
+        }
+
         var logs = await _adminService.GetAuditLogsPagedAsync(from, to, action, modulo, search, page, pageSize);
         return Ok(logs);
     }

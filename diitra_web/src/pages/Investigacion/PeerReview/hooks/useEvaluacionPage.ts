@@ -218,6 +218,7 @@ export const useEvaluacionPage = () => {
 
             localStorage.removeItem(`diitra_peer_review_draft_${revisionUuid}`);
             setEnviado(true);
+            window.dispatchEvent(new CustomEvent('diitra-review-submitted'));
         } catch (err: any) {
             setError(err?.response?.data?.message ?? 'Error al enviar la evaluación. Intente de nuevo.');
         } finally {

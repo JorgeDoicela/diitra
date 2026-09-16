@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { 
     Plus, MessageSquare, RefreshCw, Pencil, Trash2, 
-    Clock, ChevronDown, Play, CheckCircle2, Eye, FilterX
+    Clock, ChevronDown, Play, CheckCircle2, Eye, FilterX,
+    ArrowLeft, ChevronRight
 } from 'lucide-react';
 import { 
     getMyFeedback, 
@@ -145,6 +147,25 @@ export const UserFeedbackPage: React.FC = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-6 md:p-8 lg:p-10 space-y-6">
+            {/* Breadcrumb de navegación */}
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-text-dim animate-fade-in -mb-2">
+                <Link
+                    to="/solicitudes"
+                    className="p-1 -ml-1 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors inline-flex items-center justify-center no-underline"
+                    title="Volver a Solicitudes"
+                >
+                    <ArrowLeft size={14} />
+                </Link>
+                <Link
+                    to="/solicitudes"
+                    className="hover:text-text-main cursor-pointer transition-colors font-medium no-underline text-inherit"
+                >
+                    Solicitudes
+                </Link>
+                <ChevronRight size={12} className="opacity-50 shrink-0" />
+                <span className="text-text-main font-semibold">Buzón de Incidencias</span>
+            </nav>
+
             {/* Header Principal */}
             <PageHeader
                 kicker="Atención y Soporte · DIITRA"

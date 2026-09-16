@@ -332,133 +332,133 @@ const SettingsPage: React.FC = () => {
 
             {activeMainTab === 'perfil' ? (
                 <div className="max-w-6xl space-y-6">
-                <form onSubmit={handleSaveProfile} className="bento-card static p-6 space-y-6">
-                    <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
-                        <User size={16} />
-                        Perfil Científico
-                    </h2>
+                    <SignatureProfileCard />
 
-                    {isLoadingProfile ? (
-                        <div className="py-12 flex justify-center">
-                            <Loader2 className="animate-spin text-brand" size={24} />
-                        </div>
-                    ) : (
-                        <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Especialidad Científica</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
-                                        placeholder="Ej. Inteligencia Artificial, Biotecnología"
-                                        value={profile.especialidad || ''}
-                                        onChange={e => setProfile(prev => ({ ...prev, especialidad: e.target.value }))}
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Máximo Grado Académico</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
-                                        placeholder="Ej. PhD en Ciencias de la Computación"
-                                        value={profile.grado_academico_maximo || ''}
-                                        onChange={e => setProfile(prev => ({ ...prev, grado_academico_maximo: e.target.value }))}
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">ORCID ID</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand font-mono"
-                                        placeholder="0000-0000-0000-0000"
-                                        value={profile.orcid_id || ''}
-                                        onChange={e => setProfile(prev => ({ ...prev, orcid_id: e.target.value }))}
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Scopus Author ID</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand font-mono"
-                                        placeholder="Ej. 57218320492"
-                                        value={profile.scopus_id || ''}
-                                        onChange={e => setProfile(prev => ({ ...prev, scopus_id: e.target.value }))}
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Google Scholar URL</label>
-                                    <input
-                                        type="url"
-                                        className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
-                                        placeholder="https://scholar.google.com/citations?user=..."
-                                        value={profile.google_scholar_url || ''}
-                                        onChange={e => setProfile(prev => ({ ...prev, google_scholar_url: e.target.value }))}
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">ResearchGate URL</label>
-                                    <input
-                                        type="url"
-                                        className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
-                                        placeholder="https://www.researchgate.net/profile/..."
-                                        value={profile.research_gate_url || ''}
-                                        onChange={e => setProfile(prev => ({ ...prev, research_gate_url: e.target.value }))}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end pt-2">
-                                <button
-                                    type="submit"
-                                    disabled={isSavingProfile}
-                                    className="btn-vercel-primary text-xs"
-                                >
-                                    {isSavingProfile && <Loader2 className="animate-spin mr-1.5" size={14} />}
-                                    Guardar Cambios
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </form>
-
-                {!isLoadingProfile && (
-                    <div className="bento-card static p-6 space-y-6">
+                    <form onSubmit={handleSaveProfile} className="bento-card static p-6 space-y-6">
                         <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
-                            <Shield size={16} className="text-brand" />
-                            Firma Electrónica y Protección de Datos (LOPDP)
+                            <User size={16} />
+                            Perfil Científico
                         </h2>
 
-                        <div className="space-y-4">
-                            <div className="flex items-start gap-3 p-4 bg-surface border border-border-thin rounded-xl">
-                                <input
-                                    type="checkbox"
-                                    id="termsConsent"
-                                    className="mt-1 cursor-pointer accent-brand"
-                                    checked={profile.acepto_terminos_firma}
-                                    disabled={isSavingConsent}
-                                    onChange={handleConsentToggle}
-                                />
-                                <label htmlFor="termsConsent" className="text-xs text-text-dim leading-relaxed cursor-pointer select-none">
-                                    Acepto los términos de la <strong>Ley Orgánica de Protección de Datos Personales (LOPDP)</strong> y autorizo el uso de mi firma digital en el sistema. Entiendo que: 1) si uso firma electrónica avanzada con certificado <code className="bg-surface-dim px-1 py-0.5 rounded font-mono text-[10px] text-brand font-semibold">.p12</code>, el archivo y su clave se procesarán temporalmente en memoria RAM y <strong>nunca serán almacenados en el servidor</strong>; 2) si utilizo la firma institucional DIITRA, autorizo la <strong>persistencia segura del trazo de mi firma y cargo</strong> en el servidor para estampar los documentos oficiales de los cuales soy responsable.
-                                </label>
+                        {isLoadingProfile ? (
+                            <div className="py-12 flex justify-center">
+                                <Loader2 className="animate-spin text-brand" size={24} />
                             </div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Especialidad Científica</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                            placeholder="Ej. Inteligencia Artificial, Biotecnología"
+                                            value={profile.especialidad || ''}
+                                            onChange={e => setProfile(prev => ({ ...prev, especialidad: e.target.value }))}
+                                        />
+                                    </div>
 
-                            {profile.acepto_terminos_firma && (
-                                <div className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1.5 px-1 animate-fade-in">
-                                    <CheckCircle2 size={12} />
-                                    Consentimiento firmado electrónicamente y activo {profile.fecha_consentimiento_firma && `el ${new Date(profile.fecha_consentimiento_firma).toLocaleDateString()}`}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Máximo Grado Académico</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                            placeholder="Ej. PhD en Ciencias de la Computación"
+                                            value={profile.grado_academico_maximo || ''}
+                                            onChange={e => setProfile(prev => ({ ...prev, grado_academico_maximo: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">ORCID ID</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand font-mono"
+                                            placeholder="0000-0000-0000-0000"
+                                            value={profile.orcid_id || ''}
+                                            onChange={e => setProfile(prev => ({ ...prev, orcid_id: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Scopus Author ID</label>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand font-mono"
+                                            placeholder="Ej. 57218320492"
+                                            value={profile.scopus_id || ''}
+                                            onChange={e => setProfile(prev => ({ ...prev, scopus_id: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Google Scholar URL</label>
+                                        <input
+                                            type="url"
+                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                            placeholder="https://scholar.google.com/citations?user=..."
+                                            value={profile.google_scholar_url || ''}
+                                            onChange={e => setProfile(prev => ({ ...prev, google_scholar_url: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">ResearchGate URL</label>
+                                        <input
+                                            type="url"
+                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                            placeholder="https://www.researchgate.net/profile/..."
+                                            value={profile.research_gate_url || ''}
+                                            onChange={e => setProfile(prev => ({ ...prev, research_gate_url: e.target.value }))}
+                                        />
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                )}
 
-                <SignatureProfileCard />
+                                <div className="flex justify-end pt-2">
+                                    <button
+                                        type="submit"
+                                        disabled={isSavingProfile}
+                                        className="btn-vercel-primary text-xs"
+                                    >
+                                        {isSavingProfile && <Loader2 className="animate-spin mr-1.5" size={14} />}
+                                        Guardar Cambios
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </form>
+
+                    {!isLoadingProfile && (
+                        <div className="bento-card static p-6 space-y-6">
+                            <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
+                                <Shield size={16} className="text-brand" />
+                                Firma Electrónica y Protección de Datos (LOPDP)
+                            </h2>
+
+                            <div className="space-y-4">
+                                <div className="flex items-start gap-3 p-4 bg-surface border border-border-thin rounded-xl">
+                                    <input
+                                        type="checkbox"
+                                        id="termsConsent"
+                                        className="mt-1 cursor-pointer accent-brand"
+                                        checked={profile.acepto_terminos_firma}
+                                        disabled={isSavingConsent}
+                                        onChange={handleConsentToggle}
+                                    />
+                                    <label htmlFor="termsConsent" className="text-xs text-text-dim leading-relaxed cursor-pointer select-none">
+                                        Acepto los términos de la <strong>Ley Orgánica de Protección de Datos Personales (LOPDP)</strong> y autorizo el uso de mi firma digital en el sistema. Entiendo que: 1) si uso firma electrónica avanzada con certificado <code className="bg-surface-dim px-1 py-0.5 rounded font-mono text-[10px] text-brand font-semibold">.p12</code>, el archivo y su clave se procesarán temporalmente en memoria RAM y <strong>nunca serán almacenados en el servidor</strong>; 2) si utilizo la firma institucional DIITRA, autorizo la <strong>persistencia segura del trazo de mi firma y cargo</strong> en el servidor para estampar los documentos oficiales de los cuales soy responsable.
+                                    </label>
+                                </div>
+
+                                {profile.acepto_terminos_firma && (
+                                    <div className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1.5 px-1 animate-fade-in">
+                                        <CheckCircle2 size={12} />
+                                        Consentimiento firmado electrónicamente y activo {profile.fecha_consentimiento_firma && `el ${new Date(profile.fecha_consentimiento_firma).toLocaleDateString()}`}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
 
 

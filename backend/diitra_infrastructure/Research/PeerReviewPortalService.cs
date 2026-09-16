@@ -55,19 +55,20 @@ namespace diitra_infrastructure.Research
 
         public async Task<IEnumerable<PeerReviewDto>> GetMyReviewsAsync(int revisorId)
         {
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.IdUsuario == revisorId);
+            var nombreRevisor = user?.Nombre ?? "Revisor";
+
             var revisiones = await _context.Set<InvRevisionesPares>()
+                .AsNoTracking()
                 .Include(r => r.Proyecto)
                 .Where(r => r.IdRevisor == revisorId)
+                .OrderByDescending(r => r.FechaAsignacion)
                 .ToListAsync();
 
             var result = new List<PeerReviewDto>();
 
             foreach (var r in revisiones)
             {
-                var user = r.IdRevisor.HasValue
-                    ? await _context.Users.FindAsync(r.IdRevisor.Value)
-                    : null;
-                var nombreRevisor = user?.Nombre ?? "Revisor";
                 result.Add(PeerReviewHelper.MapToDto(r, nombreRevisor));
             }
 

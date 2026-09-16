@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, ClipboardList, PenTool, BarChart3, ShieldCheck, Users, Activity, Mail, Bell, Calendar, Award, Gavel, FileCode2, Sparkles, MessageSquarePlus } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, ShieldCheck, Users, Activity, Mail, Bell, Calendar, Award, Gavel, FileCode2, Sparkles, MessageSquarePlus, Inbox } from 'lucide-react';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
 import api from '../../../../api/axios_config';
@@ -111,6 +111,9 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
     const [isInnovacionOpen, setIsInnovacionOpen] = useState(
         location.pathname.startsWith('/innovacion') || isInnovacionWorkspace
     );
+    const [isSolicitudesOpen, setIsSolicitudesOpen] = useState(
+        location.pathname.startsWith('/solicitudes') || location.pathname.startsWith('/grupos') || location.pathname.startsWith('/investigacion/adopcion') || location.pathname.startsWith('/incidencias') || location.pathname.startsWith('/admin/incidencias')
+    );
     const [sidebarProjects, setSidebarProjects] = useState<SidebarProject[]>([]);
     const [sidebarProjectsLoading, setSidebarProjectsLoading] = useState(false);
     const [showAllProjects, setShowAllProjects] = useState(false);
@@ -156,6 +159,60 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         }
     }, [location.pathname, fetchSidebarProjects]);
 
+    const [hasReviews, setHasReviews] = useState<boolean>(() => {
+        return (user?.total_revisiones ?? 0) > 0;
+    });
+    const [hasCertificates, setHasCertificates] = useState<boolean>(() => {
+        return (user?.total_certificados ?? 0) > 0;
+    });
+
+    useEffect(() => {
+        if (user?.total_revisiones !== undefined) {
+            setHasReviews(user.total_revisiones > 0);
+        }
+        if (user?.total_certificados !== undefined) {
+            setHasCertificates(user.total_certificados > 0);
+        }
+    }, [user?.total_revisiones, user?.total_certificados]);
+
+    // Sincronización en segundo plano para usuarios sin registros conocidos (incluye admin, excepto superadmin)
+    useEffect(() => {
+        if (!user || isSuperAdmin) return;
+
+        let isMounted = true;
+        if (!hasReviews) {
+            api.get('/PeerReviews/my').then(res => {
+                if (isMounted && Array.isArray(res.data) && res.data.length > 0) {
+                    setHasReviews(true);
+                }
+            }).catch(() => {});
+        }
+
+        if (!hasCertificates) {
+            api.get('/certificates/my-certificates').then(res => {
+                if (isMounted && Array.isArray(res.data) && res.data.length > 0) {
+                    setHasCertificates(true);
+                }
+            }).catch(() => {});
+        }
+
+        return () => { isMounted = false; };
+    }, [user, isSuperAdmin]);
+
+    // Escuchar eventos globales del sistema para reactividad en tiempo real
+    useEffect(() => {
+        const handleReviewSubmitted = () => setHasReviews(true);
+        const handleCertificateIssued = () => setHasCertificates(true);
+
+        window.addEventListener('diitra-review-submitted', handleReviewSubmitted);
+        window.addEventListener('diitra-certificate-issued', handleCertificateIssued);
+
+        return () => {
+            window.removeEventListener('diitra-review-submitted', handleReviewSubmitted);
+            window.removeEventListener('diitra-certificate-issued', handleCertificateIssued);
+        };
+    }, []);
+
     useEffect(() => {
         const handleProjectsChanged = () => {
             fetchSidebarProjects();
@@ -173,6 +230,7 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         setIsInvestigacionOpen(false);
         setIsMisProyectosOpen(false);
         setIsInnovacionOpen(false);
+        setIsSolicitudesOpen(false);
     }, []);
 
     useEffect(() => {
@@ -187,6 +245,9 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         }
         if (location.pathname.startsWith('/investigacion/mis-proyectos')) {
             setIsMisProyectosOpen(true);
+        }
+        if (location.pathname.startsWith('/solicitudes') || location.pathname.startsWith('/grupos') || location.pathname.startsWith('/investigacion/adopcion') || location.pathname.startsWith('/incidencias') || location.pathname.startsWith('/admin/incidencias')) {
+            setIsSolicitudesOpen(true);
         }
         
         const isInvestigacionRoute = (location.pathname.startsWith('/investigacion') && !location.pathname.startsWith('/investigacion/adopcion') && !location.pathname.startsWith('/investigacion/mis-proyectos')) ||
@@ -220,7 +281,8 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
 
         setIsNotificationsOpen(false);
 
-        if (!n.url_accion) {
+        const isWelcomeNotif = n.titulo?.includes('¡Bienvenido a DIITRA') || n.titulo?.toLowerCase().includes('bienvenido a diitra');
+        if (!n.url_accion || isWelcomeNotif) {
             addToast('Notificación consultada', 'El registro se ha marcado como leído en su historial.', 'info', undefined, undefined, undefined, true);
             return;
         }
@@ -259,14 +321,14 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
     const allMenuItems: MenuItem[] = [
         // ── Orientación y contexto personal ────────────────────────────────
         { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
-        { name: 'Notificaciones', icon: Bell, path: '/notificaciones', roles: ['ANY'], group: 1 },
+        { name: 'Notificaciones', icon: Bell, path: '/notificaciones', roles: ['DIITRA_SUPER_ADMIN'], group: 1 },
         { name: 'Calendario', icon: Calendar, path: '/calendario', roles: ['ANY'], group: 1 },
         // ── Ciclo de investigación e innovación (inicio → postulación → revisión → evaluación) ──
         { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN'], group: 1, hasChevron: true },
         { name: 'Investigación', icon: ClipboardList, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1, hasChevron: true },
         { name: 'Innovación', icon: Sparkles, path: '/innovacion', roles: ['ANY'], group: 1, hasChevron: true },
+        { name: 'Solicitudes', icon: Inbox, path: '/solicitudes', roles: ['ANY'], group: 1, hasChevron: true },
         { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
-        { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
         { name: 'Mis Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'], group: 1 },
         { name: 'Evaluación', icon: Gavel || ShieldCheck, path: '/evaluacion-pares', roles: ['DIITRA_ADMIN'], group: 1 },
         // ── Resultados, evidencias y observabilidad ─────────────────────────
@@ -277,13 +339,21 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },
         { name: 'Plantillas', icon: FileCode2, path: '/plantillas', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/emails', roles: ['DIITRA_ADMIN'], group: 3 },
-        { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN'], group: 3 },
+        { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_SUPER_ADMIN'], group: 3 },
         { name: 'Incidencias', icon: MessageSquarePlus, path: '/admin/incidencias', roles: ['DIITRA_SUPER_ADMIN'], group: 3 },
     ];
 
     const menuItems = allMenuItems.filter(item => {
         if (item.path === '/investigacion/mis-proyectos' && isAdmin) return false;
         if ((item.path === '/admin/incidencias' || item.path === '/admin/feedback') && !isSuperAdmin) return false;
+        if (item.path === '/auditoria' && !isSuperAdmin) return false;
+        if (item.path === '/notificaciones' && !isSuperAdmin) return false;
+
+        // Ocultar Mis Revisiones si el usuario no es superadmin y no tiene ninguna revisión en su haber (aplica también a Admin)
+        if (item.path === '/revisiones' && !isSuperAdmin && !hasReviews) return false;
+
+        // Ocultar Mis Certificados si el usuario no es superadmin y no tiene ningún certificado emitido (aplica también a Admin)
+        if (item.path === '/mis-certificados' && !isSuperAdmin && !hasCertificates) return false;
 
         if (isAdmin) return true;
         if (item.permission) {
@@ -550,6 +620,8 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         setIsMisProyectosOpen,
         isInnovacionOpen,
         setIsInnovacionOpen,
+        isSolicitudesOpen,
+        setIsSolicitudesOpen,
         sidebarProjects,
         sidebarProjectsLoading,
         showAllProjects,

@@ -75,6 +75,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         setIsMisProyectosOpen,
         isInnovacionOpen,
         setIsInnovacionOpen,
+        isSolicitudesOpen,
+        setIsSolicitudesOpen,
         collapseAllMenus
     } = useSidebar({ isCollapsed, onCollapse, onExpand });
 
@@ -128,6 +130,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                         setIsMisProyectosOpen={setIsMisProyectosOpen}
                         isInnovacionOpen={isInnovacionOpen}
                         setIsInnovacionOpen={setIsInnovacionOpen}
+                        isSolicitudesOpen={isSolicitudesOpen}
+                        setIsSolicitudesOpen={setIsSolicitudesOpen}
                         isAnalyticsOpen={isAnalyticsOpen}
                         setIsAnalyticsOpen={setIsAnalyticsOpen}
                         isUsersOpen={isUsersOpen}
@@ -203,6 +207,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 markAllAsRead={markAllAsRead}
                 handleNotificationClick={handleNotificationClick}
                 navigate={navigate}
+                isSuperAdmin={isSuperAdmin}
             />
 
             {/* Zona de arrastre para reabrir (estilo Vercel) */}

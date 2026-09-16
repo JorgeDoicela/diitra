@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Award, Pin
+    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Pin
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -293,14 +293,6 @@ const ResearchProjectsPage = () => {
                 }
             >
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
-                    <Link
-                        to="/investigacion/adopcion"
-                        className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
-                        title="Adoptar proyectos de investigación inconclusos"
-                    >
-                        <Award size={14} />
-                        <span>Adopción</span>
-                    </Link>
                     <button
                         onClick={() => setShowWizard(true)}
                         className="btn-vercel-primary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"

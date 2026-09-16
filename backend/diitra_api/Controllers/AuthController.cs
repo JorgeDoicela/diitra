@@ -330,11 +330,24 @@ public class AuthController : ControllerBase
             var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
             bool aceptoLopdp = false;
             int? idUsuario = null;
+            int totalRevisiones = 0;
+            int totalCertificados = 0;
+
             if (dbUser != null)
             {
                 idUsuario = dbUser.IdUsuario;
                 aceptoLopdp = await _context.InvLopdpConsentimientos
                     .AnyAsync(c => c.IdUsuario == dbUser.IdUsuario && c.VersionPolitica == "LOPDP_GENERAL" && c.Estado == "Otorgado");
+
+                totalRevisiones = await _context.Set<InvRevisionesPares>()
+                    .CountAsync(r => r.IdRevisor == dbUser.IdUsuario);
+
+                var cedula = dbUser.IdSigafi?.Trim() ?? "";
+                var uidStr = dbUser.IdUsuario.ToString();
+                totalCertificados = await _context.DocumentInstances
+                    .CountAsync(d => d.TemplateCode.StartsWith("CERTIFICADO_") 
+                                     && (d.EntityUuid == cedula || d.EntityUuid == uidStr 
+                                         || EF.Functions.Like(d.DataSnapshotJson, $"%\"RecipientCedula\":\"{cedula}\"%")));
             }
 
             return Ok(new
@@ -348,7 +361,9 @@ public class AuthController : ControllerBase
                 administrador = isAdmin,
                 es_super_admin = isSuperAdmin,
                 permissions = permissions,
-                acepto_lopdp = aceptoLopdp
+                acepto_lopdp = aceptoLopdp,
+                total_revisiones = totalRevisiones,
+                total_certificados = totalCertificados
             });
         }
 
