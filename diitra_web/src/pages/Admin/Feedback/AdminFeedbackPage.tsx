@@ -201,7 +201,6 @@ export const AdminFeedbackPage: React.FC = () => {
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-thin pb-3.5">
                                         <div className="flex items-center gap-2 flex-wrap">
                                             {getTipoBadge(r.tipo)}
-                                            <span className="text-[11px] font-mono text-text-dim">#{id}</span>
                                         </div>
 
                                         {/* Selector de Estado rápido */}

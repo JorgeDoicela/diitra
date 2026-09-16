@@ -115,7 +115,6 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
                         <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                                 {getTipoBadge(report.tipo)}
-                                <span className="text-text-dim text-[11px] font-mono">#{reportId}</span>
                                 {!isAdmin && getEstadoBadge(report.estado)}
                             </div>
                         </div>
