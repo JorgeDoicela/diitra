@@ -5,6 +5,7 @@ import { FullscreenLoader } from '../../../Common/FullscreenLoader';
 import { TimedSuccessModal } from '../../../Common/TimedSuccessModal';
 import { getDocumentSignatures } from '../../../../services/signaturesService';
 import { SignatureBlock } from '../../SignatureBlock';
+import { PdfViewerShell } from './PdfViewerShell';
 import { useAuth } from '../../../../api/AuthContext';
 import api from '../../../../api/axios_config';
 
@@ -301,7 +302,11 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                     <div className="space-y-1">
                                         <p className="text-sm font-semibold text-text-main">Firma restringida</p>
                                         <p className="text-xs text-text-dim leading-relaxed">
-                                            Solo el Administrador / Coordinación de Investigación está autorizado/a para firmar digitalmente este documento.
+                                            {templateCode === 'OFICIO_APROBACION' || templateCode === 'EVALUACION_PLAN_APRENDIZAJE' || templateCode === 'RESOLUCION_DICTAMEN'
+                                                ? 'Solo la Coordinación de Investigación puede firmar este documento.'
+                                                : templateCode === 'PLAN_APRENDIZAJE'
+                                                ? 'Solo el Director del Proyecto o Coordinación pueden firmar este documento.'
+                                                : 'Solo el Director del Proyecto puede firmar este documento.'}
                                         </p>
                                     </div>
                                 </div>
@@ -402,39 +407,23 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                 </div>
                             )}
 
-                            <div className="mt-4 border-t border-border-thin pt-4">
-                                <SignatureBlock 
-                                    documentoUuid={documentUuid || formData.Uuid || formData.uuid || ''} 
-                                    refreshTrigger={signatureRefreshTrigger} 
-                                />
-                            </div>
+                            <SignatureBlock 
+                                documentoUuid={documentUuid || formData.Uuid || formData.uuid || ''} 
+                                refreshTrigger={signatureRefreshTrigger} 
+                            />
                         </div>
                     </div>
                 </div>
 
-                {/* Visor de PDF */}
-                <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl flex flex-col shadow-inner relative overflow-hidden h-[85vh] sm:h-[88vh] min-h-[750px] lg:h-full lg:min-h-0">
-                    {isGenerating ? (
-                        <FullscreenLoader 
-                            fullscreen={false} 
-                            message={[
-                                "Generando documento...",
-                                "Preparando vista previa...",
-                                "Compilando plantilla PDF...",
-                                "Cargando firmas registradas..."
-                            ]} 
-                        />
-                    ) : pdfUrl ? (
-                        <iframe src={pdfUrl} className="flex-1 w-full bg-white rounded-xl border-none shadow-2xl" title={`Vista previa — ${title}`} />
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-text-dim/20 p-8">
-                            <FileText size={80} strokeWidth={0.5} className="mb-6 lg:mb-8 md:w-[120px]" />
-                            <p className="text-xs md:text-sm font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-center">Listo para generar</p>
-                            <button onClick={() => handleGeneratePdf(false)} className="mt-6 px-6 py-3 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest lg:hidden cursor-pointer">
-                                Generar PDF
-                            </button>
-                        </div>
-                    )}
+                {/* Visor de PDF con Barra de Herramientas Integrada */}
+                <div className="col-span-1 lg:col-span-9 flex flex-col h-[85vh] sm:h-[88vh] min-h-[750px] lg:h-full lg:min-h-0">
+                    <PdfViewerShell
+                        title={title}
+                        pdfUrl={pdfUrl}
+                        isGenerating={isGenerating}
+                        onRegenerate={() => handleGeneratePdf(false)}
+                        isDraftMode={isDraftMode}
+                    />
                 </div>
             </div>
 

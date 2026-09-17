@@ -150,6 +150,7 @@ export const CalendarioPage: React.FC = () => {
             {/* Contenedor de dos columnas por debajo del título */}
             <div className="flex flex-1 gap-6 min-h-0 overflow-hidden">
                 <CalendarioSidebar
+                    viewMode={viewMode}
                     categoriasVisibles={categoriasVisibles}
                     toggleCategoria={toggleCategoria}
                     stickyNotes={stickyNotes}

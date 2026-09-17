@@ -257,34 +257,6 @@ public class FeedbackService : IFeedbackService
 
         await _context.SaveChangesAsync();
 
-        // Notificar en tiempo real por SignalR (silencioso, sin toast flotante)
-        if (entidad.IdUsuario.HasValue)
-        {
-            try
-            {
-                var notifExtra = new Dictionary<string, string>
-                {
-                    { "Categoria", "SOPORTE" },
-                    { "Tipo", entidad.Tipo },
-                    { "FeedbackId", entidad.IdFeedback.ToString() },
-                    { "FeedbackUuid", entidad.Uuid }
-                };
-
-                await _notificationService.NotifyUserAsync(
-                    userId: entidad.IdUsuario.Value,
-                    title: "Actualización de incidencia",
-                    body: $"Estado: {entidad.Estado}",
-                    category: "SOPORTE",
-                    url: "/incidencias",
-                    extraData: notifExtra
-                );
-            }
-            catch (Exception exNotif)
-            {
-                _logger.LogWarning(exNotif, "No se pudo despachar la sincronización en tiempo real para el reporte {IdFeedback}", entidad.IdFeedback);
-            }
-        }
-
         var (files, meta) = ParsePayload(entidad.ArchivosAdjuntosJson);
         return MapToDto(entidad, files, meta);
     }
@@ -472,43 +444,6 @@ public class FeedbackService : IFeedbackService
 
         _context.InvFeedbackReportes.Remove(entidad);
         await _context.SaveChangesAsync();
-
-        // Notificar en tiempo real por SignalR a administradores y usuario
-        try
-        {
-            var notifExtra = new Dictionary<string, string>
-            {
-                { "Categoria", "SOPORTE" },
-                { "Accion", "ELIMINADO" },
-                { "Tipo", tipoReporte },
-                { "FeedbackId", idFeedback.ToString() },
-                { "FeedbackUuid", uuidReporte }
-            };
-
-            await _notificationService.NotifyByRoleCodesAsync(
-                title: "Incidencia eliminada",
-                body: $"Se eliminó la incidencia #{idFeedback}",
-                roleCodes: new[] { "DIITRA_SUPER_ADMIN", "SUPERADMIN", "ADMINISTRADOR", "ADMIN" },
-                url: "/admin/incidencias",
-                extraData: notifExtra
-            );
-
-            if (idUsuarioReporte.HasValue)
-            {
-                await _notificationService.NotifyUserAsync(
-                    userId: idUsuarioReporte.Value,
-                    title: "Incidencia eliminada",
-                    body: $"Tu incidencia #{idFeedback} ha sido eliminada.",
-                    category: "SOPORTE",
-                    url: "/incidencias",
-                    extraData: notifExtra
-                );
-            }
-        }
-        catch (Exception exNotif)
-        {
-            _logger.LogWarning(exNotif, "No se pudo despachar la sincronización de eliminación para el reporte {IdFeedback}", idFeedback);
-        }
 
         return true;
     }

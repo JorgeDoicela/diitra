@@ -46,7 +46,7 @@ interface ProyectoResumen {
 
 const MyProjectsPage: React.FC = () => {
     const { states, getEstadoConfig } = useWorkflowStates();
-    const { isDocente } = useAuth();
+    const { isDocente, isEstudiante } = useAuth();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
 
@@ -325,15 +325,17 @@ const MyProjectsPage: React.FC = () => {
                 }
             >
                 <div className="flex items-center gap-3 w-full md:w-auto shrink-0">
-                    <Link
-                        to="/convocatorias"
-                        className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
-                        title="Ver convocatorias vigentes"
-                    >
-                        <PenTool size={14} />
-                        <span>Convocatorias</span>
-                    </Link>
-                    {!isDocente && (
+                    {!isEstudiante && (
+                        <Link
+                            to="/convocatorias"
+                            className="btn-vercel-secondary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
+                            title="Ver convocatorias vigentes"
+                        >
+                            <PenTool size={14} />
+                            <span>Convocatorias</span>
+                        </Link>
+                    )}
+                    {!isEstudiante && (
                         <button
                             onClick={() => setShowNewProject(true)}
                             className="btn-vercel-primary h-10 px-4 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold"
@@ -482,22 +484,16 @@ const MyProjectsPage: React.FC = () => {
                         <Target size={28} className="text-text-dim" />
                     </div>
                     <h3 className="text-lg font-semibold text-text-main tracking-tight mb-2">
-                        {hasActiveFilters ? 'Sin resultados' : 'Aún no tienes proyectos'}
+                        {hasActiveFilters ? 'Sin resultados' : (isEstudiante ? 'Aún no tienes participaciones activas' : 'Aún no tienes proyectos')}
                     </h3>
                     <p className="text-sm text-text-dim max-w-xs mb-6">
                         {hasActiveFilters
                             ? 'Prueba con otros filtros de búsqueda.'
-                            : 'Crea tu primera propuesta de investigación para comenzar.'}
+                            : (isEstudiante
+                                ? 'Un docente investigador debe incluirte en su equipo o semillero de investigación.'
+                                : 'Crea tu primera propuesta de investigación para comenzar.')}
                     </p>
-                    {!hasActiveFilters && !isDocente && (
-                        <button
-                            onClick={() => setShowNewProject(true)}
-                            className="btn-vercel-primary px-6 py-2.5"
-                        >
-                            <Plus size={14} strokeWidth={3} /> Crear primer proyecto
-                        </button>
-                    )}
-                    {!hasActiveFilters && isDocente && (
+                    {!hasActiveFilters && !isEstudiante && (
                         <Link
                             to="/convocatorias"
                             className="btn-vercel-primary px-6 py-2.5 flex items-center justify-center gap-2"
@@ -562,7 +558,7 @@ const MyProjectsPage: React.FC = () => {
                                     >
                                         <Pin size={13} className={isPinned(p.uuid) ? 'fill-amber-400 text-amber-400' : ''} />
                                     </button>
-                                    {(p.estado === 'Borrador' || p.estado === 'En Corrección' || p.estado === 'Prepropuesta' || p.estado === 'Prepropuesta Rechazada') && (
+                                    {(p.estado === 'Borrador' || p.estado === 'En Corrección' || p.estado === 'Prepropuesta' || p.estado === 'Prepropuesta Rechazada') && !isEstudiante && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();

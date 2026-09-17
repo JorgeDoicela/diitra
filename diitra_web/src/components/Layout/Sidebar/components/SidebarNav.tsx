@@ -16,6 +16,7 @@ import {
     MessageSquarePlus
 } from 'lucide-react';
 import type { MenuItem, SidebarProject } from '../types';
+import { useAuth } from '../../../../api/AuthContext';
 
 const ChevronRightIcon = ({ className = "w-3 h-3", size = 12 }: { className?: string; size?: number }) => (
     <svg
@@ -108,6 +109,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     location,
     onClose
 }) => {
+    const { isEstudiante } = useAuth();
+
     const renderMenuItem = (item: MenuItem) => {
         const isActive = item === activeItem;
 
@@ -341,7 +344,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                         <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
                             {[
                                 { name: 'Grupos de Investigación', path: '/grupos', icon: Users },
-                                { name: 'Adopción de Proyectos', path: '/investigacion/adopcion', icon: Award },
+                                ...(!isEstudiante ? [{ name: 'Adopción de Proyectos', path: '/investigacion/adopcion', icon: Award }] : []),
                                 { name: 'Buzón de Incidencias', path: '/incidencias', icon: MessageSquarePlus }
                             ].map((subItem) => {
                                 const isSubActive = subItem.path === '/incidencias'

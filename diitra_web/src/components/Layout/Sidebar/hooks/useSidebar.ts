@@ -332,8 +332,8 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         { name: 'Mis Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'], group: 1 },
         { name: 'Evaluación', icon: Gavel || ShieldCheck, path: '/evaluacion-pares', roles: ['DIITRA_ADMIN'], group: 1 },
         // ── Resultados, evidencias y observabilidad ─────────────────────────
-        { name: 'Mis Certificados', icon: Award, path: '/mis-certificados', roles: ['ANY'], group: 2 },
-        { name: 'Verificación', icon: ShieldCheck, path: '/verificacion', roles: ['ANY'], group: 2 },
+        { name: 'Mis Certificados', icon: Award, path: '/mis-certificados', roles: ['ANY'], group: (isDocente || isEstudiante) ? 1 : 2 },
+        { name: 'Verificación', icon: ShieldCheck, path: '/verificacion', roles: ['ANY'], group: (isDocente || isEstudiante) ? 1 : 2 },
         { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN'], group: 2, hasChevron: true },
         // ── Administración del sistema ──────────────────────────────────────
         { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },

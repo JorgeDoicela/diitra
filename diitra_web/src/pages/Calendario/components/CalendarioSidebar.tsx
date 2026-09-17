@@ -10,6 +10,7 @@ import {
     CATEGORIAS_CONFIG
 } from '../../../services/calendarioService';
 import type { Event as BigCalendarEvent } from 'react-big-calendar';
+import type { CalendarViewMode } from '../types/calendarioTypes';
 import './CalendarioSidebar.css';
 
 export interface CalendarEventExtended extends BigCalendarEvent {
@@ -17,6 +18,7 @@ export interface CalendarEventExtended extends BigCalendarEvent {
 }
 
 interface CalendarioSidebarProps {
+    viewMode?: CalendarViewMode;
     categoriasVisibles: Record<string, boolean>;
     toggleCategoria: (key: string) => void;
     stickyNotes: EventoCalendario[];
@@ -35,6 +37,7 @@ interface CalendarioSidebarProps {
 }
 
 export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
+    viewMode = 'calendar',
     categoriasVisibles,
     toggleCategoria,
     stickyNotes,
@@ -155,52 +158,56 @@ export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
                 </div>
             </div>
 
-            {/* Filtros */}
-            <div className="sidebar-section">
-                <h3>Filtros de Agenda</h3>
-                <div className="filtros-lista">
-                    {Object.entries(CATEGORIAS_CONFIG).map(([key, { label, color }]) => (
-                        <label key={key} className="filtro-item" style={{ '--color': color } as React.CSSProperties}>
-                            <input
-                                type="checkbox"
-                                checked={categoriasVisibles[key]}
-                                onChange={() => toggleCategoria(key)}
-                            />
-                            <span className="color-dot" />
-                            <span>{label}</span>
-                        </label>
-                    ))}
-                </div>
-            </div>
-
-            {/* iCal */}
-            <div className="sidebar-section ical-section">
-                <h3>Sincronización de Agenda</h3>
-                <p className="ical-help-text">Integra tus hitos en Google Calendar, Outlook o Apple Calendar.</p>
-                {icalUrl ? (
-                    <div className="ical-container">
-                        <input
-                            type="text"
-                            readOnly
-                            value={icalUrl}
-                            className="ical-input"
-                            onClick={(e) => (e.target as HTMLInputElement).select()}
-                        />
-                        <div className="ical-buttons">
-                            <button onClick={handleCopyIcal} className="ical-btn primary">
-                                {copied ? '¡Copiado!' : 'Copiar'}
-                            </button>
-                            <button onClick={handleGenerarToken} className="ical-btn secondary" disabled={generatingToken}>
-                                {generatingToken ? '...' : 'Regenerar'}
-                            </button>
-                        </div>
+            {/* Filtros de Agenda - Solo en vista calendario */}
+            {viewMode === 'calendar' && (
+                <div className="sidebar-section">
+                    <h3>Filtros de Agenda</h3>
+                    <div className="filtros-lista">
+                        {Object.entries(CATEGORIAS_CONFIG).map(([key, { label, color }]) => (
+                            <label key={key} className="filtro-item" style={{ '--color': color } as React.CSSProperties}>
+                                <input
+                                    type="checkbox"
+                                    checked={categoriasVisibles[key]}
+                                    onChange={() => toggleCategoria(key)}
+                                />
+                                <span className="color-dot" />
+                                <span>{label}</span>
+                            </label>
+                        ))}
                     </div>
-                ) : (
-                    <button onClick={handleGenerarToken} className="ical-btn generate" disabled={generatingToken}>
-                        {generatingToken ? 'Obtener Enlace iCal' : 'Obtener Enlace iCal'}
-                    </button>
-                )}
-            </div>
+                </div>
+            )}
+
+            {/* iCal - Solo en vista calendario */}
+            {viewMode === 'calendar' && (
+                <div className="sidebar-section ical-section">
+                    <h3>Sincronización de Agenda</h3>
+                    <p className="ical-help-text">Integra tus hitos en Google Calendar, Outlook o Apple Calendar.</p>
+                    {icalUrl ? (
+                        <div className="ical-container">
+                            <input
+                                type="text"
+                                readOnly
+                                value={icalUrl}
+                                className="ical-input"
+                                onClick={(e) => (e.target as HTMLInputElement).select()}
+                            />
+                            <div className="ical-buttons">
+                                <button onClick={handleCopyIcal} className="ical-btn primary">
+                                    {copied ? '¡Copiado!' : 'Copiar'}
+                                </button>
+                                <button onClick={handleGenerarToken} className="ical-btn secondary" disabled={generatingToken}>
+                                    {generatingToken ? '...' : 'Regenerar'}
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button onClick={handleGenerarToken} className="ical-btn generate" disabled={generatingToken}>
+                            {generatingToken ? 'Obtener Enlace iCal' : 'Obtener Enlace iCal'}
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Search, Plus, ArrowLeft, ChevronRight } from 'lucide-react';
 import { PageHeader } from '../../../../components/Common/PageHeader';
+import { useAuth } from '../../../../api/AuthContext';
 
 interface GroupsHeaderProps {
     search: string;
@@ -16,6 +17,8 @@ export const GroupsHeader: React.FC<GroupsHeaderProps> = ({
     onOpenCreate,
     isAdmin,
 }) => {
+    const { isEstudiante } = useAuth();
+
     return (
         <div className="space-y-4 mb-2">
             {/* Breadcrumb de navegación */}
@@ -54,13 +57,15 @@ export const GroupsHeader: React.FC<GroupsHeaderProps> = ({
                             className="input-vercel !pl-10 !py-2.5 !text-xs uppercase tracking-wider font-mono placeholder:!lowercase"
                         />
                     </div>
-                    <button
-                        onClick={onOpenCreate}
-                        className="btn-brand flex items-center justify-center gap-2 text-xs font-bold"
-                    >
-                        <Plus size={14} strokeWidth={3} />
-                        {isAdmin ? 'Crear Grupo' : 'Proponer Grupo'}
-                    </button>
+                    {!isEstudiante && (
+                        <button
+                            onClick={onOpenCreate}
+                            className="btn-brand flex items-center justify-center gap-2 text-xs font-bold"
+                        >
+                            <Plus size={14} strokeWidth={3} />
+                            {isAdmin ? 'Crear Grupo' : 'Proponer Grupo'}
+                        </button>
+                    )}
                 </div>
             </PageHeader>
         </div>

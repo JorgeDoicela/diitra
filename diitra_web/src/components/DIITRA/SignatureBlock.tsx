@@ -31,21 +31,8 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
         }
     };
 
-    if (loading) {
-        return (
-            <div className="sig-block-loading">
-                <span className="sig-spinner"></span>
-                <span>Cargando registro de firmas...</span>
-            </div>
-        );
-    }
-
-    if (signatures.length === 0) {
-        return (
-            <div className="sig-block-empty">
-                <p>Este documento no cuenta con firmas DIITRA registradas.</p>
-            </div>
-        );
+    if (loading || signatures.length === 0) {
+        return null;
     }
 
     return (

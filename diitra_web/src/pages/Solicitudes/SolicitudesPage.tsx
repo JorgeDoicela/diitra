@@ -5,8 +5,11 @@ import {
     ArrowRight
 } from 'lucide-react';
 import { PageHeader } from '../../components/Common/PageHeader';
+import { useAuth } from '../../api/AuthContext';
 
 export const SolicitudesPage: React.FC = () => {
+    const { isEstudiante } = useAuth();
+
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10">
             <PageHeader
@@ -17,89 +20,109 @@ export const SolicitudesPage: React.FC = () => {
             />
 
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl">
-                {/* Tarjeta 1: Grupos de Investigación */}
+                {/* Tarjeta 1: Grupos de Investigación / Semilleros */}
                 <Link
                     to="/grupos"
                     className="bento-card p-6 flex flex-col justify-between rounded-xl border border-border-thin bg-surface hover:border-text-dim/40 transition-all duration-200 group cursor-pointer no-underline text-inherit block"
                 >
                     <div className="space-y-4">
                         <div className="flex items-center justify-end">
-                            <span className="badge-vercel-green text-[11px] py-0.5 px-2 font-medium">
-                                Convocatoria Abierta
+                            <span className={`${isEstudiante ? 'badge-vercel-neutral' : 'badge-vercel-green'} text-[11px] py-0.5 px-2 font-medium`}>
+                                {isEstudiante ? 'Semilleros Activos' : 'Convocatoria Abierta'}
                             </span>
                         </div>
 
                         <div>
                             <h3 className="text-base font-semibold text-text-main group-hover:text-brand transition-colors">
-                                Grupos de Investigación
+                                {isEstudiante ? 'Grupos y Semilleros' : 'Grupos de Investigación'}
                             </h3>
                             <p className="text-xs text-text-dim leading-relaxed mt-1.5">
-                                Conformación, propuestas de nuevos colectivos, semilleros y avales para líneas de vinculación y desarrollo tecnológico.
+                                {isEstudiante 
+                                    ? 'Consulta de colectivos de investigación, semilleros y líneas de vinculación tecnológica en los que puedes participar.'
+                                    : 'Conformación, colectivos, semilleros y avales para líneas de vinculación y desarrollo tecnológico.'}
                             </p>
                         </div>
 
                         <div className="pt-2 flex flex-wrap gap-2 text-[11px] text-text-dim font-mono">
-                            <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
-                                Docentes
-                            </span>
-                            <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
-                                Estudiantes
-                            </span>
-                            <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
-                                Semilleros
-                            </span>
+                            {isEstudiante ? (
+                                <>
+                                    <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
+                                        Semilleros
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
+                                        Líneas I+D
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
+                                        Participación
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
+                                        Docentes
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
+                                        Estudiantes
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
+                                        Semilleros
+                                    </span>
+                                </>
+                            )}
                         </div>
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-border-thin">
                         <div className="btn-brand w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold py-2.5 px-5 group-hover:opacity-95 transition-opacity">
-                            <span>Administrar y Proponer Grupos</span>
+                            <span>{isEstudiante ? 'Ver Grupos y Semilleros' : 'Administrar y Proponer Grupos'}</span>
                             <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                         </div>
                     </div>
                 </Link>
 
-                {/* Tarjeta 2: Adopción de Proyectos */}
-                <Link
-                    to="/investigacion/adopcion"
-                    className="bento-card p-6 flex flex-col justify-between rounded-xl border border-border-thin bg-surface hover:border-text-dim/40 transition-all duration-200 group cursor-pointer no-underline text-inherit block"
-                >
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-end">
-                            <span className="badge-vercel-amber text-[11px] py-0.5 px-2 font-medium">
-                                Reasignación I+D
-                            </span>
+                {/* Tarjeta 2: Adopción de Proyectos (Solo Docentes e Investigadores) */}
+                {!isEstudiante && (
+                    <Link
+                        to="/investigacion/adopcion"
+                        className="bento-card p-6 flex flex-col justify-between rounded-xl border border-border-thin bg-surface hover:border-text-dim/40 transition-all duration-200 group cursor-pointer no-underline text-inherit block"
+                    >
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-end">
+                                <span className="badge-vercel-amber text-[11px] py-0.5 px-2 font-medium">
+                                    Reasignación I+D
+                                </span>
+                            </div>
+
+                            <div>
+                                <h3 className="text-base font-semibold text-text-main group-hover:text-amber-500 transition-colors">
+                                    Adopción de Proyectos
+                                </h3>
+                                <p className="text-xs text-text-dim leading-relaxed mt-1.5">
+                                    Rescate, reanudación y continuidad de proyectos de investigación e innovación inconclusos o disponibles para adopción.
+                                </p>
+                            </div>
+
+                            <div className="pt-2 flex flex-wrap gap-2 text-[11px] text-text-dim font-mono">
+                                <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
+                                    Investigación
+                                </span>
+                                <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
+                                    Reasignación
+                                </span>
+                                <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
+                                    Continuidad
+                                </span>
+                            </div>
                         </div>
 
-                        <div>
-                            <h3 className="text-base font-semibold text-text-main group-hover:text-amber-500 transition-colors">
-                                Adopción de Proyectos
-                            </h3>
-                            <p className="text-xs text-text-dim leading-relaxed mt-1.5">
-                                Rescate, reanudación y continuidad de proyectos de investigación e innovación inconclusos o disponibles para adopción.
-                            </p>
+                        <div className="mt-6 pt-4 border-t border-border-thin">
+                            <div className="btn-brand w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold py-2.5 px-5 group-hover:opacity-95 transition-opacity">
+                                <span>Ver Proyectos para Adopción</span>
+                                <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                            </div>
                         </div>
-
-                        <div className="pt-2 flex flex-wrap gap-2 text-[11px] text-text-dim font-mono">
-                            <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
-                                Investigación
-                            </span>
-                            <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
-                                Reasignación
-                            </span>
-                            <span className="px-2 py-0.5 rounded bg-surface-hover/80 border border-border-thin">
-                                Continuidad
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="mt-6 pt-4 border-t border-border-thin">
-                        <div className="btn-brand w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold py-2.5 px-5 group-hover:opacity-95 transition-opacity">
-                            <span>Ver Proyectos para Adopción</span>
-                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                        </div>
-                    </div>
-                </Link>
+                    </Link>
+                )}
 
                 {/* Tarjeta 3: Buzón de Incidencias */}
                 <Link

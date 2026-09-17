@@ -69,8 +69,8 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
                 {/* 1. Único Indicador de Persistencia Inteligente */}
                 <div className="flex items-center">
                     {readOnly ? (
-                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-warning cursor-default select-none flex items-center gap-1.5 animate-fade-in pr-1">
-                            <Shield size={10} /> Solo lectura
+                        <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-warning cursor-default select-none animate-fade-in pr-1">
+                            Solo lectura
                         </span>
                     ) : isSyncing ? (
                         <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-1.5 select-none animate-fade-in pr-1">

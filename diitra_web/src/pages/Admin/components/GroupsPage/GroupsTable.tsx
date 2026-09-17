@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, Edit2, Trash2, CheckCircle, XCircle, Calendar, Loader2, Eye } from 'lucide-react';
 import type { Group } from './types';
+import { useAuth } from '../../../../api/AuthContext';
 
 interface GroupsTableProps {
     groups: Group[];
@@ -29,11 +30,16 @@ export const GroupsTable: React.FC<GroupsTableProps> = ({
     formatNombre,
     formatCareerName,
 }) => {
+    const { isEstudiante } = useAuth();
+
     const filteredGroups = groups.filter(g => {
         if (isAdmin && viewMode === 'all') return true;
-        const isCoord = g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim();
-        const isMem = g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim());
-        return isCoord || isMem;
+        const userRef = user?.id_referencia?.trim();
+        const isCoord = g.id_profesor_coordinador?.trim() === userRef;
+        const isMem = g.teacherMemberCedulas?.some((ced: string) => ced.trim() === userRef);
+        const isStudentMem = g.studentMemberCedulas?.some((ced: string) => ced.trim() === userRef) ||
+                             g.miembros?.some((m: any) => m.activo && (m.cedula?.trim() === userRef || m.id_usuario === user?.id_usuario));
+        return isCoord || isMem || isStudentMem;
     });
 
     return (
@@ -73,7 +79,7 @@ export const GroupsTable: React.FC<GroupsTableProps> = ({
                                 </tr>
                             ) : (
                                 filteredGroups.map((g) => {
-                                    const canEditOrDelete = isAdmin || ((g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim() || g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim())) && g.estado !== 'Aprobado');
+                                    const canEditOrDelete = !isEstudiante && (isAdmin || ((g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim() || g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim())) && g.estado !== 'Aprobado'));
 
                                     return (
                                         <tr

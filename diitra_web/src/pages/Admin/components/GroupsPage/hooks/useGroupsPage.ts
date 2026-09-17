@@ -6,7 +6,7 @@ import type { Group, ResearchLine, Domain, Career, PendingDraft, ConfirmDialogSt
 import { useGroupsReview } from './useGroupsReview';
 
 export function useGroupsPage() {
-    const { user, isAdmin, isSuperAdmin } = useAuth();
+    const { user, isAdmin, isSuperAdmin, isEstudiante } = useAuth();
     const canManageAllGroups = Boolean(isAdmin || isSuperAdmin);
     const [searchParams, setSearchParams] = useSearchParams();
     const openUuid = searchParams.get('open');
@@ -149,6 +149,10 @@ export function useGroupsPage() {
     };
 
     const refreshDraftMetadata = () => {
+        if (isEstudiante) {
+            setPendingDraft(null);
+            return;
+        }
         const metaStr = localStorage.getItem('groups_draft_metadata');
         if (metaStr) {
             try {
@@ -201,12 +205,14 @@ export function useGroupsPage() {
     };
 
     const handleOpenModal = (group?: Group, readOnly = false) => {
+        if (isEstudiante && !readOnly && !group) return;
         setIsReadOnly(readOnly);
         setEditingGroup(group || null);
         setIsModalOpen(true);
     };
 
     const handleDelete = (uuid: string, name: string) => {
+        if (isEstudiante) return;
         const title = isAdmin ? 'Desactivar Grupo' : 'Eliminar Propuesta';
         const confirmMsg = isAdmin
             ? `¿Está seguro de desactivar el grupo "${name}"?`

@@ -66,9 +66,14 @@ public partial class GroupsController : ControllerBase
     {
         try 
         {
+            if (IsStudentUser())
+            {
+                return StatusCode(403, new { message = "Los estudiantes no están autorizados para proponer grupos de investigación. Esta acción está reservada a docentes investigadores y administradores." });
+            }
+
             var solicitanteNombre = User.FindFirst(ClaimTypes.Name)?.Value ?? User.FindFirst("nombre")?.Value;
 
-            var isAdmin = User.IsInRole("DIITRA_ADMIN");
+            var isAdmin = IsAdminUser();
             if (!isAdmin)
             {
                 dto.Estado = "Pendiente";
@@ -302,6 +307,20 @@ public partial class GroupsController
             || User.FindFirst("es_super_admin")?.Value == "true"
             || User.FindFirst("es_superadmin")?.Value == "true"
             || User.FindFirst("administrador")?.Value == "true";
+    }
+
+    private bool IsStudentUser()
+    {
+        if (IsAdminUser()) return false;
+
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value)
+            .Union(User.FindAll("roles").Select(c => c.Value))
+            .Distinct()
+            .Select(r => r.ToUpperInvariant())
+            .ToList();
+
+        var tablaSigafi = User.FindFirst("tabla_sigafi")?.Value?.ToLowerInvariant();
+        return tablaSigafi == "alumno" || roles.Contains("DIITRA_ESTUDIANTE") || roles.Contains("ESTUDIANTE");
     }
 
     private string? GetCurrentUserReference() =>

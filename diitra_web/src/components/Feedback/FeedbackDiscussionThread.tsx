@@ -124,12 +124,12 @@ export const FeedbackDiscussionThread: React.FC<FeedbackDiscussionThreadProps> =
 
                 {isClosed && (
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-text-dim">
-                        <Lock size={11} /> Incidencia cerrada
+                        <Lock size={11} /> Incidencia cerrada por el Desarrollador
                     </span>
                 )}
                 {isResolved && (
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-medium">
-                        <CheckCircle2 size={12} /> Incidencia resuelta
+                        <CheckCircle2 size={12} /> Incidencia resuelta por el Desarrollador
                     </span>
                 )}
             </div>
@@ -141,8 +141,8 @@ export const FeedbackDiscussionThread: React.FC<FeedbackDiscussionThreadProps> =
                     {conversacion.map((msg: FeedbackMensaje, idx: number) => {
                         const isMe = isCurrentUser(msg);
                         const esAdmin = msg.es_admin ?? msg.esAdmin;
-                        const autorNombre = esAdmin ? 'Superadministrador' : (msg.nombre_autor || msg.nombreAutor || 'Usuario');
-                        const nombreVisual = isMe ? (esAdmin && isAdmin ? 'Tú (Superadministrador)' : 'Tú') : autorNombre;
+                        const autorNombre = esAdmin ? 'Desarrollador' : (msg.nombre_autor || msg.nombreAutor || 'Usuario');
+                        const nombreVisual = isMe ? (esAdmin && isAdmin ? 'Tú (Desarrollador)' : 'Tú') : autorNombre;
 
                         return (
                             <div 

@@ -8,17 +8,17 @@ export const TIPO_OPTIONS = [
 
 export const ESTADO_OPTIONS = [
     { value: 'TODOS', label: 'Todos los estados' },
-    { value: 'PENDIENTE', label: 'En espera' },
-    { value: 'EN_REVISION', label: 'En revisión' },
-    { value: 'ATENDIDO', label: 'Resuelto' },
-    { value: 'DESCARTADO', label: 'Cerrado' }
+    { value: 'PENDIENTE', label: 'En espera de revisión' },
+    { value: 'EN_REVISION', label: 'En revisión por el Desarrollador' },
+    { value: 'ATENDIDO', label: 'Resuelto por el Desarrollador' },
+    { value: 'DESCARTADO', label: 'Cerrado por el Desarrollador' }
 ];
 
 export const ESTADO_ROW_OPTIONS = [
-    { value: 'PENDIENTE', label: 'En espera' },
-    { value: 'EN_REVISION', label: 'En revisión' },
-    { value: 'ATENDIDO', label: 'Resuelto' },
-    { value: 'DESCARTADO', label: 'Cerrado' }
+    { value: 'PENDIENTE', label: 'En espera de revisión' },
+    { value: 'EN_REVISION', label: 'En revisión por el Desarrollador' },
+    { value: 'ATENDIDO', label: 'Resuelto por el Desarrollador' },
+    { value: 'DESCARTADO', label: 'Cerrado por el Desarrollador' }
 ];
 
 export const getTipoBadge = (tipo?: string) => {
@@ -52,15 +52,15 @@ export const getEstadoBadge = (estado?: string) => {
             return (
                 <span className="text-amber-500 font-semibold text-[12px] flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
-                    <span>En espera</span>
+                    <span>En espera de revisión</span>
                 </span>
             );
         case 'EN_REVISION':
         case 'EN REVISION':
             return (
                 <span className="text-blue-500 font-semibold text-[12px] flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
-                    <span>En revisión</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block animate-pulse"></span>
+                    <span>En revisión por el Desarrollador</span>
                 </span>
             );
         case 'ATENDIDO':
@@ -68,7 +68,7 @@ export const getEstadoBadge = (estado?: string) => {
             return (
                 <span className="text-emerald-500 font-semibold text-[12px] flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                    <span>Resuelto</span>
+                    <span>Resuelto por el Desarrollador</span>
                 </span>
             );
         case 'DESCARTADO':
@@ -76,7 +76,7 @@ export const getEstadoBadge = (estado?: string) => {
             return (
                 <span className="text-text-dim font-semibold text-[12px] flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-text-dim inline-block"></span>
-                    <span>Cerrado</span>
+                    <span>Cerrado por el Desarrollador</span>
                 </span>
             );
         default:
@@ -90,16 +90,16 @@ export const getEstadoLabel = (estado?: string) => {
         case 'PENDIENTE':
         case 'EN_ESPERA':
         case 'EN ESPERA':
-            return 'En espera';
+            return 'En espera de revisión';
         case 'EN_REVISION':
         case 'EN REVISION':
-            return 'En revisión';
+            return 'En revisión por el Desarrollador';
         case 'ATENDIDO':
         case 'RESUELTO':
-            return 'Resuelto';
+            return 'Resuelto por el Desarrollador';
         case 'DESCARTADO':
         case 'CERRADO':
-            return 'Cerrado';
+            return 'Cerrado por el Desarrollador';
         default:
             return estado || '';
     }
