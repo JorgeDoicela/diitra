@@ -329,6 +329,7 @@ public partial class GroupsController
     private async Task<bool> CanManageGroupAsync(string groupUuid)
     {
         if (IsAdminUser()) return true;
+        if (IsStudentUser()) return false;
 
         var userRef = GetCurrentUserReference();
         if (string.IsNullOrEmpty(userRef)) return false;

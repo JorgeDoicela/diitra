@@ -23,7 +23,7 @@ interface PerfilData {
 
 const SettingsPage: React.FC = () => {
     const { addToast } = useNotifications();
-    const { logout, isRevisor, isAdmin, isSuperAdmin } = useAuth();
+    const { logout, isRevisor, isAdmin, isSuperAdmin, isEstudiante } = useAuth();
     const confirm = useConfirm();
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -140,10 +140,15 @@ const SettingsPage: React.FC = () => {
     // Firma electrónica state — solo consentimiento, no se guarda certificado
 
     useEffect(() => {
-        fetchProfile();
-    }, []);
+        if (!isEstudiante) {
+            fetchProfile();
+        } else {
+            setIsLoadingProfile(false);
+        }
+    }, [isEstudiante]);
 
     const fetchProfile = async () => {
+        if (isEstudiante) return;
         setIsLoadingProfile(true);
         try {
             const res = await api.get('/lopdp/perfil');
@@ -286,6 +291,7 @@ const SettingsPage: React.FC = () => {
                     activeMainTab === 'parametros' ? 'Administre las líneas de investigación, períodos académicos, dominios institucionales e hitos normativos CACES.'
                     : activeMainTab === 'plantillas' ? 'Configure las firmas requeridas y el tipo de firma electrónica para cada plantilla de documento oficial de la institución.'
                     : activeMainTab === 'almacenamiento' ? 'Depure y audite el almacenamiento físico de versiones preliminares de documentos obsoletos bajo políticas del CACES.'
+                    : isEstudiante ? 'Administre su trazo digital y configuración de firma institucional conforme a la LOPDP.'
                     : 'Administre su perfil científico, identificadores de investigación y otorgue su consentimiento de firma conforme a la LOPDP.'
                 }
             />
@@ -337,99 +343,104 @@ const SettingsPage: React.FC = () => {
                 <div className="max-w-6xl space-y-6">
                     <SignatureProfileCard />
 
-                    <form onSubmit={handleSaveProfile} className="bento-card static p-6 space-y-6">
-                        <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
-                            <User size={16} />
-                            Perfil Científico
-                        </h2>
+                    {!isEstudiante && (
+                        <form onSubmit={handleSaveProfile} className="bento-card static p-6 space-y-6">
+                            <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
+                                <User size={16} />
+                                Perfil Científico
+                            </h2>
 
-                        {isLoadingProfile ? (
-                            <div className="py-12 flex justify-center">
-                                <Loader2 className="animate-spin text-brand" size={24} />
-                            </div>
-                        ) : (
-                            <>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Especialidad Científica</label>
-                                        <input
-                                            type="text"
-                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
-                                            placeholder="Ej. Inteligencia Artificial, Biotecnología"
-                                            value={profile.especialidad || ''}
-                                            onChange={e => setProfile(prev => ({ ...prev, especialidad: e.target.value }))}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Máximo Grado Académico</label>
-                                        <input
-                                            type="text"
-                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
-                                            placeholder="Ej. PhD en Ciencias de la Computación"
-                                            value={profile.grado_academico_maximo || ''}
-                                            onChange={e => setProfile(prev => ({ ...prev, grado_academico_maximo: e.target.value }))}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">ORCID ID</label>
-                                        <input
-                                            type="text"
-                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand font-mono"
-                                            placeholder="0000-0000-0000-0000"
-                                            value={profile.orcid_id || ''}
-                                            onChange={e => setProfile(prev => ({ ...prev, orcid_id: e.target.value }))}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Scopus Author ID</label>
-                                        <input
-                                            type="text"
-                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand font-mono"
-                                            placeholder="Ej. 57218320492"
-                                            value={profile.scopus_id || ''}
-                                            onChange={e => setProfile(prev => ({ ...prev, scopus_id: e.target.value }))}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Google Scholar URL</label>
-                                        <input
-                                            type="url"
-                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
-                                            placeholder="https://scholar.google.com/citations?user=..."
-                                            value={profile.google_scholar_url || ''}
-                                            onChange={e => setProfile(prev => ({ ...prev, google_scholar_url: e.target.value }))}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">ResearchGate URL</label>
-                                        <input
-                                            type="url"
-                                            className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
-                                            placeholder="https://www.researchgate.net/profile/..."
-                                            value={profile.research_gate_url || ''}
-                                            onChange={e => setProfile(prev => ({ ...prev, research_gate_url: e.target.value }))}
-                                        />
-                                    </div>
+                            {isLoadingProfile ? (
+                                <div className="py-12 flex justify-center">
+                                    <Loader2 className="animate-spin text-brand" size={24} />
                                 </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Especialidad Científica</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                                placeholder="Ej. Inteligencia Artificial, Biotecnología"
+                                                value={profile.especialidad || ''}
+                                                onChange={e => setProfile(prev => ({ ...prev, especialidad: e.target.value }))}
+                                            />
+                                        </div>
 
-                                <div className="flex justify-end pt-2">
-                                    <button
-                                        type="submit"
-                                        disabled={isSavingProfile}
-                                        className="btn-vercel-primary text-xs"
-                                    >
-                                        {isSavingProfile && <Loader2 className="animate-spin mr-1.5" size={14} />}
-                                        Guardar Cambios
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </form>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Nivel de Formación</label>
+                                            <select
+                                                className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                                value={profile.maximo_titulo || ''}
+                                                onChange={e => setProfile(prev => ({ ...prev, maximo_titulo: e.target.value }))}
+                                            >
+                                                <option value="">Seleccione grado académico</option>
+                                                <option value="Tercer Nivel / Licenciatura / Ingeniería">Tercer Nivel / Licenciatura / Ingeniería</option>
+                                                <option value="Maestría / Magíster / Especialista">Maestría / Magíster / Especialista</option>
+                                                <option value="Doctorado / Ph.D.">Doctorado / Ph.D.</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Código ORCID</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand font-mono"
+                                                placeholder="0000-0000-0000-0000"
+                                                value={profile.orcid_id || ''}
+                                                onChange={e => setProfile(prev => ({ ...prev, orcid_id: e.target.value }))}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Scopus Author ID</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand font-mono"
+                                                placeholder="Ej. 57200000000"
+                                                value={profile.scopus_id || ''}
+                                                onChange={e => setProfile(prev => ({ ...prev, scopus_id: e.target.value }))}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Google Scholar URL</label>
+                                            <input
+                                                type="url"
+                                                className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                                placeholder="https://scholar.google.com/citations?user=..."
+                                                value={profile.google_scholar_url || ''}
+                                                onChange={e => setProfile(prev => ({ ...prev, google_scholar_url: e.target.value }))}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">ResearchGate URL</label>
+                                            <input
+                                                type="url"
+                                                className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
+                                                placeholder="https://www.researchgate.net/profile/..."
+                                                value={profile.research_gate_url || ''}
+                                                onChange={e => setProfile(prev => ({ ...prev, research_gate_url: e.target.value }))}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={isSavingProfile}
+                                            className="btn-vercel-primary text-xs"
+                                        >
+                                            {isSavingProfile && <Loader2 className="animate-spin mr-1.5" size={14} />}
+                                            Guardar Cambios
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </form>
+                    )}
 
                     {!isLoadingProfile && (
                         <div className="bento-card static p-6 space-y-6">

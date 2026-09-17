@@ -711,6 +711,11 @@ public class AdminService : IAdminService
 
         if (meta == null) return false;
 
+        if (meta.User != null && meta.User.TablaSigafi == "alumno")
+        {
+            throw new InvalidOperationException("Los estudiantes no poseen perfil de investigador indexado (CACES/SENESCYT). Su información académica es gestionada por el registro institucional.");
+        }
+
         var beforeState = new
         {
             OrcidId = meta.OrcidId,

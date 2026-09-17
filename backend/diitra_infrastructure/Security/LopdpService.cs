@@ -178,6 +178,12 @@ public class LopdpService : ILopdpService
     {
         try
         {
+            var user = await _context.Users.FindAsync(idUsuario);
+            if (user != null && user.TablaSigafi == "alumno")
+            {
+                throw new InvalidOperationException("Los estudiantes no poseen perfil científico de investigador (CACES/SENESCYT).");
+            }
+
             var meta = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == idUsuario);
             if (meta == null)
             {

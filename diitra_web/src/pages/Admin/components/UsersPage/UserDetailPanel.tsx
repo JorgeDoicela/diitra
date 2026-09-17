@@ -182,12 +182,14 @@ export const UserDetailPanel: React.FC<UserDetailPanelProps> = ({
 
                 <div className="modal-footer">
                     <button onClick={handleCloseDetail} className="btn-vercel-secondary">Cerrar</button>
-                    <button
-                        onClick={() => { setSelectedUser(detailUser); handleCloseDetail(); }}
-                        className="btn-vercel-primary flex items-center gap-2"
-                    >
-                        <Settings2 size={14} /> Editar Perfil
-                    </button>
+                    {detailUser.type !== 'ESTUDIANTE' && (
+                        <button
+                            onClick={() => { setSelectedUser(detailUser); handleCloseDetail(); }}
+                            className="btn-vercel-primary flex items-center gap-2"
+                        >
+                            <Settings2 size={14} /> Editar Perfil
+                        </button>
+                    )}
                 </div>
             </div>
         </div>,

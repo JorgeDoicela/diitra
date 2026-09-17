@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Award, Link, BookOpen, Fingerprint, Save, RefreshCw, ChevronRight, FileText } from 'lucide-react';
+import { Award, Link, BookOpen, Fingerprint, Save, RefreshCw, ChevronRight, FileText, GraduationCap } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useConfirm } from '../../../api/ConfirmContext';
 
@@ -9,6 +9,11 @@ interface UserProfileModalProps {
         nombre_completo: string;
         user_uuid: string;
         type?: string;
+        carrera?: string;
+        nivel?: string;
+        es_graduado?: boolean;
+        email?: string;
+        firma_habilitada?: boolean;
     };
     onClose: () => void;
     onDraftCleared?: () => void;
@@ -41,10 +46,10 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
     const isInitializedRef = useRef(false);
 
     useEffect(() => {
-        if (user.user_uuid) {
+        if (user.user_uuid && user.type !== 'ESTUDIANTE') {
             fetchMetadata();
         }
-    }, [user.user_uuid]);
+    }, [user.user_uuid, user.type]);
 
     const fetchMetadata = async () => {
         setLoading(true);
@@ -105,7 +110,7 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
 
     // Auto-save effect
     useEffect(() => {
-        if (loading || !isInitializedRef.current || !user.user_uuid) return;
+        if (user.type === 'ESTUDIANTE' || loading || !isInitializedRef.current || !user.user_uuid) return;
 
         const draftData = { metadata };
         const draftKey = `edit_user_metadata_draft_${user.user_uuid}`;
@@ -118,7 +123,7 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
             timestamp: Date.now()
         };
         localStorage.setItem('user_metadata_draft_metadata', JSON.stringify(meta));
-    }, [metadata, loading, user.user_uuid, user.nombre_completo]);
+    }, [metadata, loading, user.user_uuid, user.nombre_completo, user.type]);
 
     const handleCloseModal = async () => {
         // Check if metadata has changes from officialMetadata
@@ -165,11 +170,13 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
                 <div className="modal-header">
                     <div className="flex items-center gap-3">
                         <div className="icon-circle icon-circle-brand">
-                            <Award size={20} />
+                            {user.type === 'ESTUDIANTE' ? <GraduationCap size={20} /> : <Award size={20} />}
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold text-text-main tracking-tight">{formatNombre(user.nombre_completo)}</h3>
-                            <p className="section-label text-text-dim">Perfil del Investigador - CACES/SENESCYT</p>
+                            <p className="section-label text-text-dim">
+                                {user.type === 'ESTUDIANTE' ? 'Ficha del Estudiante - ISTPET' : 'Perfil del Investigador - CACES/SENESCYT'}
+                            </p>
                         </div>
                     </div>
                     <button onClick={handleCloseModal} className="text-text-dim hover:text-text-main p-2 transition-colors">
@@ -206,7 +213,67 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
                         </div>
                     )}
 
-                    {loading ? (
+                    {user.type === 'ESTUDIANTE' ? (
+                        <div className="space-y-6 animate-fade-in">
+                            <div className="bento-card static p-4 space-y-3">
+                                <label className="section-label text-text-main flex items-center gap-1.5">
+                                    <GraduationCap size={14} className="text-brand" /> Registro Académico Oficial (SIGAFI)
+                                </label>
+                                <div className="divider-vercel !my-0" />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="section-label text-text-dim mb-1">Cédula / Identificación</p>
+                                        <p className="text-sm font-bold text-text-main font-mono">{user.id_profesor || 'No registrada'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="section-label text-text-dim mb-1">Correo Institucional</p>
+                                        <p className="text-sm font-bold text-text-main break-all">{user.email || 'No registrado'}</p>
+                                    </div>
+                                    {user.carrera && (
+                                        <div className="col-span-2">
+                                            <p className="section-label text-text-dim mb-1">Carrera / Tecnología</p>
+                                            <p className="text-sm font-bold text-text-main">{user.carrera}</p>
+                                        </div>
+                                    )}
+                                    {user.nivel && (
+                                        <div>
+                                            <p className="section-label text-text-dim mb-1">Nivel Cursado</p>
+                                            <p className="text-sm font-bold text-text-main">{user.nivel}</p>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <p className="section-label text-text-dim mb-1">Estado Académico</p>
+                                        <span className={`badge-vercel ${user.es_graduado ? 'badge-vercel-warning' : 'badge-vercel-success'}`}>
+                                            {user.es_graduado ? 'Graduado' : 'Estudiante Regular'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bento-card static p-4 space-y-3">
+                                <label className="section-label text-text-main flex items-center gap-1.5">
+                                    <Fingerprint size={14} className="text-brand" /> Firma Institucional
+                                </label>
+                                <div className="divider-vercel !my-0" />
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-text-dim">Estado de Firma</span>
+                                    <span className={`badge-vercel ${user.firma_habilitada ? 'badge-vercel-success' : 'badge-vercel-neutral'}`}>
+                                        {user.firma_habilitada ? 'Firma Configurada' : 'Sin Firma Registrada'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="p-4 rounded-xl border border-brand/20 bg-brand/[0.02] space-y-2">
+                                <h4 className="text-xs font-semibold text-text-main flex items-center gap-1.5">
+                                    <Award size={14} className="text-brand" />
+                                    Criterio Normativo CACES / SENESCYT
+                                </h4>
+                                <p className="text-xs text-text-dim leading-relaxed">
+                                    De acuerdo con la normativa técnica del Consejo de Aseguramiento de la Calidad de la Educación Superior (CACES) y SENESCYT, la producción científica indexada (ORCID, Scopus, Google Scholar, ResearchGate) y grados de cuarto nivel aplican a la evaluación y categorización de la planta docente e investigadora. La información del estudiante se gestiona y sincroniza de forma centralizada con el sistema académico institucional (SIGAFI).
+                                </p>
+                            </div>
+                        </div>
+                    ) : loading ? (
                         <div className="py-20 flex flex-col items-center justify-center gap-4">
                             <RefreshCw className="animate-spin text-brand" size={24} />
                             <p className="section-label text-text-dim">Cargando perfiles externos...</p>
@@ -338,15 +405,19 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
                 </div>
 
                 <div className="modal-footer">
-                    <button onClick={handleCloseModal} className="btn-vercel-secondary">Cancelar</button>
-                    <button 
-                        onClick={handleSave}
-                        disabled={saving || loading}
-                        className="btn-vercel-primary flex items-center gap-2"
-                    >
-                        {saving ? <RefreshCw className="animate-spin" size={14} /> : <Save size={14} />}
-                        {saving ? 'Guardando...' : 'Actualizar Perfil'}
+                    <button onClick={handleCloseModal} className="btn-vercel-secondary">
+                        {user.type === 'ESTUDIANTE' ? 'Cerrar' : 'Cancelar'}
                     </button>
+                    {user.type !== 'ESTUDIANTE' && (
+                        <button 
+                            onClick={handleSave}
+                            disabled={saving || loading}
+                            className="btn-vercel-primary flex items-center gap-2"
+                        >
+                            {saving ? <RefreshCw className="animate-spin" size={14} /> : <Save size={14} />}
+                            {saving ? 'Guardando...' : 'Actualizar Perfil'}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

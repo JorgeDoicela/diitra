@@ -1,5 +1,5 @@
 import React from 'react';
-import { User as UserIcon, Settings2 } from 'lucide-react';
+import { User as UserIcon, Settings2, Eye } from 'lucide-react';
 import type { ManagedUser, Role } from '../../hooks/useUsersPage';
 import { formatCarrera, formatNombre, highlightText } from './utils';
 
@@ -197,13 +197,23 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                     </div>
                                 </td>
                                 <td className="p-4 text-right">
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setSelectedUser(u); }}
-                                        className="btn-vercel-secondary !p-1.5 rounded-lg text-text-dim hover:text-text-main transition-colors ml-auto cursor-pointer"
-                                        title="Configurar Perfil y Roles"
-                                    >
-                                        <Settings2 size={14} />
-                                    </button>
+                                    {u.type === 'ESTUDIANTE' ? (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setDetailUser(u); }}
+                                            className="btn-vercel-secondary !p-1.5 rounded-lg text-text-dim hover:text-text-main transition-colors ml-auto cursor-pointer"
+                                            title="Ver Ficha Académica del Estudiante"
+                                        >
+                                            <Eye size={14} />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setSelectedUser(u); }}
+                                            className="btn-vercel-secondary !p-1.5 rounded-lg text-text-dim hover:text-text-main transition-colors ml-auto cursor-pointer"
+                                            title="Configurar Perfil y Roles"
+                                        >
+                                            <Settings2 size={14} />
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         );

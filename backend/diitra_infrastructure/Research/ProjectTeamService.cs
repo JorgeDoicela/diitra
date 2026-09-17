@@ -167,6 +167,15 @@ namespace diitra_infrastructure.Research
 
                 if (isStudent)
                 {
+                    if (inv.EsDirector == true)
+                    {
+                        return new SyncResult
+                        {
+                            Success = false,
+                            Message = $"El estudiante {persona.Nombre} (C.I. {persona.IdSigafi}) no puede ser asignado como Director de Proyecto. La dirección de proyectos está reservada exclusivamente a docentes investigadores."
+                        };
+                    }
+
                     // Regla Institucional: En equipos de investigación (no grupos), los estudiantes deben estar matriculados en el período actual
                     if (!isAssociativeRequested)
                     {
@@ -418,6 +427,11 @@ namespace diitra_infrastructure.Research
                 if (nuevoDirectorUser == null)
                 {
                     return new SyncResult { Success = false, Message = "No se pudo encontrar o registrar al nuevo director institucional." };
+                }
+
+                if (nuevoDirectorUser.TablaSigafi == "alumno")
+                {
+                    return new SyncResult { Success = false, Message = "Un estudiante no puede ser designado como Director de Proyecto. La dirección está reservada exclusivamente a docentes investigadores." };
                 }
 
                 var existingProf = project.InvProyectoParticipantes

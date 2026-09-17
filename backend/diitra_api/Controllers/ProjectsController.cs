@@ -56,6 +56,30 @@ namespace diitra_api.Controllers
                 || User.FindFirst("es_superadmin")?.Value == "true";
         }
 
+        private bool IsCurrentUserStudent()
+        {
+            if (User?.Identity == null || !User.Identity.IsAuthenticated)
+                return false;
+
+            if (IsCurrentUserSuperAdmin()) return false;
+
+            var roles = User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .Union(User.FindAll("roles").Select(c => c.Value))
+                .Union(User.FindAll("role").Select(c => c.Value))
+                .Distinct()
+                .ToList();
+
+            if (roles.Contains("DIITRA_DOCENTE") || roles.Contains("DIITRA_ADMIN"))
+                return false;
+
+            var tablaSigafi = User.FindFirst("tabla_sigafi")?.Value?.ToLowerInvariant();
+            return tablaSigafi == "alumno"
+                || roles.Contains("DIITRA_ESTUDIANTE")
+                || roles.Contains("ESTUDIANTE")
+                || User.FindFirst("tipo_usuario")?.Value?.ToUpper() == "ESTUDIANTE";
+        }
+
         /// <summary>
         /// Genera el PDF del protocolo de investigación usando el motor DIITRA.
         /// </summary>
@@ -82,12 +106,7 @@ namespace diitra_api.Controllers
         [HttpPost("draft")]
         public IActionResult CreateDraft([FromBody] ProyectoDto dto)
         {
-            var isEstudiante = (User.IsInRole("DIITRA_ESTUDIANTE") || User.FindFirst("tipo_usuario")?.Value?.ToUpper() == "ESTUDIANTE") && 
-                               !User.IsInRole("DIITRA_DOCENTE") && 
-                               !User.IsInRole("DIITRA_ADMIN") && 
-                               !IsCurrentUserSuperAdmin();
-
-            if (isEstudiante)
+            if (IsCurrentUserStudent())
             {
                 return StatusCode(403, new { message = "Los estudiantes no pueden postular ni crear proyectos. Esta acción está reservada exclusivamente para docentes investigadores." });
             }
