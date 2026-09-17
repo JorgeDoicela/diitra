@@ -348,7 +348,7 @@ const MyProjectsPage: React.FC = () => {
             </PageHeader>
 
             {/* Banner de Recuperación de Borrador */}
-            {pendingDraft && (
+            {pendingDraft && !isEstudiante && (
                 <div className="bento-card static p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8">
                     <div className="flex items-center gap-3">
                         <FileText size={18} className="text-text-main shrink-0" />

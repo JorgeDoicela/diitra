@@ -63,9 +63,13 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     restoreDraftOnOpen = false
 }) => {
     const navigate = useNavigate();
-    const { user, isDocente, isAdmin } = useAuth();
+    const { user, isDocente, isAdmin, isEstudiante } = useAuth();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
+
+    if (isEstudiante) {
+        return null;
+    }
 
     const [modalidad, setModalidad] = useState<'INVESTIGACION' | 'INNOVACION'>('INVESTIGACION');
     const [titulo, setTitulo] = useState('');

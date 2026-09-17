@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, Stamp } from 'lucide-react';
 import { useSignatureProfile } from './useSignatureProfile';
 import { useImageCropper } from './useImageCropper';
+import { useAuth } from '../../../api/AuthContext';
 import { AutoSignatureTab } from './AutoSignatureTab';
 import { UploadSignatureTab } from './UploadSignatureTab';
 import { DrawSignatureTab } from './DrawSignatureTab';
+import { DocumentStampPreview } from './DocumentStampPreview';
 import './SignatureProfileCard.css';
 
 export const SignatureProfileCard: React.FC = () => {
+    const { user } = useAuth();
     const sig = useSignatureProfile();
     const cropper = useImageCropper();
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showLiveStamp, setShowLiveStamp] = useState(true);
 
     const handleSaveProfile = (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,6 +49,9 @@ export const SignatureProfileCard: React.FC = () => {
             </div>
         );
     }
+
+    const userName = user?.nombre_completo || sig.autoText || 'Usuario Institucional';
+    const userCi = user?.id_referencia || '17XXXXXXXX';
 
     return (
         <div className="signature-profile-container" id="perfil-firma">
@@ -102,12 +109,28 @@ export const SignatureProfileCard: React.FC = () => {
                             </div>
                         )}
                     </div>
+
                     <div className="sig-preview-section">
-                        <span className="sig-label">Vista Previa de Trazo Oficial:</span>
-                        <div className="sig-preview-box">
-                            {sig.profile?.firmaImagenB64
-                                ? <img src={sig.profile.firmaImagenB64} alt="Firma registrada" />
-                                : <div className="no-image">No hay trazo registrado</div>}
+                        <div className="sig-dual-preview-grid">
+                            <div className="sig-dual-preview-item">
+                                <span className="sig-label">Trazo Digital</span>
+                                <div className="sig-preview-box">
+                                    {sig.profile?.firmaImagenB64
+                                        ? <img src={sig.profile.firmaImagenB64} alt="Firma registrada" />
+                                        : <div className="no-image">No hay trazo registrado</div>}
+                                </div>
+                            </div>
+                            <div className="sig-dual-preview-item">
+                                <span className="sig-label">Sello Institucional</span>
+                                <DocumentStampPreview
+                                    nombreFirmante={userName}
+                                    cargo={sig.profile?.cargo || 'Docente'}
+                                    departamento={sig.profile?.departamento || 'Investigación'}
+                                    cedula={userCi}
+                                    firmaImagenB64={sig.profile?.firmaImagenB64}
+                                    firmadoEn={sig.profile?.actualizadoEn ? `${new Date(sig.profile.actualizadoEn).toLocaleDateString('es-EC')} UTC` : undefined}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -167,6 +190,33 @@ export const SignatureProfileCard: React.FC = () => {
                         )}
                     </div>
 
+                    {/* ── PREVISUALIZACIÓN EN TIEMPO REAL DEL SELLO INSTITUCIONAL ── */}
+                    <div className="sig-live-stamp-wrapper">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Stamp size={14} className="text-brand" />
+                                <span className="sig-section-title-label">Previsualización del Sello Institucional (En Tiempo Real)</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowLiveStamp(!showLiveStamp)}
+                                className="text-xs text-text-dim hover:text-text-main transition-colors"
+                            >
+                                {showLiveStamp ? 'Ocultar Previsualización' : 'Mostrar Previsualización'}
+                            </button>
+                        </div>
+
+                        {showLiveStamp && (
+                            <DocumentStampPreview
+                                nombreFirmante={sig.autoText || userName}
+                                cargo={sig.cargo.trim() || 'Cargo Institucional'}
+                                departamento={sig.departamento.trim() || 'Departamento / Área'}
+                                cedula={userCi}
+                                firmaImagenB64={sig.firmaImagenB64}
+                            />
+                        )}
+                    </div>
+
                     <div className="sig-form-actions">
                         <button type="button" onClick={sig.cancelEdit} className="btn-vercel-secondary text-xs">Cancelar</button>
                         <button type="submit" disabled={sig.saving || !sig.firmaImagenB64} className="btn-vercel-primary text-xs">
@@ -183,7 +233,7 @@ export const SignatureProfileCard: React.FC = () => {
                 ))}
             </div>
 
-            {/* ── MODAL DE CONFIRMACIÓN ─────────────────────────────────── */}
+            {/* ── MODAL DE CONFIRMACIÓN CON VISTA DE SELLO COMPLETO ─────── */}
             {showConfirmModal && createPortal(
                 <div className="signature-profile-container">
                     <div className="sig-modal-overlay">
@@ -198,7 +248,7 @@ export const SignatureProfileCard: React.FC = () => {
                                 </span>
                                 <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-brand">
                                     <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />
-                                    <span>Configuración Activa</span>
+                                    <span>Verificación de Sello</span>
                                 </div>
                             </div>
                             <button
@@ -210,27 +260,19 @@ export const SignatureProfileCard: React.FC = () => {
                             </button>
                         </div>
 
-                        {/* Contenido (Scrollable) con Bento Cards de dos columnas */}
-                        <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface text-left">
-                            <div className="space-y-4">
-                                <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
-                                    Confirmar Firma Digital
+                        {/* Contenido (Scrollable) con Bento Cards */}
+                        <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-surface text-left">
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-bold tracking-tight text-text-main leading-tight font-sans">
+                                    Confirmar Firma y Sello Institucional
                                 </h2>
                                 <p className="text-sm text-text-dim leading-relaxed font-medium">
-                                    Esta información se incrustará de manera oficial al estampar su firma en los documentos. ¿Está seguro de que desea guardar y activar su perfil con los siguientes datos?
+                                    A continuación se presenta cómo quedará estampado su sello oficial en los documentos y actas del ISTPET. Verifique los datos antes de activar.
                                 </p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bento-card static p-5 space-y-1.5 col-span-2">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
-                                        Nombre de la Firma
-                                    </div>
-                                    <div className="text-sm font-bold text-text-main font-sans">
-                                        {sig.autoText || sig.toTitleCase(sig.cargo)}
-                                    </div>
-                                </div>
-                                <div className="bento-card static p-5 space-y-1.5">
+                                <div className="bento-card static p-4 space-y-1">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
                                         Cargo
                                     </div>
@@ -238,7 +280,7 @@ export const SignatureProfileCard: React.FC = () => {
                                         {sig.cargo.trim()}
                                     </div>
                                 </div>
-                                <div className="bento-card static p-5 space-y-1.5">
+                                <div className="bento-card static p-4 space-y-1">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
                                         Departamento / Área
                                     </div>
@@ -246,18 +288,24 @@ export const SignatureProfileCard: React.FC = () => {
                                         {sig.departamento.trim()}
                                     </div>
                                 </div>
-                                <div className="bento-card static p-5 space-y-3 col-span-2">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
-                                        Firma Oficial
-                                    </div>
-                                    <div className="sig-modal-preview-box">
-                                        <img src={sig.firmaImagenB64} alt="Firma a guardar" />
-                                    </div>
+                            </div>
+
+                            {/* Previsualización del Sello Institucional */}
+                            <div className="space-y-2">
+                                <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
+                                    Sello Institucional Oficial
                                 </div>
+                                <DocumentStampPreview
+                                    nombreFirmante={sig.autoText || userName}
+                                    cargo={sig.cargo.trim()}
+                                    departamento={sig.departamento.trim()}
+                                    cedula={userCi}
+                                    firmaImagenB64={sig.firmaImagenB64}
+                                />
                             </div>
                         </div>
 
-                        {/* Pie de página con botones fluidos y borde superior */}
+                        {/* Pie de página con botones */}
                         <div className="p-8 border-t border-border-thin bg-surface flex gap-4">
                             <button
                                 type="button"
@@ -283,3 +331,4 @@ export const SignatureProfileCard: React.FC = () => {
         </div>
     );
 };
+

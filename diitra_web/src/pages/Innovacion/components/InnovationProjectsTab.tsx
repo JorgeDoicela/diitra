@@ -51,7 +51,7 @@ interface Props {
 }
 
 export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
-    const { isAdmin } = useAuth();
+    const { isAdmin, isEstudiante } = useAuth();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
     const { getEstadoConfig } = useWorkflowStates();
@@ -69,7 +69,8 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
     const loadProjects = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await api.get('/projects');
+            const endpoint = isAdmin ? '/projects' : '/projects/my';
+            const res = await api.get(endpoint);
             const allProjects: any[] = res.data || [];
             
             // Filtrar exclusivamente proyectos de Innovación (PROTOCOLO_INNOVACION)
@@ -110,7 +111,7 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
         } finally {
             setLoading(false);
         }
-    }, [onCountChange]);
+    }, [isAdmin, onCountChange]);
 
     useEffect(() => {
         loadProjects();
@@ -343,14 +344,16 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
                         <Target size={28} className="text-text-dim" />
                     </div>
                     <h3 className="text-lg font-semibold text-text-main tracking-tight mb-2">
-                        {hasActiveFilters ? 'Sin resultados' : 'Aún no tienes proyectos'}
+                        {hasActiveFilters ? 'Sin resultados' : (isEstudiante ? 'Aún no tienes participaciones activas' : 'Aún no tienes proyectos')}
                     </h3>
                     <p className="text-sm text-text-dim max-w-xs mb-6">
                         {hasActiveFilters
                             ? 'Prueba con otros filtros de búsqueda.'
-                            : 'Crea tu primera propuesta de innovación para comenzar.'}
+                            : (isEstudiante
+                                ? 'Un docente investigador debe incluirte en su equipo de innovación o transferencia tecnológica.'
+                                : 'Crea tu primera propuesta de innovación para comenzar.')}
                     </p>
-                    {!hasActiveFilters && (
+                    {!hasActiveFilters && !isEstudiante && (
                         <Link
                             to="/convocatorias"
                             className="btn-vercel-primary px-6 py-2.5 flex items-center justify-center gap-2"

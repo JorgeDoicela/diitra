@@ -154,19 +154,42 @@
     .sig-preview-section {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 12px;
         flex-grow: 1;
+    }
+
+    .sig-dual-preview-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.25fr;
+        gap: 16px;
+        align-items: stretch;
+    }
+
+    @media (max-width: 960px) {
+        .sig-dual-preview-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+    }
+
+    .sig-dual-preview-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        height: 100%;
     }
 
     .sig-preview-box {
         background: var(--surface-hover);
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        height: 120px;
+        min-height: 120px;
+        height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
         overflow: hidden;
+        padding: 16px;
 
         img {
             max-height: 90px;
@@ -174,6 +197,14 @@
             object-fit: contain;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
         }
+    }
+
+    .sig-live-stamp-wrapper {
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
 
     .sig-profile-form {

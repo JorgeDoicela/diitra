@@ -39,6 +39,23 @@ namespace diitra_api.Controllers
             _projectPublishingService = projectPublishingService;
         }
 
+        private bool IsCurrentUserSuperAdmin()
+        {
+            if (User?.Identity == null || !User.Identity.IsAuthenticated)
+                return false;
+
+            var roles = User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .Union(User.FindAll("roles").Select(c => c.Value))
+                .Union(User.FindAll("role").Select(c => c.Value))
+                .Distinct()
+                .ToList();
+
+            return roles.Contains("DIITRA_SUPER_ADMIN")
+                || User.FindFirst("es_super_admin")?.Value == "true"
+                || User.FindFirst("es_superadmin")?.Value == "true";
+        }
+
         /// <summary>
         /// Genera el PDF del protocolo de investigación usando el motor DIITRA.
         /// </summary>
@@ -65,6 +82,16 @@ namespace diitra_api.Controllers
         [HttpPost("draft")]
         public IActionResult CreateDraft([FromBody] ProyectoDto dto)
         {
+            var isEstudiante = (User.IsInRole("DIITRA_ESTUDIANTE") || User.FindFirst("tipo_usuario")?.Value?.ToUpper() == "ESTUDIANTE") && 
+                               !User.IsInRole("DIITRA_DOCENTE") && 
+                               !User.IsInRole("DIITRA_ADMIN") && 
+                               !IsCurrentUserSuperAdmin();
+
+            if (isEstudiante)
+            {
+                return StatusCode(403, new { message = "Los estudiantes no pueden postular ni crear proyectos. Esta acción está reservada exclusivamente para docentes investigadores." });
+            }
+
             dto.Uuid = Guid.NewGuid().ToString();
             dto.Estado = "Borrador";
             return Ok(new { message = "Workspace Borrador Creado", proyectoId = dto.Uuid });
@@ -303,6 +330,23 @@ namespace diitra_api.Controllers
         [HttpGet]
         public async Task<IActionResult> List()
         {
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrEmpty(userIdRef))
+            {
+                var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userIdRef);
+                var isRoleAdmin = User.IsInRole("DIITRA_ADMIN") ||
+                                  User.IsInRole("DIITRA_SUPER_ADMIN") ||
+                                  User.FindFirst("es_super_admin")?.Value == "true" ||
+                                  User.FindFirst("es_admin")?.Value == "true" ||
+                                  User.FindFirst("administrador")?.Value == "true";
+
+                if (!isSystemAdmin && !isRoleAdmin)
+                {
+                    var myProjects = await _projectOrchestrator.GetMyProjectsAsync(userIdRef);
+                    return Ok(myProjects);
+                }
+            }
+
             var projects = await _projectOrchestrator.GetAllProjectsAsync();
             return Ok(projects);
         }

@@ -5,7 +5,6 @@ import { FullscreenLoader } from '../../../Common/FullscreenLoader';
 import { TimedSuccessModal } from '../../../Common/TimedSuccessModal';
 import { getDocumentSignatures } from '../../../../services/signaturesService';
 import { SignatureBlock } from '../../SignatureBlock';
-import { PdfViewerShell } from './PdfViewerShell';
 import { useAuth } from '../../../../api/AuthContext';
 import api from '../../../../api/axios_config';
 
@@ -68,7 +67,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
     setIsSignedModalOpen,
     signedModalData
 }) => {
-    const { isAdmin } = useAuth();
+    const { isAdmin, isSuperAdmin } = useAuth();
     const navigate = useNavigate();
     const [signatures, setSignatures] = React.useState<any[]>([]);
     const [isProtocoloSigned, setIsProtocoloSigned] = React.useState<boolean | null>(null);
@@ -87,7 +86,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                         params: { templateCode, entityUuid: projectUuid }
                     });
                     targetDocId = instRes.data?.uuid || instRes.data?.Uuid;
-                } catch {}
+                } catch { }
             }
 
             if (targetDocId && !targetDocId.startsWith('temp_')) {
@@ -123,7 +122,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
 
                     const protoDoc = res.data.find(
                         (d: any) => d.template_code === 'PROTOCOLO_INVESTIGACION' || d.templateCode === 'PROTOCOLO_INVESTIGACION' ||
-                                    d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
+                            d.template_code === 'PROTOCOLO_INNOVACION' || d.templateCode === 'PROTOCOLO_INNOVACION'
                     );
                     setIsProtocoloSigned(isDocValidlySigned(protoDoc));
 
@@ -133,7 +132,7 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                     setIsPlanSigned(isDocValidlySigned(planDoc));
                 }
             })
-            .catch(() => {});
+            .catch(() => { });
 
         return () => { isMounted = false; };
     }, [projectUuid, projectStatus, signatureRefreshTrigger]);
@@ -160,26 +159,24 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                 <div className="col-span-1 lg:col-span-3 bg-bg-deep border border-border-thin rounded-2xl shadow-sm flex flex-col lg:overflow-hidden lg:h-full">
                     {/* Sección 1: Emisión */}
                     <div className="p-5 flex flex-col gap-4 shrink-0">
-                        <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
-                            <Settings size={16} className="text-text-dim" /> Emisión
-                        </h4>
-
-                        {/* Switch Modo Borrador */}
-                        <div className="flex items-center justify-between p-3.5 bg-surface/50 border border-border-thin/80 rounded-xl hover:border-border-hover transition-colors">
-                            <div className="flex flex-col gap-0.5">
-                                <span className="text-xs font-semibold text-text-main">Modo borrador</span>
-                                <span className="text-[10px] text-text-dim">Marca de agua de seguridad</span>
+                        {/* Switch Modo Borrador — Exclusivo Super Administrador */}
+                        {isSuperAdmin && (
+                            <div className="flex items-center justify-between p-3.5 bg-surface/50 border border-border-thin/80 rounded-xl hover:border-border-hover transition-colors animate-fade-in">
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-xs font-semibold text-text-main">Modo borrador</span>
+                                    <span className="text-[10px] text-text-dim">Marca de agua de seguridad</span>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={isDraftMode}
+                                        onChange={(e) => setIsDraftMode(e.target.checked)}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-9 h-5 bg-border-thin peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-text-main"></div>
+                                </label>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={isDraftMode}
-                                    onChange={(e) => setIsDraftMode(e.target.checked)}
-                                    className="sr-only peer"
-                                />
-                                <div className="w-9 h-5 bg-border-thin peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-text-main"></div>
-                            </label>
-                        </div>
+                        )}
 
                         {/* Botones de Generación y Vista */}
                         <div className="flex flex-col gap-2">
@@ -187,21 +184,23 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                 type="button"
                                 onClick={() => handleGeneratePdf(false)}
                                 disabled={isGenerating}
-                                className="w-full py-2.5 px-4 btn-vercel-primary text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+                                className="w-full py-3.5 px-4 btn-vercel-primary text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2.5 shadow-md cursor-pointer disabled:opacity-50 hover:brightness-105 active:scale-[0.99]"
                             >
-                                <FileText size={14} />
-                                <span>{isGenerating ? 'Generando...' : 'Generar vista previa'}</span>
+                                <FileText size={17} />
+                                <span>{isGenerating ? 'Generando...' : 'Generar documento'}</span>
                             </button>
 
-                            <button
-                                type="button"
-                                onClick={() => handleGeneratePdf(true)}
-                                disabled={isGenerating}
-                                className="w-full py-2.5 px-4 btn-vercel-secondary text-xs font-medium rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                            >
-                                <Users size={14} />
-                                <span>Vista sin identidades</span>
-                            </button>
+                            {isSuperAdmin && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleGeneratePdf(true)}
+                                    disabled={isGenerating}
+                                    className="w-full py-2.5 px-4 btn-vercel-secondary text-xs font-medium rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 animate-fade-in"
+                                >
+                                    <Users size={14} />
+                                    <span>Vista sin identidades</span>
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -293,20 +292,15 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                     </div>
                                 </div>
                             ) : !canSign ? (
-                                <div className="p-4 bg-surface border border-border-thin rounded-xl text-center space-y-2.5">
-                                    <div className="flex justify-center">
-                                        <div className="icon-circle icon-circle-warning !p-2">
-                                            <Shield size={16} />
-                                        </div>
-                                    </div>
+                                <div className="p-4 bg-surface border border-border-thin rounded-xl text-center space-y-2">
                                     <div className="space-y-1">
                                         <p className="text-sm font-semibold text-text-main">Firma restringida</p>
                                         <p className="text-xs text-text-dim leading-relaxed">
                                             {templateCode === 'OFICIO_APROBACION' || templateCode === 'EVALUACION_PLAN_APRENDIZAJE' || templateCode === 'RESOLUCION_DICTAMEN'
                                                 ? 'Solo la Coordinación de Investigación puede firmar este documento.'
                                                 : templateCode === 'PLAN_APRENDIZAJE'
-                                                ? 'Solo el Director del Proyecto o Coordinación pueden firmar este documento.'
-                                                : 'Solo el Director del Proyecto puede firmar este documento.'}
+                                                    ? 'Solo el Director del Proyecto o Coordinación pueden firmar este documento.'
+                                                    : 'Solo el Director del Proyecto puede firmar este documento.'}
                                         </p>
                                     </div>
                                 </div>
@@ -335,8 +329,8 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                                 onClick={handleSignDiitra}
                                                 disabled={isSigning || !institutionalPassword}
                                                 className={`w-full py-2.5 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${(!institutionalPassword)
-                                                        ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
-                                                        : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
+                                                    ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
+                                                    : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
                                                     }`}
                                             >
                                                 {isSigning ? <><Clock size={14} className="animate-spin" /> Firmando...</> : <><Shield size={14} /> Aplicar firma DIITRA</>}
@@ -354,8 +348,8 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                                 <label className="text-[10px] font-bold text-text-dim block">Certificado .p12</label>
                                                 <label
                                                     className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-3 cursor-pointer transition-all gap-1.5 ${signatureCertFile
-                                                            ? 'border-green-500/40 bg-green-500/5'
-                                                            : 'border-border-thin hover:border-text-main/30 bg-surface'
+                                                        ? 'border-green-500/40 bg-green-500/5'
+                                                        : 'border-border-thin hover:border-text-main/30 bg-surface'
                                                         }`}
                                                 >
                                                     <input
@@ -396,8 +390,8 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                                 onClick={handleSign}
                                                 disabled={isSigning || !signatureCertFile}
                                                 className={`w-full py-2.5 rounded-xl text-[10px] font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${(!signatureCertFile || isSigning)
-                                                        ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
-                                                        : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
+                                                    ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
+                                                    : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
                                                     }`}
                                             >
                                                 {isSigning ? <><Clock size={14} className="animate-spin" /> Firmando...</> : <><Shield size={14} /> Aplicar firma electrónica</>}
@@ -407,23 +401,37 @@ export const OutputSection: React.FC<OutputSectionProps> = ({
                                 </div>
                             )}
 
-                            <SignatureBlock 
-                                documentoUuid={documentUuid || formData.Uuid || formData.uuid || ''} 
-                                refreshTrigger={signatureRefreshTrigger} 
+                            <SignatureBlock
+                                documentoUuid={documentUuid || formData.Uuid || formData.uuid || ''}
+                                refreshTrigger={signatureRefreshTrigger}
                             />
                         </div>
                     </div>
                 </div>
 
-                {/* Visor de PDF con Barra de Herramientas Integrada */}
-                <div className="col-span-1 lg:col-span-9 flex flex-col h-[85vh] sm:h-[88vh] min-h-[750px] lg:h-full lg:min-h-0">
-                    <PdfViewerShell
-                        title={title}
-                        pdfUrl={pdfUrl}
-                        isGenerating={isGenerating}
-                        onRegenerate={() => handleGeneratePdf(false)}
-                        isDraftMode={isDraftMode}
-                    />
+                {/* Visor de PDF */}
+                <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl flex flex-col shadow-inner relative overflow-hidden h-[85vh] sm:h-[88vh] min-h-[750px] lg:h-full lg:min-h-0">
+                    {isGenerating ? (
+                        <FullscreenLoader
+                            fullscreen={false}
+                            message={[
+                                "Generando documento...",
+                                "Preparando vista previa...",
+                                "Compilando plantilla PDF...",
+                                "Cargando firmas registradas..."
+                            ]}
+                        />
+                    ) : pdfUrl ? (
+                        <iframe src={pdfUrl} className="flex-1 w-full bg-white rounded-xl border-none shadow-2xl" title={`Vista previa — ${title}`} />
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-text-dim/20 p-8">
+                            <FileText size={80} strokeWidth={0.5} className="mb-6 lg:mb-8 md:w-[120px]" />
+                            <p className="text-xs md:text-sm font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-center">Listo para generar</p>
+                            <button onClick={() => handleGeneratePdf(false)} className="mt-6 px-6 py-3 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest lg:hidden cursor-pointer">
+                                Generar PDF
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

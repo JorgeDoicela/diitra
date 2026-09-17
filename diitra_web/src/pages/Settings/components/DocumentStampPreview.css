@@ -1,0 +1,187 @@
+.doc-stamp-preview-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+/* ── Contenedor del Sello ─────────────────────────────────────────── */
+.doc-stamp-display-wrapper {
+    background: var(--surface-hover, #18181b);
+    border: 1px solid var(--border, #27272a);
+    border-radius: var(--radius, 8px);
+    padding: 16px 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: auto;
+    height: 100%;
+    min-height: 120px;
+}
+
+/* ── Sello Institucional Oficial (Idéntico a SignatureStamper) ────── */
+.diitra-official-stamp {
+    width: 100%;
+    max-width: 490px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #0f172a;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stamp-header {
+    background: #0a3264;
+    color: #ffffff;
+    font-size: 0.58rem;
+    font-weight: 800;
+    text-align: center;
+    padding: 4px 8px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.stamp-header-dot {
+    width: 4px;
+    height: 4px;
+    background: #38bdf8;
+    border-radius: 50%;
+}
+
+.stamp-body-grid {
+    display: grid;
+    grid-template-columns: 110px 1fr 70px;
+    background: #f8fafc;
+    min-height: 80px;
+}
+
+.stamp-col-stroke {
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.stamp-stroke-img {
+    max-width: 98px;
+    max-height: 56px;
+    object-fit: contain;
+    /* En el sello la tinta siempre se mantiene auténtica y nítida */
+    filter: none !important;
+}
+
+.stamp-initials-box {
+    width: 48px;
+    height: 34px;
+    background: #e0e7ff;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0a3264;
+    letter-spacing: 0.05em;
+}
+
+.stamp-col-data {
+    padding: 6px 10px;
+    border-left: 1px solid #cbd5e1;
+    border-right: 1px solid #cbd5e1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.5px;
+    text-align: left;
+}
+
+.stamp-signer-name {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #0a3264;
+    line-height: 1.15;
+    margin-bottom: 2px;
+}
+
+.stamp-data-row {
+    font-size: 0.54rem;
+    line-height: 1.25;
+    color: #1e293b;
+    display: flex;
+    gap: 4px;
+    align-items: baseline;
+}
+
+.stamp-data-label {
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.stamp-data-val {
+    font-weight: 500;
+    color: #0f172a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stamp-data-val.code {
+    color: #0284c7;
+    font-family: monospace;
+    font-weight: 700;
+}
+
+.stamp-col-qr {
+    padding: 4px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    gap: 2px;
+}
+
+.stamp-qr-matrix {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stamp-qr-label {
+    font-size: 0.45rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.stamp-footer {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.44rem;
+    text-align: center;
+    padding: 3px 6px;
+    letter-spacing: 0.02em;
+    border-top: 1px solid #cbd5e1;
+}
+
+@media (max-width: 640px) {
+    .stamp-body-grid {
+        grid-template-columns: 85px 1fr 60px;
+    }
+    .stamp-stroke-img {
+        max-width: 75px;
+    }
+}

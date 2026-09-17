@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GraduationCap, Award, BookOpen, UserPlus, Star, ArrowRight } from 'lucide-react';
+import { GraduationCap, Award, BookOpen, UserPlus, Star, ArrowRight, Folder, Lightbulb } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -143,6 +143,24 @@ export const EstudianteDashboard: React.FC = () => {
                 title={`Hola, ${firstName}`} 
                 subtitle="Participa en proyectos de vanguardia, gana experiencia y construye tu perfil científico." 
                 roleName="Estudiante Colaborador"
+                actions={
+                    <>
+                        <Link
+                            to="/investigacion/mis-proyectos"
+                            className="btn-vercel-secondary flex-1 md:flex-none no-underline"
+                        >
+                            <Folder size={14} />
+                            <span>Investigación</span>
+                        </Link>
+                        <Link
+                            to="/innovacion"
+                            className="btn-vercel-secondary flex-1 md:flex-none no-underline"
+                        >
+                            <Lightbulb size={14} />
+                            <span>Innovación</span>
+                        </Link>
+                    </>
+                }
             />
 
             {loading ? (

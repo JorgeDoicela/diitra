@@ -5,6 +5,8 @@ using Diitra.Domain.Common.Documents;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System.Linq;
 
 namespace diitra_api.Controllers
 {
@@ -33,6 +35,23 @@ namespace diitra_api.Controllers
             _logger = logger;
         }
 
+        private bool IsCurrentUserSuperAdmin()
+        {
+            if (User?.Identity == null || !User.Identity.IsAuthenticated)
+                return false;
+
+            var roles = User.FindAll(ClaimTypes.Role)
+                .Select(c => c.Value)
+                .Union(User.FindAll("roles").Select(c => c.Value))
+                .Union(User.FindAll("role").Select(c => c.Value))
+                .Distinct()
+                .ToList();
+
+            return roles.Contains("DIITRA_SUPER_ADMIN")
+                || User.FindFirst("es_super_admin")?.Value == "true"
+                || User.FindFirst("es_superadmin")?.Value == "true";
+        }
+
         /// <summary>
         /// RENDERIZADO UNIVERSAL (Punto de entrada único para digitalización masiva)
         /// -------------------------------------------------------------------------
@@ -45,6 +64,23 @@ namespace diitra_api.Controllers
             try 
             {
                 _logger.LogInformation("[DIITRA CORE] Solicitud de renderizado universal para plantilla: {Code}", templateCode);
+
+                // Control de privilegios institucionales:
+                // Solo Super Administradores (o revisores autorizados en evaluación técnica) pueden emitir vistas sin marca de agua o en modo ciego ad-hoc.
+                var isSuperAdmin = IsCurrentUserSuperAdmin();
+                if (!isSuperAdmin)
+                {
+                    var isRevisor = User.FindAll(ClaimTypes.Role)
+                        .Select(c => c.Value)
+                        .Union(User.FindAll("roles").Select(c => c.Value))
+                        .Any(r => r.Contains("REVISOR", System.StringComparison.OrdinalIgnoreCase));
+
+                    if (!isRevisor)
+                    {
+                        isDraft = true;
+                        isBlind = false;
+                    }
+                }
 
                 // IMPORTANTE: Scriban procesa mejor objetos anónimos o Dictionaries. 
                 // JsonSerializer deserializa el rawText a una estructura dinámica compatible.
