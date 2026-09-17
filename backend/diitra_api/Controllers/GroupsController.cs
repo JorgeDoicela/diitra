@@ -288,8 +288,21 @@ public class ReviewGroupRequest
 
 public partial class GroupsController
 {
-    private bool IsAdminUser() =>
-        User.IsInRole("DIITRA_ADMIN");
+    private bool IsAdminUser()
+    {
+        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value)
+            .Union(User.FindAll("roles").Select(c => c.Value)).Distinct().ToList();
+
+        return roles.Contains("DIITRA_SUPER_ADMIN")
+            || roles.Contains("SUPERADMIN")
+            || roles.Contains("SUPER_ADMIN")
+            || roles.Contains("DIITRA_ADMIN")
+            || roles.Contains("ADMINISTRADOR")
+            || roles.Contains("ADMIN")
+            || User.FindFirst("es_super_admin")?.Value == "true"
+            || User.FindFirst("es_superadmin")?.Value == "true"
+            || User.FindFirst("administrador")?.Value == "true";
+    }
 
     private string? GetCurrentUserReference() =>
         User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

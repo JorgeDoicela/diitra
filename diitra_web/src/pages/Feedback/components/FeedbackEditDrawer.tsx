@@ -75,19 +75,19 @@ export const FeedbackEditDrawer: React.FC<FeedbackEditDrawerProps> = ({
 
     return createPortal(
         <div
-            className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6"
+            className="fixed inset-0 z-[10000] flex justify-end"
             role="dialog"
             aria-modal="true"
             aria-labelledby="feedback-edit-drawer-title"
         >
             {/* Backdrop Blur Overlay */}
             <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer animate-fade-in"
+                className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-xs cursor-pointer animate-fade-in"
                 onClick={() => !isSaving && onClose()}
             />
 
-            {/* Modal Centrado */}
-            <div className="relative w-full max-w-lg sm:max-w-xl max-h-[88vh] bg-surface border border-border-thin rounded-2xl shadow-2xl flex flex-col z-10 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+            {/* Panel Lateral Deslizante a la Derecha */}
+            <div className="relative w-full max-w-md sm:max-w-lg lg:max-w-xl h-full bg-surface border-l border-border-thin shadow-2xl flex flex-col z-10 animate-slide-in-right overflow-hidden">
                 {/* Header del Modal */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface shrink-0">
                     <div className="flex items-center gap-2">

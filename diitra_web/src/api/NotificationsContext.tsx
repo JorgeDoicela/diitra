@@ -472,7 +472,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                         else if (payload.categoria === 'WARNING') type = 'warning';
                         else if (payload.categoria === 'INFO') type = 'info';
 
-                        addToast(payload.title, payload.body, type, payload.url || undefined);
+                        const catUpper = String(payload.categoria || payload.category || '').toUpperCase();
+                        if (catUpper !== 'SOPORTE' && catUpper !== 'FEEDBACK') {
+                            addToast(payload.title, payload.body, type, payload.url || undefined);
+                        }
                     }
                 });
 

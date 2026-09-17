@@ -70,7 +70,15 @@ export const AdminFeedbackPage: React.FC = () => {
 
     // Sincronización ante eventos de cambio
     useEffect(() => {
-        const handleFeedbackChanged = () => loadData(true);
+        const handleFeedbackChanged = (e?: any) => {
+            const idEliminado = e?.detail?.idEliminado || e?.detail?.FeedbackId;
+            if (idEliminado) {
+                const numId = Number(idEliminado);
+                setReportes(prev => prev.filter(r => (r.id_feedback || r.idFeedback) !== numId));
+                setActiveReport(prev => (prev && (prev.id_feedback || prev.idFeedback) === numId ? null : prev));
+            }
+            loadData(true);
+        };
         window.addEventListener('diitra-feedback-changed', handleFeedbackChanged);
         return () => window.removeEventListener('diitra-feedback-changed', handleFeedbackChanged);
     }, [loadData]);
@@ -123,7 +131,7 @@ export const AdminFeedbackPage: React.FC = () => {
                 setActiveReport(null);
             }
             setDeletingReport(null);
-            window.dispatchEvent(new CustomEvent('diitra-feedback-changed'));
+            window.dispatchEvent(new CustomEvent('diitra-feedback-changed', { detail: { idEliminado: id } }));
         } catch (err: any) {
             console.error('Error al eliminar reporte:', err);
             setDeleteError(err.response?.data?.message || 'Error al eliminar el reporte.');
@@ -135,7 +143,7 @@ export const AdminFeedbackPage: React.FC = () => {
     return (
         <main className="flex-1 bg-bg-deep p-6 md:p-8 lg:p-10 space-y-6">
             {/* Breadcrumb de navegación */}
-            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-text-dim animate-fade-in -mb-2">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-1 text-xs text-text-dim animate-fade-in select-none">
                 <Link
                     to="/solicitudes"
                     className="p-1 -ml-1 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors inline-flex items-center justify-center no-underline"
@@ -318,14 +326,14 @@ export const AdminFeedbackPage: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => toggleThread(id)}
-                                                className={`inline-flex items-center gap-1.5 font-medium px-2.5 py-1 rounded-md text-[11.5px] transition-colors cursor-pointer ${
+                                                className={`inline-flex items-center gap-1.5 font-medium py-1 px-2 rounded-md text-[11.5px] transition-colors cursor-pointer ${
                                                     expandedThreadIds.has(id)
-                                                        ? 'bg-brand/10 text-brand font-semibold'
+                                                        ? 'text-brand font-semibold hover:text-brand/80'
                                                         : 'text-text-dim hover:text-text-main hover:bg-surface-hover'
                                                 }`}
                                             >
                                                 <MessageSquare size={13} />
-                                                <span>Conversación ({r.conversacion?.length || 0})</span>
+                                                <span>{expandedThreadIds.has(id) ? 'Ocultar conversación' : 'Conversación'}</span>
                                                 <ChevronDown 
                                                     size={13} 
                                                     className={`transition-transform duration-200 ${expandedThreadIds.has(id) ? 'rotate-180 text-brand' : ''}`} 

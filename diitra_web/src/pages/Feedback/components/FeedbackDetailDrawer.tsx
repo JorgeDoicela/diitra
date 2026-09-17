@@ -1,17 +1,39 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { 
     X, ChevronLeft, ChevronRight, Video, Image as ImageIcon,
-    Monitor, Wifi, Trash2, MessageSquare
+    Trash2, Monitor, Cpu, Wifi, Globe, Terminal, Copy, Check,
+    Layers, HardDrive, ShieldCheck, CornerDownRight
 } from 'lucide-react';
+import { useAuth } from '../../../api/AuthContext';
 import { 
     getFeedbackMediaUrl, 
     type FeedbackReporte, 
     type FeedbackAdjunto 
 } from '../../../services/feedbackService';
-import { getTipoBadge, getEstadoBadge, ESTADO_ROW_OPTIONS } from './FeedbackBadges';
+import { ESTADO_ROW_OPTIONS } from './FeedbackBadges';
 import { GeistSelect } from '../../../components/Common/GeistSelect';
-import { FeedbackDiscussionThread } from '../../../components/Feedback/FeedbackDiscussionThread';
+
+interface DeviceDiagnosticMetadata {
+    browser?: string;
+    os?: string;
+    url?: string;
+    pathname?: string;
+    screen?: string;
+    viewport?: string;
+    devicePixelRatio?: number | string;
+    language?: string;
+    isOnline?: boolean;
+    connectionType?: string;
+    deviceMemoryGB?: string;
+    hardwareConcurrency?: string;
+    userAgent?: string;
+    timestamp?: string;
+    userRef?: string;
+    userName?: string;
+    userRole?: string;
+    [key: string]: any;
+}
 
 interface FeedbackDetailDrawerProps {
     report: FeedbackReporte | null;
@@ -23,6 +45,16 @@ interface FeedbackDetailDrawerProps {
     onReportUpdated?: (updated: FeedbackReporte) => void;
 }
 
+const parseMetadata = (raw?: any): DeviceDiagnosticMetadata | null => {
+    if (!raw) return null;
+    if (typeof raw === 'object') return raw;
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+};
+
 export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
     report,
     initialMediaIndex = 0,
@@ -32,13 +64,23 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
     onDeleteClick,
     onReportUpdated
 }) => {
+    const { isSuperAdmin } = useAuth();
     const [activeMediaIndex, setActiveMediaIndex] = useState<number>(initialMediaIndex);
+    const [dragOffset, setDragOffset] = useState<number>(0);
+    const [isDragging, setIsDragging] = useState<boolean>(false);
+    const [copiedDiag, setCopiedDiag] = useState<boolean>(false);
+    const [showFullUa, setShowFullUa] = useState<boolean>(false);
+    const dragStartX = useRef<number | null>(null);
 
     useEffect(() => {
         setActiveMediaIndex(initialMediaIndex);
+        setDragOffset(0);
+        setIsDragging(false);
+        setCopiedDiag(false);
+        setShowFullUa(false);
     }, [initialMediaIndex, report]);
 
-    // Bloquear scroll de fondo y soportar teclado (ESC y flechas)
+    // Bloquear scroll de fondo y soportar teclado (ESC y flechas ← / →)
     useEffect(() => {
         if (!report) return;
 
@@ -71,18 +113,6 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
         };
     }, [report, onClose]);
 
-    // Parseo de metadatos técnicos si están disponibles
-    const parsedMetadata = useMemo(() => {
-        if (!report) return null;
-        const metaStr = report.metadata_navegador || report.metadataNavegador;
-        if (!metaStr) return null;
-        try {
-            return JSON.parse(metaStr);
-        } catch {
-            return null;
-        }
-    }, [report]);
-
     if (!report) return null;
 
     const reportId = report.id_feedback || report.idFeedback || 0;
@@ -91,32 +121,98 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
     const isCurrentVideo = Boolean(currentMedia && (currentMedia.tipo_mime || currentMedia.tipoMime || '').startsWith('video/'));
     const currentMediaUrl = currentMedia ? getFeedbackMediaUrl(currentMedia.url) : '';
 
+    const meta = parseMetadata(report.metadata_navegador || report.metadataNavegador);
+
+    // Manejadores de arrastre con cursor (PC) y deslizamiento táctil (Móvil)
+    const handlePointerDown = (e: React.PointerEvent) => {
+        if ((e.target as HTMLElement).closest('button, video, a, input')) return;
+        if (activeFiles.length <= 1) return;
+        dragStartX.current = e.clientX;
+        setIsDragging(true);
+        try {
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch {}
+    };
+
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!isDragging || dragStartX.current === null) return;
+        const deltaX = e.clientX - dragStartX.current;
+        setDragOffset(deltaX);
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+        if (!isDragging || dragStartX.current === null) return;
+        const deltaX = e.clientX - dragStartX.current;
+        const threshold = 40;
+
+        if (deltaX > threshold) {
+            // Deslizó hacia la derecha -> Anterior
+            setActiveMediaIndex(prev => (prev > 0 ? prev - 1 : activeFiles.length - 1));
+        } else if (deltaX < -threshold) {
+            // Deslizó hacia la izquierda -> Siguiente
+            setActiveMediaIndex(prev => (prev < activeFiles.length - 1 ? prev + 1 : 0));
+        }
+
+        setIsDragging(false);
+        setDragOffset(0);
+        dragStartX.current = null;
+        try {
+            (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        } catch {}
+    };
+
+    const handlePointerCancel = () => {
+        setIsDragging(false);
+        setDragOffset(0);
+        dragStartX.current = null;
+    };
+
+    const handleCopyDiagnostic = () => {
+        const diagData = {
+            id_reporte: reportId,
+            titulo: report.titulo,
+            usuario: report.nombre_usuario || report.nombreUsuario,
+            rol: report.rol_usuario || report.rolUsuario,
+            cedula: report.cedula,
+            ruta_origen: report.ruta_origen || report.rutaOrigen || meta?.pathname,
+            diagnostico_maquina: meta
+        };
+
+        navigator.clipboard.writeText(JSON.stringify(diagData, null, 2));
+        setCopiedDiag(true);
+        setTimeout(() => setCopiedDiag(false), 2000);
+    };
+
     return createPortal(
         <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6"
+            className="fixed inset-0 z-[9999] flex justify-end"
             role="dialog"
             aria-modal="true"
-            aria-label={`Detalle de incidencia: ${report.titulo}`}
+            aria-label={`Visor de adjuntos: ${report.titulo}`}
         >
             {/* Backdrop Blur Overlay */}
             <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer animate-fade-in"
+                className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-xs cursor-pointer animate-fade-in"
                 onClick={onClose}
             />
 
-            {/* Modal Centrado */}
-            <div className="relative w-full max-w-2xl lg:max-w-3xl max-h-[88vh] bg-surface border border-border-thin rounded-2xl shadow-2xl flex flex-col z-10 animate-in fade-in zoom-in-95 duration-150 overflow-hidden">
+            {/* Panel Lateral Deslizante a la Derecha */}
+            <div className="relative w-full max-w-lg sm:max-w-xl lg:max-w-2xl h-full bg-surface border-l border-border-thin shadow-2xl flex flex-col z-10 animate-slide-in-right overflow-hidden">
                 {/* Header del Panel */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface shrink-0">
-                    <div className="flex items-center gap-2.5 min-w-0 pr-4">
-                        <div className="w-7 h-7 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0">
-                            <MessageSquare size={15} />
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border-thin bg-surface shrink-0">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                        <div className="w-8 h-8 rounded-lg bg-brand/10 text-brand flex items-center justify-center shrink-0">
+                            {isCurrentVideo ? <Video size={16} /> : <ImageIcon size={16} />}
                         </div>
                         <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                {getTipoBadge(report.tipo)}
-                                {!isAdmin && getEstadoBadge(report.estado)}
-                            </div>
+                            <h3 className="text-[13.5px] font-semibold text-text-main truncate">
+                                {isCurrentVideo ? 'Video Adjunto' : 'Captura Adjunta'}
+                            </h3>
+                            {activeFiles.length > 1 && (
+                                <p className="text-[11px] font-mono text-text-dim">
+                                    Archivo {activeMediaIndex + 1} de {activeFiles.length}
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -125,7 +221,7 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
                             <button
                                 type="button"
                                 onClick={() => onDeleteClick(report)}
-                                className="btn-vercel-secondary text-[11.5px] px-2.5 py-1 text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20 flex items-center gap-1.5 cursor-pointer"
+                                className="btn-vercel-secondary text-[11px] px-2.5 py-1 text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20 flex items-center gap-1.5 cursor-pointer"
                                 title="Eliminar reporte permanentemente"
                             >
                                 <Trash2 size={12} />
@@ -144,208 +240,258 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
                     </div>
                 </div>
 
-                {/* Body del Panel con Scroll */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-surface custom-scrollbar">
-                    {/* Título, Descripción y Selector de Estado en modo Admin */}
-                    <div className="space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                            <div className="space-y-1 min-w-0 flex-1">
-                                <h3 className="text-[16px] font-bold text-text-main tracking-tight">
-                                    {report.titulo}
-                                </h3>
-                                {report.ruta_origen && (
-                                    <div className="text-[11px] font-mono text-text-dim flex items-center gap-1.5">
-                                        <span>Pantalla:</span>
-                                        <code className="px-1.5 py-0.5 rounded bg-accents-1 text-text-main text-[10.5px]">
-                                            {report.ruta_origen}
-                                        </code>
-                                    </div>
-                                )}
-                            </div>
-
-                            {isAdmin && onStatusChange && (
-                                <div className="flex items-center gap-2 shrink-0 pt-0.5">
-                                    <span className="text-[11px] text-text-dim font-medium">Estado:</span>
-                                    <div className="w-38">
-                                        <GeistSelect
-                                            value={report.estado}
-                                            onChange={(val) => onStatusChange(reportId, String(val))}
-                                            options={ESTADO_ROW_OPTIONS}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="p-3.5 rounded-xl bg-bg-deep border border-border-thin">
-                            <p className="text-[13px] text-text-main whitespace-pre-wrap leading-relaxed">
-                                {report.descripcion}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Visor Multimedia si contiene archivos */}
-                    {currentMedia && (
-                        <div className="space-y-3 p-4 rounded-xl border border-border-thin bg-bg-deep/50">
-                            <div className="flex items-center justify-between text-[11.5px] font-mono text-text-dim">
-                                <span className="uppercase font-semibold flex items-center gap-1.5 text-text-main">
-                                    {isCurrentVideo ? <Video size={13} /> : <ImageIcon size={13} />}
-                                    <span>{isCurrentVideo ? 'Video Adjunto' : 'Captura Adjunta'}</span>
-                                </span>
-                                {activeFiles.length > 1 && (
-                                    <span>{activeMediaIndex + 1} de {activeFiles.length}</span>
-                                )}
-                            </div>
-
-                            <div className="relative flex items-center justify-center min-h-[220px] max-h-[380px] rounded-lg border border-border-thin bg-surface p-2 overflow-hidden">
-                                {isCurrentVideo ? (
+                {/* Body del Visor Multimedia con Soporte de Arrastre/Swipe */}
+                <div className="flex-1 flex flex-col p-4 overflow-y-auto custom-scrollbar gap-4">
+                    {/* Área Principal de la Imagen / Video */}
+                    <div 
+                        onPointerDown={handlePointerDown}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
+                        onPointerCancel={handlePointerCancel}
+                        className={`min-h-[260px] sm:min-h-[300px] flex items-center justify-center relative overflow-hidden select-none touch-pan-y rounded-xl bg-surface-deep/40 border border-border-thin/60 p-2 ${
+                            activeFiles.length > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : ''
+                        }`}
+                    >
+                        <div
+                            style={{
+                                transform: `translateX(${dragOffset}px)`,
+                                transition: isDragging ? 'none' : 'transform 0.22s ease-out'
+                            }}
+                            className="w-full h-full flex items-center justify-center pointer-events-none"
+                        >
+                            {currentMedia ? (
+                                isCurrentVideo ? (
                                     <video
                                         src={currentMediaUrl}
-                                        controls
+                                        controls={!isDragging}
                                         autoPlay
-                                        className="max-h-[360px] w-auto max-w-full rounded object-contain"
+                                        className="max-h-[55vh] w-auto max-w-full rounded-lg object-contain shadow-xs pointer-events-auto"
                                     />
                                 ) : (
                                     <img
                                         src={currentMediaUrl}
                                         alt={currentMedia.nombre_original || 'Captura'}
-                                        className="max-h-[360px] w-auto max-w-full rounded object-contain select-none"
+                                        draggable={false}
+                                        className="max-h-[55vh] w-auto max-w-full rounded-lg object-contain select-none shadow-xs"
                                     />
-                                )}
+                                )
+                            ) : (
+                                <div className="text-center text-text-dim p-8">
+                                    <ImageIcon size={32} className="mx-auto mb-2 opacity-50" />
+                                    <p className="text-xs">No hay archivos adjuntos en este reporte</p>
+                                </div>
+                            )}
+                        </div>
 
-                                {activeFiles.length > 1 && (
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveMediaIndex(prev => (prev > 0 ? prev - 1 : activeFiles.length - 1))}
-                                            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface/90 border border-border-thin text-text-main flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                                            title="Anterior [←]"
-                                        >
-                                            <ChevronLeft size={16} />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveMediaIndex(prev => (prev < activeFiles.length - 1 ? prev + 1 : 0))}
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface/90 border border-border-thin text-text-main flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                                            title="Siguiente [→]"
-                                        >
-                                            <ChevronRight size={16} />
-                                        </button>
-                                    </>
-                                )}
+                        {/* Flechas de Navegación flotantes */}
+                        {activeFiles.length > 1 && (
+                            <>
+                                <button
+                                    type="button"
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    onPointerUp={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMediaIndex(prev => (prev > 0 ? prev - 1 : activeFiles.length - 1));
+                                    }}
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-surface/90 hover:bg-surface border border-border-thin text-text-main flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer z-20 pointer-events-auto"
+                                    title="Anterior [←]"
+                                    aria-label="Archivo anterior"
+                                >
+                                    <ChevronLeft size={18} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    onPointerUp={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMediaIndex(prev => (prev < activeFiles.length - 1 ? prev + 1 : 0));
+                                    }}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-surface/90 hover:bg-surface border border-border-thin text-text-main flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer z-20 pointer-events-auto"
+                                    title="Siguiente [→]"
+                                    aria-label="Archivo siguiente"
+                                >
+                                    <ChevronRight size={18} />
+                                </button>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Tira Inferior de Miniaturas para alternar rápidamente */}
+                    {activeFiles.length > 1 && (
+                        <div className="w-full flex items-center justify-center gap-2 py-1 px-1 overflow-x-auto custom-scrollbar shrink-0">
+                            {activeFiles.map((f, fIdx) => {
+                                const isV = (f.tipo_mime || f.tipoMime || '').startsWith('video/');
+                                const u = getFeedbackMediaUrl(f.url);
+                                const isSelected = fIdx === activeMediaIndex;
+
+                                return (
+                                    <button
+                                        key={fIdx}
+                                        type="button"
+                                        onClick={() => setActiveMediaIndex(fIdx)}
+                                        className={`h-14 w-18 rounded-lg overflow-hidden border-2 shrink-0 transition-all cursor-pointer relative bg-surface flex items-center justify-center ${
+                                            isSelected 
+                                                ? 'border-brand ring-2 ring-brand/20 scale-105 opacity-100 shadow-xs' 
+                                                : 'border-border-thin opacity-60 hover:opacity-100'
+                                        }`}
+                                        title={f.nombre_original || `Archivo ${fIdx + 1}`}
+                                    >
+                                        {isV ? (
+                                            <div className="w-full h-full flex items-center justify-center p-1 text-text-dim bg-bg-deep">
+                                                <Video size={14} />
+                                            </div>
+                                        ) : (
+                                            <img src={u} alt={f.nombre_original || ''} className="h-full w-full object-cover" />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* SECCIÓN EXCLUSIVA DE SUPERADMINISTRADOR: Datos técnicos y de máquina */}
+                    {isSuperAdmin && (
+                        <div className="rounded-xl border border-indigo-500/25 bg-indigo-500/5 dark:bg-indigo-950/20 p-4 space-y-3">
+                            <div className="flex items-center justify-between gap-2 pb-2 border-b border-indigo-500/15">
+                                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                                    <ShieldCheck size={16} className="shrink-0" />
+                                    <span className="text-[12px] font-semibold tracking-wide uppercase font-mono">
+                                        Diagnóstico Técnico de la Máquina
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleCopyDiagnostic}
+                                    className="btn-vercel-secondary text-[11px] px-2.5 py-1 flex items-center gap-1.5 text-text-main border-border-thin hover:border-indigo-500/30 cursor-pointer"
+                                    title="Copiar JSON completo del diagnóstico"
+                                >
+                                    {copiedDiag ? (
+                                        <>
+                                            <Check size={12} className="text-emerald-500" />
+                                            <span className="text-emerald-500 font-medium">Copiado</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy size={12} />
+                                            <span>Copiar datos</span>
+                                        </>
+                                    )}
+                                </button>
                             </div>
 
-                            {activeFiles.length > 1 && (
-                                <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 custom-scrollbar">
-                                    {activeFiles.map((f, fIdx) => {
-                                        const isV = (f.tipo_mime || f.tipoMime || '').startsWith('video/');
-                                        const u = getFeedbackMediaUrl(f.url);
-                                        const isSelected = fIdx === activeMediaIndex;
+                            {meta ? (
+                                <div className="space-y-2.5 text-[12px]">
+                                    {/* Grid de Hardware y Navegador */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {/* Sistema Operativo & Navegador */}
+                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin flex items-start gap-2.5">
+                                            <Monitor size={15} className="text-indigo-500 shrink-0 mt-0.5" />
+                                            <div className="min-w-0">
+                                                <span className="text-[10.5px] text-text-dim block font-medium">SO y Navegador</span>
+                                                <span className="font-semibold text-text-main text-[12px] truncate block">
+                                                    {meta.os || 'Desconocido'} • {meta.browser || 'Navegador'}
+                                                </span>
+                                            </div>
+                                        </div>
 
-                                        return (
+                                        {/* Pantalla & Viewport */}
+                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin flex items-start gap-2.5">
+                                            <Layers size={15} className="text-indigo-500 shrink-0 mt-0.5" />
+                                            <div className="min-w-0">
+                                                <span className="text-[10.5px] text-text-dim block font-medium">Resolución / Ventana</span>
+                                                <span className="font-mono text-text-main text-[11.5px] truncate block">
+                                                    {meta.screen || 'N/A'} (VP: {meta.viewport || 'N/A'})
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* CPU & Memoria */}
+                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin flex items-start gap-2.5">
+                                            <Cpu size={15} className="text-indigo-500 shrink-0 mt-0.5" />
+                                            <div className="min-w-0">
+                                                <span className="text-[10.5px] text-text-dim block font-medium">Hardware</span>
+                                                <span className="font-mono text-text-main text-[11.5px] truncate block">
+                                                    {meta.hardwareConcurrency || 'N/D'} | {meta.deviceMemoryGB || 'RAM N/D'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Conexión e Idioma */}
+                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin flex items-start gap-2.5">
+                                            <Wifi size={15} className="text-indigo-500 shrink-0 mt-0.5" />
+                                            <div className="min-w-0">
+                                                <span className="text-[10.5px] text-text-dim block font-medium">Red e Idioma</span>
+                                                <span className="font-mono text-text-main text-[11.5px] truncate block">
+                                                    {meta.connectionType || 'Estable'} • {meta.language || 'es'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Ruta Origen y URL */}
+                                    {(meta.url || meta.pathname || report.ruta_origen || report.rutaOrigen) && (
+                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin space-y-1">
+                                            <div className="flex items-center gap-1.5 text-text-dim text-[10.5px] font-medium">
+                                                <Globe size={13} className="text-indigo-500" />
+                                                <span>Ruta exacta al momento de la incidencia:</span>
+                                            </div>
+                                            <div className="font-mono text-[11px] text-text-main break-all bg-surface-deep px-2 py-1 rounded">
+                                                {meta.url || meta.pathname || report.ruta_origen || report.rutaOrigen}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* User Agent Desplegable */}
+                                    {meta.userAgent && (
+                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin space-y-1.5">
                                             <button
-                                                key={fIdx}
                                                 type="button"
-                                                onClick={() => setActiveMediaIndex(fIdx)}
-                                                className={`h-14 w-auto min-w-[48px] rounded-lg overflow-hidden border-2 shrink-0 transition-all cursor-pointer relative bg-surface ${
-                                                    isSelected ? 'border-brand ring-2 ring-brand/20 scale-105' : 'border-border-thin opacity-70 hover:opacity-100'
-                                                }`}
-                                                title={f.nombre_original || 'Adjunto'}
+                                                onClick={() => setShowFullUa(!showFullUa)}
+                                                className="w-full flex items-center justify-between text-left text-[10.5px] text-text-dim font-medium hover:text-text-main cursor-pointer"
                                             >
-                                                {isV ? (
-                                                    <div className="w-full h-full flex items-center justify-center p-1 text-text-dim">
-                                                        <Video size={14} />
-                                                    </div>
-                                                ) : (
-                                                    <img src={u} alt={f.nombre_original} className="h-full w-auto object-contain" />
-                                                )}
+                                                <span className="flex items-center gap-1.5">
+                                                    <Terminal size={12} className="text-indigo-500" />
+                                                    <span>User Agent completo</span>
+                                                </span>
+                                                <span className="text-[10px] text-indigo-500 font-semibold">
+                                                    {showFullUa ? 'Ocultar' : 'Ver'}
+                                                </span>
                                             </button>
-                                        );
-                                    })}
+                                            {showFullUa && (
+                                                <div className="font-mono text-[10.5px] leading-relaxed text-text-dim bg-surface-deep p-2 rounded break-all border border-border-thin animate-fade-in select-all">
+                                                    {meta.userAgent}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
+                            ) : (
+                                <p className="text-[11.5px] text-text-dim italic">
+                                    No se registraron metadatos técnicos adicionales para esta incidencia.
+                                </p>
                             )}
                         </div>
                     )}
 
-                    {/* Metadatos Técnicos (exclusivo Admin o si existen) */}
-                    {isAdmin && parsedMetadata && (
-                        <div className="bento-card static p-4 space-y-3">
-                            <h4 className="text-[12px] font-mono font-bold text-text-dim uppercase tracking-wider flex items-center gap-2">
-                                <Monitor size={14} className="text-brand" />
-                                <span>Metadatos Técnicos del Entorno y Navegador</span>
-                            </h4>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-[11.5px]">
-                                <div className="p-2.5 rounded-lg border border-border-thin bg-bg-deep space-y-0.5">
-                                    <span className="text-[10px] font-mono text-text-dim uppercase block">Navegador</span>
-                                    <p className="font-semibold text-text-main truncate">
-                                        {parsedMetadata.browser || 'No registrado'}
-                                    </p>
-                                </div>
-
-                                <div className="p-2.5 rounded-lg border border-border-thin bg-bg-deep space-y-0.5">
-                                    <span className="text-[10px] font-mono text-text-dim uppercase block">Sistema Operativo</span>
-                                    <p className="font-semibold text-text-main truncate">
-                                        {parsedMetadata.os || 'No registrado'}
-                                    </p>
-                                </div>
-
-                                <div className="p-2.5 rounded-lg border border-border-thin bg-bg-deep space-y-0.5">
-                                    <span className="text-[10px] font-mono text-text-dim uppercase block">Pantalla / Ventana</span>
-                                    <p className="font-semibold text-text-main truncate">
-                                        {parsedMetadata.screen ? `${parsedMetadata.screen} (Ventana: ${parsedMetadata.viewport || ''})` : 'No registrado'}
-                                    </p>
-                                </div>
-
-                                <div className="p-2.5 rounded-lg border border-border-thin bg-bg-deep space-y-0.5">
-                                    <span className="text-[10px] font-mono text-text-dim uppercase block">Conexión</span>
-                                    <p className="font-semibold text-text-main truncate flex items-center gap-1">
-                                        <Wifi size={12} className="text-emerald-500" />
-                                        <span>{parsedMetadata.connectionType || (parsedMetadata.isOnline ? 'En línea' : 'Desconocida')}</span>
-                                    </p>
-                                </div>
-
-                                <div className="p-2.5 rounded-lg border border-border-thin bg-bg-deep space-y-0.5 sm:col-span-2">
-                                    <span className="text-[10px] font-mono text-text-dim uppercase block">Hardware (Memoria / Núcleos)</span>
-                                    <p className="font-semibold text-text-main truncate">
-                                        {parsedMetadata.deviceMemoryGB ? `${parsedMetadata.deviceMemoryGB} RAM` : ''} {parsedMetadata.hardwareConcurrency ? `· ${parsedMetadata.hardwareConcurrency}` : ''} {!parsedMetadata.deviceMemoryGB && !parsedMetadata.hardwareConcurrency ? 'Estándar' : ''}
-                                    </p>
-                                </div>
+                    {/* Panel de administración de estado (visible para Admin / SuperAdmin) */}
+                    {isAdmin && onStatusChange && (
+                        <div className="p-3.5 rounded-xl border border-border-thin bg-surface flex items-center justify-between gap-3 shrink-0">
+                            <span className="text-[11.5px] text-text-dim font-medium">Estado del reporte:</span>
+                            <div className="w-40">
+                                <GeistSelect
+                                    value={report.estado}
+                                    onChange={(val) => onStatusChange(reportId, String(val))}
+                                    options={ESTADO_ROW_OPTIONS}
+                                />
                             </div>
                         </div>
                     )}
-
-                    {/* Hilo de Conversación Bidireccional */}
-                    <div className="bento-card static p-4 space-y-3">
-                        <FeedbackDiscussionThread
-                            report={report}
-                            isAdmin={isAdmin}
-                            onMessageSent={(updated) => {
-                                if (onReportUpdated) {
-                                    onReportUpdated(updated);
-                                }
-                            }}
-                        />
-                    </div>
-                </div>
-
-                {/* Footer del Panel */}
-                <div className="p-4 border-t border-border-thin bg-surface shrink-0 flex items-center justify-between">
-                    <div className="text-[11px] text-text-dim font-mono">
-                        {report.nombre_usuario || report.nombreUsuario
-                            ? `Reportado por ${report.nombre_usuario || report.nombreUsuario}`
-                            : 'Buzón de incidencias DIITRA'}
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="btn-vercel-secondary text-[12px] font-medium px-4 py-1.5 cursor-pointer"
-                    >
-                        Cerrar
-                    </button>
                 </div>
             </div>
         </div>,
         document.body
     );
 };
+

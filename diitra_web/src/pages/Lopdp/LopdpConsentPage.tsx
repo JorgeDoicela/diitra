@@ -88,27 +88,32 @@ const LopdpConsentPage: React.FC = () => {
 
                     <p>
                         <strong>2. FINALIDADES DEL TRATAMIENTO:</strong><br />
-                        Sus datos personales serán tratados exclusivamente para las siguientes finalidades institucionales y académicas:
+                        Sus datos personales serán tratados exclusivamente para las siguientes finalidades institucionales, académicas y técnicas:
                     </p>
                     <ul className="list-disc pl-5 space-y-1">
                         <li>Gestión, evaluación, monitoreo y archivo de proyectos de investigación científica, desarrollo experimental y transferencia tecnológica.</li>
                         <li>Registro y acreditación de la producción científica ante los organismos de control de la educación superior (SENESCYT, CACES).</li>
                         <li>Habilitación y uso temporal de firmas electrónicas (sin almacenamiento ni custodia del certificado en el servidor) para la suscripción de actas de acreditación y reportes de avance.</li>
                         <li>Procesos de revisión por pares ciegos (evaluadores internos y externos).</li>
+                        <li>Auditoría de seguridad, trazabilidad de operaciones críticas y prevención de accesos no autorizados en la plataforma.</li>
+                        <li>Atención, diagnóstico técnico y resolución de incidencias o errores reportados por los usuarios.</li>
                         <li>Envío de notificaciones críticas de la plataforma y alertas sobre hitos y fechas límite.</li>
                     </ul>
 
                     <p>
                         <strong>3. DATOS OBJETO DE TRATAMIENTO:</strong><br />
                         DIITRA recopila y procesa los siguientes datos:
-                        Datos de identificación y contacto (nombres completos, cédula/pasaporte, correo institucional).
-                        Datos académicos e investigadores (grados académicos, especialidades, ORCID ID, Scopus Author ID, Google Scholar URL, ResearchGate URL).
-                        Datos técnicos de seguridad y de auditoría (dirección IP, navegador y dispositivo, fecha y hora de acceso, firmas electrónicas y códigos de verificación del consentimiento).
                     </p>
+                    <ul className="list-disc pl-5 space-y-1">
+                        <li><strong>Datos de identificación y contacto:</strong> nombres completos, cédula/pasaporte, correo institucional y rol asignado.</li>
+                        <li><strong>Datos académicos e investigadores:</strong> grados académicos, especialidades, ORCID ID, Scopus Author ID, Google Scholar URL, ResearchGate URL.</li>
+                        <li><strong>Datos técnicos de auditoría y seguridad:</strong> dirección IP, identificador de sesión, fecha/hora exacta de cada operación, registros de auditoría de modificaciones y evidencias electrónicas del consentimiento.</li>
+                        <li><strong>Datos de telemetría y diagnóstico técnico:</strong> información del navegador, sistema operativo, resolución de pantalla, capacidades de hardware y ruta de ejecución transmitidos durante la notificación voluntaria de incidencias para soporte.</li>
+                    </ul>
 
                     <p>
-                        <strong>4. SEGURIDAD Y PRIVACIDAD DE LA FIRMA:</strong><br />
-                        Los datos personales son custodiados utilizando altos estándares de seguridad informática. El certificado digital (.p12) y su contraseña ingresados para la firma electrónica se procesan de forma temporal en la memoria del servidor durante la firma y <strong>nunca se almacenan</strong> en bases de datos o discos del sistema.
+                        <strong>4. SEGURIDAD, AUDITORÍA Y PRIVACIDAD DE LA FIRMA:</strong><br />
+                        Los datos personales y técnicos son custodiados utilizando altos estándares de seguridad informática y principio de mínimo privilegio (acceso técnico restringido). El certificado digital (.p12) y su contraseña ingresados para la firma electrónica se procesan de forma temporal y efímera en la memoria del servidor durante la firma y <strong>nunca se almacenan</strong> en bases de datos o discos del sistema.
                     </p>
 
                     <p className="border-t border-border-thin/50 pt-3 text-center text-[10px] font-semibold text-text-main">

@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { 
     X, Send, Bug, HelpCircle, 
     UploadCloud, Trash2, Image as ImageIcon, Video, CheckCircle2, 
-    ExternalLink, AlertCircle, Info, ChevronLeft, ChevronRight, Eye
+    ExternalLink, AlertCircle, Info, ChevronLeft, ChevronRight, Eye,
+    Clipboard
 } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
 import { useLocation } from 'react-router-dom';
@@ -15,6 +16,67 @@ interface FeedbackModalProps {
 }
 
 type FeedbackType = 'ERROR' | 'DUDA';
+
+const normalizeMediaFile = (file: File): File => {
+    let type = file.type;
+    const name = file.name || '';
+    const ext = name.split('.').pop()?.toLowerCase();
+
+    if (!type && ext) {
+        if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'].includes(ext)) {
+            type = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+        } else if (['mp4', 'webm', 'mov', 'mkv', 'avi'].includes(ext)) {
+            type = ext === 'mov' ? 'video/quicktime' : `video/${ext}`;
+        }
+    }
+
+    const isGeneric = !name || name === 'image.png' || name === 'blob';
+    if (isGeneric) {
+        const now = new Date();
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const timeStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+        const finalExt = type.split('/')[1]?.split('+')[0] || (type.startsWith('video/') ? 'mp4' : 'png');
+        const prefix = type.startsWith('video/') ? 'Video' : 'Captura';
+        return new File([file], `${prefix}_${timeStr}.${finalExt}`, { type });
+    }
+
+    if (type !== file.type) {
+        return new File([file], name, { type });
+    }
+
+    return file;
+};
+
+const extractMediaFilesFromDataTransfer = (dataTransfer: DataTransfer): File[] => {
+    const files: File[] = [];
+
+    if (dataTransfer.items && dataTransfer.items.length > 0) {
+        for (let i = 0; i < dataTransfer.items.length; i++) {
+            const item = dataTransfer.items[i];
+            if (item.kind === 'file') {
+                const file = item.getAsFile();
+                if (file) {
+                    const normalized = normalizeMediaFile(file);
+                    if (normalized.type.startsWith('image/') || normalized.type.startsWith('video/')) {
+                        files.push(normalized);
+                    }
+                }
+            }
+        }
+    }
+
+    if (files.length === 0 && dataTransfer.files && dataTransfer.files.length > 0) {
+        for (let i = 0; i < dataTransfer.files.length; i++) {
+            const file = dataTransfer.files[i];
+            const normalized = normalizeMediaFile(file);
+            if (normalized.type.startsWith('image/') || normalized.type.startsWith('video/')) {
+                files.push(normalized);
+            }
+        }
+    }
+
+    return files;
+};
 
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
     const { user, roleDisplayName } = useAuth();
@@ -38,6 +100,12 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
     const [errors, setErrors] = useState<{ titulo?: string; descripcion?: string; archivos?: string; general?: string }>({});
     const [isSuccess, setIsSuccess] = useState(false);
     const [previewModalIndex, setPreviewModalIndex] = useState<number | null>(null);
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+    const archivosRef = useRef(archivos);
+    archivosRef.current = archivos;
+    const previewsRef = useRef(previews);
+    previewsRef.current = previews;
 
     // Bloquear scroll de fondo
     useEffect(() => {
@@ -92,11 +160,46 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
             });
             setIsSuccess(false);
             setErrors({});
+            setContextMenu(null);
         }
     }, [isOpen]);
 
-    const previewsRef = useRef(previews);
-    previewsRef.current = previews;
+    // Soporte global de pegado con teclado (Ctrl + V / Pegar captura o video)
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handlePaste = (e: ClipboardEvent) => {
+            if (!e.clipboardData) return;
+
+            const target = e.target as HTMLElement | null;
+            const isTextInput = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+
+            const mediaFiles = extractMediaFilesFromDataTransfer(e.clipboardData);
+
+            if (mediaFiles.length > 0) {
+                // Si el portapapeles contiene capturas o videos, procesarlos como adjuntos
+                e.preventDefault();
+                processFiles(mediaFiles);
+            } else if (!isTextInput) {
+                // Si no estamos en un input y no hay archivos multimedia, no se realiza acción
+            }
+        };
+
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, [isOpen]);
+
+    // Cerrar menú contextual al interactuar o hacer scroll fuera
+    useEffect(() => {
+        if (!contextMenu) return;
+        const handleClose = () => setContextMenu(null);
+        window.addEventListener('click', handleClose);
+        window.addEventListener('scroll', handleClose, true);
+        return () => {
+            window.removeEventListener('click', handleClose);
+            window.removeEventListener('scroll', handleClose, true);
+        };
+    }, [contextMenu]);
 
     // Limpieza de URLs blob únicamente cuando se desmonta el componente
     useEffect(() => {
@@ -120,13 +223,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
         setErrors(prev => ({ ...prev, archivos: undefined }));
         if (selectedFiles.length === 0) return;
 
-        const currentImages = archivos.filter(f => f.type.startsWith('image/'));
-        const currentVideos = archivos.filter(f => f.type.startsWith('video/'));
+        const currentImages = archivosRef.current.filter(f => f.type.startsWith('image/'));
+        const currentVideos = archivosRef.current.filter(f => f.type.startsWith('video/'));
 
         const newFilesToAdd: File[] = [];
         const newPreviewsToAdd: { name: string; url: string; isVideo: boolean; size: string }[] = [];
 
-        for (const file of selectedFiles) {
+        for (const rawFile of selectedFiles) {
+            const file = normalizeMediaFile(rawFile);
             const isImage = file.type.startsWith('image/');
             const isVideo = file.type.startsWith('video/');
 
@@ -171,6 +275,45 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
 
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
+        }
+    };
+
+    const handlePasteFromClipboard = async () => {
+        try {
+            if (!navigator.clipboard || !navigator.clipboard.read) {
+                setErrors(prev => ({
+                    ...prev,
+                    archivos: 'Usa el atajo de teclado Ctrl + V para pegar la captura o video directamente.'
+                }));
+                return;
+            }
+
+            const clipboardItems = await navigator.clipboard.read();
+            const files: File[] = [];
+
+            for (const item of clipboardItems) {
+                for (const type of item.types) {
+                    if (type.startsWith('image/') || type.startsWith('video/')) {
+                        const blob = await item.getType(type);
+                        const rawFile = new File([blob], 'clipboard_file', { type });
+                        files.push(normalizeMediaFile(rawFile));
+                    }
+                }
+            }
+
+            if (files.length > 0) {
+                processFiles(files);
+            } else {
+                setErrors(prev => ({
+                    ...prev,
+                    archivos: 'No se encontraron imágenes ni videos en el portapapeles. Copia o toma una captura de pantalla primero y vuelve a intentar.'
+                }));
+            }
+        } catch {
+            setErrors(prev => ({
+                ...prev,
+                archivos: 'Para pegar tu captura o video, presiona la combinación de teclas Ctrl + V.'
+            }));
         }
     };
 
@@ -597,10 +740,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
                                     /* Dropzone blanco limpio en modo claro, oscuro sobrio en dark mode */
                                     <div 
                                         onClick={() => fileInputRef.current?.click()}
+                                        onContextMenu={(e) => {
+                                            e.preventDefault();
+                                            setContextMenu({ x: e.clientX, y: e.clientY });
+                                        }}
                                         onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
                                         onDragLeave={() => setIsDraggingOver(false)}
                                         onDrop={handleDrop}
-                                        className={`border border-dashed rounded-xl transition-all flex flex-col items-center justify-center cursor-pointer text-center ${
+                                        className={`border border-dashed rounded-xl transition-all flex flex-col items-center justify-center cursor-pointer text-center select-none ${
                                             previews.length > 0 ? 'py-4 px-3 gap-2' : 'py-8 px-4 gap-2.5'
                                         } ${
                                             isDraggingOver 
@@ -614,17 +761,18 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
                                             </div>
                                             <p className="text-[13px] font-medium text-text-main">
                                                 {archivos.filter(f => f.type.startsWith('image/')).length >= 3
-                                                    ? 'Límite de imágenes alcanzado. Clic aquí para adjuntar video (máx 1)'
-                                                    : 'Haz clic o arrastra capturas y videos aquí'
+                                                    ? 'Límite de imágenes alcanzado. Clic para adjuntar video (máx 1)'
+                                                    : 'Haz clic, arrastra o presiona Ctrl + V para pegar'
                                                 }
                                             </p>
                                         </div>
+
                                         {previews.length === 0 && (
                                             <div className="flex items-center gap-1.5 text-[10px] font-mono text-text-dim">
-                                                <span className="px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">PNG</span>
-                                                <span className="px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">JPG</span>
-                                                <span className="px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">WEBP</span>
-                                                <span className="px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">MP4</span>
+                                                <span className="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">PNG</span>
+                                                <span className="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">JPG</span>
+                                                <span className="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">WEBP</span>
+                                                <span className="px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xs">MP4</span>
                                             </div>
                                         )}
                                     </div>
@@ -867,6 +1015,48 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
                             </button>
                         </div>
                     </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Menú contextual flotante para Clic Derecho (Pegar / Examinar) */}
+            {contextMenu && createPortal(
+                <div
+                    style={{
+                        top: Math.min(contextMenu.y, window.innerHeight - 110),
+                        left: Math.min(contextMenu.x, window.innerWidth - 230)
+                    }}
+                    className="fixed z-[99999] min-w-[210px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl py-1.5 px-1 animate-in fade-in zoom-in-95 duration-100 backdrop-blur-md"
+                    onClick={(e) => e.stopPropagation()}
+                    onContextMenu={(e) => e.preventDefault()}
+                >
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setContextMenu(null);
+                            handlePasteFromClipboard();
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2 text-[12px] font-medium text-text-main hover:bg-zinc-100 dark:hover:bg-zinc-800/80 rounded-lg transition-colors cursor-pointer"
+                    >
+                        <span className="flex items-center gap-2">
+                            <Clipboard className="w-3.5 h-3.5 text-blue-500" />
+                            Pegar captura o video
+                        </span>
+                        <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-text-dim">
+                            Ctrl + V
+                        </kbd>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setContextMenu(null);
+                            fileInputRef.current?.click();
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-[12px] font-medium text-text-main hover:bg-zinc-100 dark:hover:bg-zinc-800/80 rounded-lg transition-colors cursor-pointer"
+                    >
+                        <UploadCloud className="w-3.5 h-3.5 text-text-dim" />
+                        Examinar archivos...
+                    </button>
                 </div>,
                 document.body
             )}

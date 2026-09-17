@@ -18,9 +18,10 @@ export const SolicitudesPage: React.FC = () => {
 
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl">
                 {/* Tarjeta 1: Grupos de Investigación */}
-                <div className="bento-card p-6 flex flex-col justify-between rounded-xl border border-border-thin bg-surface hover:border-border-accent/40 transition-all duration-200 group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
-                    
+                <Link
+                    to="/grupos"
+                    className="bento-card p-6 flex flex-col justify-between rounded-xl border border-border-thin bg-surface hover:border-text-dim/40 transition-all duration-200 group cursor-pointer no-underline text-inherit block"
+                >
                     <div className="space-y-4">
                         <div className="flex items-center justify-end">
                             <span className="badge-vercel-green text-[11px] py-0.5 px-2 font-medium">
@@ -29,7 +30,7 @@ export const SolicitudesPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <h3 className="text-base font-semibold text-text-main group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            <h3 className="text-base font-semibold text-text-main group-hover:text-brand transition-colors">
                                 Grupos de Investigación
                             </h3>
                             <p className="text-xs text-text-dim leading-relaxed mt-1.5">
@@ -51,20 +52,18 @@ export const SolicitudesPage: React.FC = () => {
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-border-thin">
-                        <Link
-                            to="/grupos"
-                            className="btn-brand w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold py-2.5 px-5 no-underline"
-                        >
+                        <div className="btn-brand w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold py-2.5 px-5 group-hover:opacity-95 transition-opacity">
                             <span>Administrar y Proponer Grupos</span>
-                            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                        </Link>
+                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        </div>
                     </div>
-                </div>
+                </Link>
 
                 {/* Tarjeta 2: Adopción de Proyectos */}
-                <div className="bento-card p-6 flex flex-col justify-between rounded-xl border border-border-thin bg-surface hover:border-border-accent/40 transition-all duration-200 group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-                    
+                <Link
+                    to="/investigacion/adopcion"
+                    className="bento-card p-6 flex flex-col justify-between rounded-xl border border-border-thin bg-surface hover:border-text-dim/40 transition-all duration-200 group cursor-pointer no-underline text-inherit block"
+                >
                     <div className="space-y-4">
                         <div className="flex items-center justify-end">
                             <span className="badge-vercel-amber text-[11px] py-0.5 px-2 font-medium">
@@ -73,7 +72,7 @@ export const SolicitudesPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <h3 className="text-base font-semibold text-text-main group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                            <h3 className="text-base font-semibold text-text-main group-hover:text-amber-500 transition-colors">
                                 Adopción de Proyectos
                             </h3>
                             <p className="text-xs text-text-dim leading-relaxed mt-1.5">
@@ -95,20 +94,18 @@ export const SolicitudesPage: React.FC = () => {
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-border-thin">
-                        <Link
-                            to="/investigacion/adopcion"
-                            className="btn-brand w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold py-2.5 px-5 no-underline"
-                        >
+                        <div className="btn-brand w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold py-2.5 px-5 group-hover:opacity-95 transition-opacity">
                             <span>Ver Proyectos para Adopción</span>
-                            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                        </Link>
+                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        </div>
                     </div>
-                </div>
+                </Link>
 
                 {/* Tarjeta 3: Buzón de Incidencias */}
-                <div className="bento-card p-6 flex flex-col justify-between rounded-xl border border-border-thin bg-surface hover:border-border-accent/40 transition-all duration-200 group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl pointer-events-none" />
-                    
+                <Link
+                    to="/incidencias"
+                    className="bento-card p-6 flex flex-col justify-between rounded-xl border border-border-thin bg-surface hover:border-text-dim/40 transition-all duration-200 group cursor-pointer no-underline text-inherit block"
+                >
                     <div className="space-y-4">
                         <div className="flex items-center justify-end">
                             <span className="badge-vercel-neutral text-[11px] py-0.5 px-2 font-medium">
@@ -117,7 +114,7 @@ export const SolicitudesPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <h3 className="text-base font-semibold text-text-main group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                            <h3 className="text-base font-semibold text-text-main group-hover:text-brand transition-colors">
                                 Buzón de Incidencias
                             </h3>
                             <p className="text-xs text-text-dim leading-relaxed mt-1.5">
@@ -139,15 +136,12 @@ export const SolicitudesPage: React.FC = () => {
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-border-thin">
-                        <Link
-                            to="/incidencias"
-                            className="btn-brand w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold py-2.5 px-5 no-underline"
-                        >
+                        <div className="btn-brand w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-semibold py-2.5 px-5 group-hover:opacity-95 transition-opacity">
                             <span>Ir a Buzón de Incidencias</span>
-                            <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                        </Link>
+                            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        </div>
                     </div>
-                </div>
+                </Link>
             </div>
         </main>
     );

@@ -16,6 +16,7 @@ const GroupsPage = () => {
     const {
         user,
         isAdmin,
+        canManageAllGroups,
         groups,
         lines,
         dominios,
@@ -72,7 +73,7 @@ const GroupsPage = () => {
                 />
             )}
 
-            {!isAdmin && (
+            {canManageAllGroups && (
                 <GroupViewTabs
                     viewMode={viewMode}
                     setViewMode={setViewMode}

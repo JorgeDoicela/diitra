@@ -30,7 +30,7 @@ export const GroupsTable: React.FC<GroupsTableProps> = ({
     formatCareerName,
 }) => {
     const filteredGroups = groups.filter(g => {
-        if (isAdmin || viewMode === 'all') return true;
+        if (isAdmin && viewMode === 'all') return true;
         const isCoord = g.id_profesor_coordinador?.trim() === user?.id_referencia?.trim();
         const isMem = g.teacherMemberCedulas?.some((ced: string) => ced.trim() === user?.id_referencia?.trim());
         return isCoord || isMem;

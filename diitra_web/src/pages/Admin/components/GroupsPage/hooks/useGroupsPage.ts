@@ -6,7 +6,8 @@ import type { Group, ResearchLine, Domain, Career, PendingDraft, ConfirmDialogSt
 import { useGroupsReview } from './useGroupsReview';
 
 export function useGroupsPage() {
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, isSuperAdmin } = useAuth();
+    const canManageAllGroups = Boolean(isAdmin || isSuperAdmin);
     const [searchParams, setSearchParams] = useSearchParams();
     const openUuid = searchParams.get('open');
 
@@ -17,6 +18,12 @@ export function useGroupsPage() {
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
     const [viewMode, setViewMode] = useState<'all' | 'my'>('my');
+
+    useEffect(() => {
+        if (!canManageAllGroups && viewMode !== 'my') {
+            setViewMode('my');
+        }
+    }, [canManageAllGroups, viewMode]);
 
     // Drawer / Modal states for creation and edit
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -230,7 +237,9 @@ export function useGroupsPage() {
 
     return {
         user,
-        isAdmin,
+        isAdmin: canManageAllGroups,
+        isSuperAdmin,
+        canManageAllGroups,
         groups,
         lines,
         dominios,

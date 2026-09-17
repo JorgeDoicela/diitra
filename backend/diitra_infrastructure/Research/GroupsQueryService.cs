@@ -37,8 +37,8 @@ namespace diitra_infrastructure.Research
             if (!isAdmin && !string.IsNullOrEmpty(userSigafiId))
             {
                 var userSigafiTrim = userSigafiId.Trim();
-                query = query.Where(g => g.Estado == "Aprobado" 
-                    || (g.IdCoordinadorNavigation != null && g.IdCoordinadorNavigation.IdSigafi == userSigafiTrim)
+                query = query.Where(g => 
+                    (g.IdCoordinadorNavigation != null && g.IdCoordinadorNavigation.IdSigafi == userSigafiTrim)
                     || g.InvGruposMiembros.Any(m => m.IdUsuarioNavigation != null && m.IdUsuarioNavigation.IdSigafi == userSigafiTrim && m.Activo != false));
             }
 

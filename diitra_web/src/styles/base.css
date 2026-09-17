@@ -79,12 +79,12 @@ body {
 }
 
 /* Enfoque Vercel en Inputs */
-input:focus,
-textarea:focus,
-select:focus,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
+input:not(.border-none):not([class*="border-none"]):not(.border-0):focus,
+textarea:not(.border-none):not([class*="border-none"]):not(.border-0):focus,
+select:not(.border-none):not([class*="border-none"]):not(.border-0):focus,
+input:not(.border-none):not([class*="border-none"]):not(.border-0):focus-visible,
+textarea:not(.border-none):not([class*="border-none"]):not(.border-0):focus-visible,
+select:not(.border-none):not([class*="border-none"]):not(.border-0):focus-visible {
     outline: none !important;
     border-color: var(--fg) !important;
     box-shadow: 0 0 0 1px var(--fg) !important;

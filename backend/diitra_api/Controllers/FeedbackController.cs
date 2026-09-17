@@ -258,7 +258,13 @@ public class CreateFeedbackApiRequest
 
         var cedula = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
         var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).Union(User.FindAll("roles").Select(c => c.Value)).Distinct().ToList();
-        var isSuperAdmin = roles.Contains("DIITRA_SUPER_ADMIN") || User.FindFirst("es_super_admin")?.Value == "true" || User.FindFirst("es_superadmin")?.Value == "true";
+        var isSuperAdmin = roles.Contains("DIITRA_SUPER_ADMIN") 
+            || roles.Contains("SUPERADMIN") 
+            || roles.Contains("SUPER_ADMIN")
+            || roles.Contains("ADMINISTRADOR")
+            || roles.Contains("ADMIN")
+            || User.FindFirst("es_super_admin")?.Value == "true" 
+            || User.FindFirst("es_superadmin")?.Value == "true";
 
         try
         {

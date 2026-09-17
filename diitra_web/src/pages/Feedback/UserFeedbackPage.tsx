@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
     Plus, MessageSquare, RefreshCw, Pencil, Trash2, 
-    Clock, ChevronDown, Play, CheckCircle2, Eye, FilterX,
+    Clock, ChevronDown, Play, CheckCircle2, FilterX,
     ArrowLeft, ChevronRight
 } from 'lucide-react';
 import { 
@@ -75,7 +75,15 @@ export const UserFeedbackPage: React.FC = () => {
 
     // Sincronización ante eventos de actualización de feedback
     useEffect(() => {
-        const handleFeedbackChanged = () => loadData(true);
+        const handleFeedbackChanged = (e?: any) => {
+            const idEliminado = e?.detail?.idEliminado || e?.detail?.FeedbackId;
+            if (idEliminado) {
+                const numId = Number(idEliminado);
+                setReportes(prev => prev.filter(r => (r.id_feedback || r.idFeedback) !== numId));
+                setActiveReport(prev => (prev && (prev.id_feedback || prev.idFeedback) === numId ? null : prev));
+            }
+            loadData(true);
+        };
         window.addEventListener('diitra-feedback-changed', handleFeedbackChanged);
         return () => window.removeEventListener('diitra-feedback-changed', handleFeedbackChanged);
     }, [loadData]);
@@ -136,7 +144,7 @@ export const UserFeedbackPage: React.FC = () => {
                 setActiveReport(null);
             }
             setDeletingReport(null);
-            window.dispatchEvent(new CustomEvent('diitra-feedback-changed'));
+            window.dispatchEvent(new CustomEvent('diitra-feedback-changed', { detail: { idEliminado: id } }));
         } catch (err: any) {
             console.error('Error al eliminar reporte:', err);
             setDeleteError(err.response?.data?.message || 'Error al eliminar el reporte.');
@@ -148,7 +156,7 @@ export const UserFeedbackPage: React.FC = () => {
     return (
         <main className="flex-1 bg-bg-deep p-6 md:p-8 lg:p-10 space-y-6">
             {/* Breadcrumb de navegación */}
-            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-text-dim animate-fade-in -mb-2">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 mb-1 text-xs text-text-dim animate-fade-in select-none">
                 <Link
                     to="/solicitudes"
                     className="p-1 -ml-1 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors inline-flex items-center justify-center no-underline"
@@ -285,10 +293,7 @@ export const UserFeedbackPage: React.FC = () => {
                                     {/* Contenido Principal */}
                                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                                         <div className="space-y-2 flex-1 min-w-0">
-                                            <h3 
-                                                onClick={() => handleOpenDrawer(r, 0)}
-                                                className="text-[14.5px] font-semibold text-text-main hover:text-brand transition-colors cursor-pointer"
-                                            >
+                                            <h3 className="text-[14.5px] font-semibold text-text-main">
                                                 {r.titulo}
                                             </h3>
                                             <p className="text-[13px] text-text-dim whitespace-pre-wrap leading-relaxed line-clamp-3">
@@ -357,45 +362,39 @@ export const UserFeedbackPage: React.FC = () => {
                                         )}
                                     </div>
 
-                                    {/* Footer de Tarjeta con Apertura Universal al Detalle */}
-                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-[11px] text-text-dim border-t border-border-thin">
-                                        <div className="flex items-center gap-3 flex-wrap">
+                                    {/* Footer de Tarjeta: Bloque de datos (Pantalla + Fecha abajo) y Botón de Conversación al lado derecho */}
+                                    <div className="flex flex-wrap items-center gap-4 pt-2.5 text-[11px] text-text-dim border-t border-border-thin">
+                                        <div className="flex flex-col gap-1 text-[11px] text-text-dim">
                                             {r.ruta_origen && (
-                                                <span>Pantalla: <code className="px-1.5 py-0.5 rounded bg-accents-1 text-text-main font-mono text-[10.5px]">{r.ruta_origen}</code></span>
+                                                <div>
+                                                    <span>Pantalla: </span>
+                                                    <code className="px-1.5 py-0.5 rounded bg-accents-1 text-text-main font-mono text-[10.5px]">{r.ruta_origen}</code>
+                                                </div>
                                             )}
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleThread(id)}
-                                                className={`inline-flex items-center gap-1.5 font-medium px-2.5 py-1 rounded-md text-[11.5px] transition-colors cursor-pointer ${
-                                                    expandedThreadIds.has(id)
-                                                        ? 'bg-brand/10 text-brand font-semibold'
-                                                        : 'text-text-dim hover:text-text-main hover:bg-surface-hover'
-                                                }`}
-                                            >
-                                                <MessageSquare size={13} />
-                                                <span>Conversación ({r.conversacion?.length || 0})</span>
-                                                <ChevronDown 
-                                                    size={13} 
-                                                    className={`transition-transform duration-200 ${expandedThreadIds.has(id) ? 'rotate-180 text-brand' : ''}`} 
-                                                />
-                                            </button>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleOpenDrawer(r, 0)}
-                                                className="btn-vercel-secondary text-[11px] font-medium px-2.5 py-1 flex items-center gap-1.5 cursor-pointer"
-                                                title="Abrir inspección y visor multimedia"
-                                            >
-                                                <Eye size={12} />
-                                                <span>Ver detalle</span>
-                                            </button>
-
                                             <div className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3 text-text-dim" />
                                                 <span className="font-mono text-[10.5px]">{formattedDate}</span>
                                             </div>
+                                        </div>
+
+                                        <div className="flex items-center pl-3 border-l border-border-thin self-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleThread(id)}
+                                                className={`inline-flex items-center gap-1.5 text-[11.5px] font-medium py-1 px-2 rounded-md transition-colors cursor-pointer ${
+                                                    expandedThreadIds.has(id)
+                                                        ? 'text-brand font-semibold hover:text-brand/80'
+                                                        : 'text-text-dim hover:text-text-main hover:bg-surface-hover'
+                                                }`}
+                                                title={expandedThreadIds.has(id) ? "Ocultar conversación" : "Abrir conversación"}
+                                            >
+                                                <MessageSquare size={13.5} className={expandedThreadIds.has(id) ? "text-brand" : "text-blue-500"} />
+                                                <span>{expandedThreadIds.has(id) ? 'Ocultar conversación' : 'Conversación'}</span>
+                                                <ChevronDown 
+                                                    size={13} 
+                                                    className={`transition-transform duration-200 ${expandedThreadIds.has(id) ? 'rotate-180 text-brand' : 'text-text-dim'}`} 
+                                                />
+                                            </button>
                                         </div>
                                     </div>
 
