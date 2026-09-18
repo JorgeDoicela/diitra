@@ -62,12 +62,6 @@
 
 .bento-card:hover {
     border-color: var(--border-hover);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    transform: translateY(-1px);
-}
-
-[data-theme="light"] .bento-card:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 .bento-card.static,

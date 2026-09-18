@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { 
     X, ChevronLeft, ChevronRight, Video, Image as ImageIcon,
     Trash2, Monitor, Cpu, Wifi, Globe, Terminal, Copy, Check,
-    Layers, HardDrive, ShieldCheck, CornerDownRight
+    Layers
 } from 'lucide-react';
 import { useAuth } from '../../../api/AuthContext';
 import { 
@@ -353,18 +353,19 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
 
                     {/* SECCIÓN EXCLUSIVA DE SUPERADMINISTRADOR: Datos técnicos y de máquina */}
                     {isSuperAdmin && (
-                        <div className="rounded-xl border border-indigo-500/25 bg-indigo-500/5 dark:bg-indigo-950/20 p-4 space-y-3">
-                            <div className="flex items-center justify-between gap-2 pb-2 border-b border-indigo-500/15">
-                                <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-                                    <ShieldCheck size={16} className="shrink-0" />
-                                    <span className="text-[12px] font-semibold tracking-wide uppercase font-mono">
+                        <div className="bento-card static overflow-hidden">
+                            {/* Header del bloque de diagnóstico */}
+                            <div className="px-4 py-3 bg-surface-deep/50 border-b border-border-thin flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 text-text-main">
+                                    <Monitor size={14} className="text-text-dim shrink-0" />
+                                    <span className="text-[11px] font-bold tracking-wider uppercase font-mono">
                                         Diagnóstico Técnico de la Máquina
                                     </span>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={handleCopyDiagnostic}
-                                    className="btn-vercel-secondary text-[11px] px-2.5 py-1 flex items-center gap-1.5 text-text-main border-border-thin hover:border-indigo-500/30 cursor-pointer"
+                                    className="btn-vercel-secondary text-[11px] px-2.5 py-1 flex items-center gap-1.5 text-text-main border-border-thin cursor-pointer"
                                     title="Copiar JSON completo del diagnóstico"
                                 >
                                     {copiedDiag ? (
@@ -382,48 +383,48 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
                             </div>
 
                             {meta ? (
-                                <div className="space-y-2.5 text-[12px]">
-                                    {/* Grid de Hardware y Navegador */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div>
+                                    {/* Grícula 2x2 estructurada de 1 sola capa (sin anidamiento excesivo de cajas) */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 divide-border-thin border-b border-border-thin bg-surface">
                                         {/* Sistema Operativo & Navegador */}
-                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin flex items-start gap-2.5">
-                                            <Monitor size={15} className="text-indigo-500 shrink-0 mt-0.5" />
+                                        <div className="p-3.5 sm:border-r border-border-thin flex items-start gap-2.5">
+                                            <Monitor size={14} className="text-text-dim shrink-0 mt-0.5" />
                                             <div className="min-w-0">
-                                                <span className="text-[10.5px] text-text-dim block font-medium">SO y Navegador</span>
-                                                <span className="font-semibold text-text-main text-[12px] truncate block">
+                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">SO y Navegador</span>
+                                                <span className="font-semibold text-text-main text-[12px] truncate block mt-0.5">
                                                     {meta.os || 'Desconocido'} • {meta.browser || 'Navegador'}
                                                 </span>
                                             </div>
                                         </div>
 
                                         {/* Pantalla & Viewport */}
-                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin flex items-start gap-2.5">
-                                            <Layers size={15} className="text-indigo-500 shrink-0 mt-0.5" />
+                                        <div className="p-3.5 flex items-start gap-2.5">
+                                            <Layers size={14} className="text-text-dim shrink-0 mt-0.5" />
                                             <div className="min-w-0">
-                                                <span className="text-[10.5px] text-text-dim block font-medium">Resolución / Ventana</span>
-                                                <span className="font-mono text-text-main text-[11.5px] truncate block">
-                                                    {meta.screen || 'N/A'} (VP: {meta.viewport || 'N/A'})
+                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Resolución / Ventana</span>
+                                                <span className="font-mono text-text-main text-[11.5px] truncate block mt-0.5">
+                                                    {meta.screen || 'N/A'} <span className="text-text-dim font-normal">(VP: {meta.viewport || 'N/A'})</span>
                                                 </span>
                                             </div>
                                         </div>
 
                                         {/* CPU & Memoria */}
-                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin flex items-start gap-2.5">
-                                            <Cpu size={15} className="text-indigo-500 shrink-0 mt-0.5" />
+                                        <div className="p-3.5 sm:border-r sm:border-t border-t border-border-thin flex items-start gap-2.5">
+                                            <Cpu size={14} className="text-text-dim shrink-0 mt-0.5" />
                                             <div className="min-w-0">
-                                                <span className="text-[10.5px] text-text-dim block font-medium">Hardware</span>
-                                                <span className="font-mono text-text-main text-[11.5px] truncate block">
+                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Hardware</span>
+                                                <span className="font-mono text-text-main text-[11.5px] truncate block mt-0.5">
                                                     {meta.hardwareConcurrency || 'N/D'} | {meta.deviceMemoryGB || 'RAM N/D'}
                                                 </span>
                                             </div>
                                         </div>
 
                                         {/* Conexión e Idioma */}
-                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin flex items-start gap-2.5">
-                                            <Wifi size={15} className="text-indigo-500 shrink-0 mt-0.5" />
+                                        <div className="p-3.5 border-t border-border-thin flex items-start gap-2.5">
+                                            <Wifi size={14} className="text-text-dim shrink-0 mt-0.5" />
                                             <div className="min-w-0">
-                                                <span className="text-[10.5px] text-text-dim block font-medium">Red e Idioma</span>
-                                                <span className="font-mono text-text-main text-[11.5px] truncate block">
+                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Red e Idioma</span>
+                                                <span className="font-mono text-text-main text-[11.5px] truncate block mt-0.5">
                                                     {meta.connectionType || 'Estable'} • {meta.language || 'es'}
                                                 </span>
                                             </div>
@@ -432,12 +433,12 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
 
                                     {/* Ruta Origen y URL */}
                                     {(meta.url || meta.pathname || report.ruta_origen || report.rutaOrigen) && (
-                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin space-y-1">
-                                            <div className="flex items-center gap-1.5 text-text-dim text-[10.5px] font-medium">
-                                                <Globe size={13} className="text-indigo-500" />
-                                                <span>Ruta exacta al momento de la incidencia:</span>
+                                        <div className="p-3.5 border-b border-border-thin space-y-1 bg-surface">
+                                            <div className="flex items-center gap-1.5 text-text-dim text-[10px] font-bold uppercase tracking-wider">
+                                                <Globe size={13} className="text-text-dim" />
+                                                <span>Ruta exacta al momento de la incidencia</span>
                                             </div>
-                                            <div className="font-mono text-[11px] text-text-main break-all bg-surface-deep px-2 py-1 rounded">
+                                            <div className="font-mono text-[11.5px] text-text-main break-all bg-surface-deep/40 px-2.5 py-1.5 rounded border border-border-thin/60 select-all">
                                                 {meta.url || meta.pathname || report.ruta_origen || report.rutaOrigen}
                                             </div>
                                         </div>
@@ -445,22 +446,22 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
 
                                     {/* User Agent Desplegable */}
                                     {meta.userAgent && (
-                                        <div className="p-2.5 rounded-lg bg-surface border border-border-thin space-y-1.5">
+                                        <div className="p-3.5 space-y-2 bg-surface">
                                             <button
                                                 type="button"
                                                 onClick={() => setShowFullUa(!showFullUa)}
-                                                className="w-full flex items-center justify-between text-left text-[10.5px] text-text-dim font-medium hover:text-text-main cursor-pointer"
+                                                className="w-full flex items-center justify-between text-left text-[10px] text-text-dim font-bold uppercase tracking-wider hover:text-text-main cursor-pointer group transition-colors"
                                             >
                                                 <span className="flex items-center gap-1.5">
-                                                    <Terminal size={12} className="text-indigo-500" />
+                                                    <Terminal size={13} className="text-text-dim group-hover:text-text-main transition-colors" />
                                                     <span>User Agent completo</span>
                                                 </span>
-                                                <span className="text-[10px] text-indigo-500 font-semibold">
+                                                <span className="text-[11px] font-mono text-brand hover:underline font-semibold">
                                                     {showFullUa ? 'Ocultar' : 'Ver'}
                                                 </span>
                                             </button>
                                             {showFullUa && (
-                                                <div className="font-mono text-[10.5px] leading-relaxed text-text-dim bg-surface-deep p-2 rounded break-all border border-border-thin animate-fade-in select-all">
+                                                <div className="font-mono text-[10.5px] leading-relaxed text-text-dim bg-surface-deep/50 p-2.5 rounded border border-border-thin/60 break-all animate-fade-in select-all">
                                                     {meta.userAgent}
                                                 </div>
                                             )}
@@ -468,9 +469,11 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
                                     )}
                                 </div>
                             ) : (
-                                <p className="text-[11.5px] text-text-dim italic">
-                                    No se registraron metadatos técnicos adicionales para esta incidencia.
-                                </p>
+                                <div className="p-4 bg-surface">
+                                    <p className="text-[11.5px] text-text-dim italic">
+                                        No se registraron metadatos técnicos adicionales para esta incidencia.
+                                    </p>
+                                </div>
                             )}
                         </div>
                     )}
@@ -478,11 +481,15 @@ export const FeedbackDetailDrawer: React.FC<FeedbackDetailDrawerProps> = ({
                     {/* Panel de administración de estado (visible para Admin / SuperAdmin) */}
                     {isAdmin && onStatusChange && (
                         <div className="p-3.5 rounded-xl border border-border-thin bg-surface flex items-center justify-between gap-3 shrink-0">
-                            <span className="text-[11.5px] text-text-dim font-medium">Estado del reporte:</span>
-                            <div className="w-40">
+                            <span className="text-[12px] text-text-dim font-medium">Estado del reporte:</span>
+                            <div className="w-56 sm:w-64 shrink-0">
                                 <GeistSelect
                                     value={report.estado}
-                                    onChange={(val) => onStatusChange(reportId, String(val))}
+                                    onChange={(val) => {
+                                        const nuevoEstado = String(val);
+                                        onStatusChange(reportId, nuevoEstado);
+                                        onReportUpdated?.({ ...report, estado: nuevoEstado });
+                                    }}
                                     options={ESTADO_ROW_OPTIONS}
                                 />
                             </div>

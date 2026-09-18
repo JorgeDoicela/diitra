@@ -48,11 +48,11 @@ namespace diitra_infrastructure.Research
         public Task<string?> ResolveCanonicalUuidAsync(string identifier)
             => _lookupSubservice.ResolveCanonicalUuidAsync(identifier);
 
-        public Task<List<ProyectoResumenDto>> GetAllProjectsAsync()
-            => _lookupSubservice.GetAllProjectsAsync();
+        public Task<List<ProyectoResumenDto>> GetAllProjectsAsync(string? modalidad = null)
+            => _lookupSubservice.GetAllProjectsAsync(modalidad);
 
-        public Task<List<ProyectoResumenDto>> GetMyProjectsAsync(string userIdReferencia)
-            => _lookupSubservice.GetMyProjectsAsync(userIdReferencia);
+        public Task<List<ProyectoResumenDto>> GetMyProjectsAsync(string userIdReferencia, string? modalidad = null)
+            => _lookupSubservice.GetMyProjectsAsync(userIdReferencia, modalidad);
 
         public Task<ProyectoDto?> GetProjectDetailAsync(string uuid)
             => _detailSubservice.GetProjectDetailAsync(uuid);

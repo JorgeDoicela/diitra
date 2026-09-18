@@ -11,6 +11,7 @@ import { GeistSelect } from '../Common/GeistSelect';
 
 interface CreateProjectModalProps {
     preselectedConvocatoriaId?: number | null;
+    initialModalidad?: 'INVESTIGACION' | 'INNOVACION';
     onClose: () => void;
     onSuccess?: (targetUrl: string) => void;
     restoreDraftOnOpen?: boolean;
@@ -58,6 +59,7 @@ const formatCurrency = (val: string | number) => {
 
 export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     preselectedConvocatoriaId,
+    initialModalidad,
     onClose,
     onSuccess,
     restoreDraftOnOpen = false
@@ -71,7 +73,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         return null;
     }
 
-    const [modalidad, setModalidad] = useState<'INVESTIGACION' | 'INNOVACION'>('INVESTIGACION');
+    const [modalidad, setModalidad] = useState<'INVESTIGACION' | 'INNOVACION'>(initialModalidad || 'INVESTIGACION');
     const [titulo, setTitulo] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [presupuestoEstimado, setPresupuestoEstimado] = useState<string>('');
@@ -381,6 +383,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             const initialMetadata = isInnovacion ? {
                 ...DocumentTemplateRegistry.PROTOCOLO_INNOVACION.schema,
                 Uuid: newUuid,
+                Modalidad: 'INNOVACION',
+                modalidad: 'INNOVACION',
                 Titulo: titulo.trim().toUpperCase(),
                 IdCarrera: idCarrera,
                 Carrera: carreraName,
@@ -400,6 +404,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             } : {
                 ...DocumentTemplateRegistry.PROTOCOLO_INVESTIGACION.schema,
                 Uuid: newUuid,
+                Modalidad: 'INVESTIGACION',
+                modalidad: 'INVESTIGACION',
                 Titulo: titulo.trim().toUpperCase(),
                 IdCarrera: idCarrera,
                 Carrera: carreraName,

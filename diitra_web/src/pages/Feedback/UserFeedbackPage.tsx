@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
     Plus, MessageSquare, RefreshCw, Pencil, Trash2, 
     Clock, ChevronDown, Play, CheckCircle2, FilterX,
@@ -20,11 +20,14 @@ import { FeedbackDetailDrawer } from './components/FeedbackDetailDrawer';
 import { FeedbackEditDrawer } from './components/FeedbackEditDrawer';
 import { FeedbackDeleteDrawer } from './components/FeedbackDeleteDrawer';
 import { useFeedbackFilters } from './hooks/useFeedbackFilters';
+import { useFeedbackUnreadMessages } from './hooks/useFeedbackUnreadMessages';
 
 export const UserFeedbackPage: React.FC = () => {
+    const [searchParams] = useSearchParams();
     const [reportes, setReportes] = useState<FeedbackReporte[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [expandedThreadIds, setExpandedThreadIds] = useState<Set<number>>(new Set());
+    const { getUnreadCount, markReportAsRead } = useFeedbackUnreadMessages(false);
 
     // Drawer de Detalle y Visor Multimedia
     const [activeReport, setActiveReport] = useState<FeedbackReporte | null>(null);
@@ -93,15 +96,40 @@ export const UserFeedbackPage: React.FC = () => {
         setActiveMediaIndex(mediaIdx);
     };
 
-    const toggleThread = (id?: number) => {
+    const toggleThread = (id?: number, report?: FeedbackReporte) => {
         if (!id) return;
         setExpandedThreadIds(prev => {
             const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
+            const willExpand = !next.has(id);
+            if (willExpand) {
+                next.add(id);
+                markReportAsRead(id, report?.conversacion);
+            } else {
+                next.delete(id);
+            }
             return next;
         });
     };
+
+    // Auto-expandir y enfocar incidencia si viene referenciada en la URL desde una notificación
+    const targetIdParam = searchParams.get('id');
+    useEffect(() => {
+        if (!targetIdParam || reportes.length === 0) return;
+        const targetId = Number(targetIdParam);
+        if (!isNaN(targetId) && targetId > 0) {
+            setExpandedThreadIds(prev => new Set(prev).add(targetId));
+            const rep = reportes.find(r => (r.id_feedback || r.idFeedback) === targetId);
+            if (rep) {
+                markReportAsRead(targetId, rep.conversacion);
+            }
+            setTimeout(() => {
+                const el = document.getElementById(`report-card-${targetId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 300);
+        }
+    }, [targetIdParam, reportes, markReportAsRead]);
 
     const isEditable = (estado?: string) => {
         const est = estado?.toUpperCase() || '';
@@ -252,7 +280,7 @@ export const UserFeedbackPage: React.FC = () => {
                             }) : '';
 
                             return (
-                                <div key={r.uuid || id} className="bento-card static p-5 space-y-4">
+                                <div key={r.uuid || id} id={`report-card-${id}`} className="bento-card static p-5 space-y-4">
                                     {/* Encabezado de la Tarjeta */}
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-thin pb-3">
                                         <div className="flex items-center gap-2 flex-wrap">
@@ -378,23 +406,37 @@ export const UserFeedbackPage: React.FC = () => {
                                         </div>
 
                                         <div className="flex items-center pl-3 border-l border-border-thin self-center">
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleThread(id)}
-                                                className={`inline-flex items-center gap-1.5 text-[11.5px] font-medium py-1 px-2 rounded-md transition-colors cursor-pointer ${
-                                                    expandedThreadIds.has(id)
-                                                        ? 'text-brand font-semibold hover:text-brand/80'
-                                                        : 'text-text-dim hover:text-text-main hover:bg-surface-hover'
-                                                }`}
-                                                title={expandedThreadIds.has(id) ? "Ocultar conversación" : "Abrir conversación"}
-                                            >
-                                                <MessageSquare size={13.5} className={expandedThreadIds.has(id) ? "text-brand" : "text-blue-500"} />
-                                                <span>{expandedThreadIds.has(id) ? 'Ocultar conversación' : 'Conversación'}</span>
-                                                <ChevronDown 
-                                                    size={13} 
-                                                    className={`transition-transform duration-200 ${expandedThreadIds.has(id) ? 'rotate-180 text-brand' : 'text-text-dim'}`} 
-                                                />
-                                            </button>
+                                            {(() => {
+                                                const unreadCount = getUnreadCount(r);
+                                                const isExpanded = expandedThreadIds.has(id);
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleThread(id, r)}
+                                                        className={`inline-flex items-center gap-1.5 text-[11.5px] font-medium py-1 px-2 rounded-md transition-colors cursor-pointer ${
+                                                            isExpanded
+                                                                ? 'text-brand font-semibold hover:text-brand/80'
+                                                                : 'text-text-dim hover:text-text-main hover:bg-surface-hover'
+                                                        }`}
+                                                        title={isExpanded ? "Ocultar conversación" : "Abrir conversación"}
+                                                    >
+                                                        <MessageSquare size={13.5} className={isExpanded ? "text-brand" : "text-blue-500"} />
+                                                        <span>{isExpanded ? 'Ocultar conversación' : 'Conversación'}</span>
+                                                        {unreadCount > 0 && !isExpanded && (
+                                                            <span 
+                                                                className="inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 text-[10px] font-bold font-mono text-white bg-red-500 dark:bg-red-600 rounded-full shadow-xs animate-scale-in"
+                                                                title={`${unreadCount} ${unreadCount === 1 ? 'nuevo mensaje' : 'nuevos mensajes'}`}
+                                                            >
+                                                                {unreadCount > 99 ? '99+' : unreadCount}
+                                                            </span>
+                                                        )}
+                                                        <ChevronDown 
+                                                            size={13} 
+                                                            className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-brand' : 'text-text-dim'}`} 
+                                                        />
+                                                    </button>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
 

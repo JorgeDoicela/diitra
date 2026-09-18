@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
     MessageSquare, RefreshCw, Clock, ChevronDown, 
     Play, Eye, Trash2, FilterX, ArrowLeft, ChevronRight
@@ -19,12 +19,15 @@ import { FeedbackFilterBar } from '../../Feedback/components/FeedbackFilterBar';
 import { FeedbackDetailDrawer } from '../../Feedback/components/FeedbackDetailDrawer';
 import { FeedbackDeleteDrawer } from '../../Feedback/components/FeedbackDeleteDrawer';
 import { useFeedbackFilters } from '../../Feedback/hooks/useFeedbackFilters';
+import { useFeedbackUnreadMessages } from '../../Feedback/hooks/useFeedbackUnreadMessages';
 
 export const AdminFeedbackPage: React.FC = () => {
+    const [searchParams] = useSearchParams();
     const [reportes, setReportes] = useState<FeedbackReporte[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState<number | null>(null);
     const [expandedThreadIds, setExpandedThreadIds] = useState<Set<number>>(new Set());
+    const { getUnreadCount, markReportAsRead } = useFeedbackUnreadMessages(true);
 
     // Drawer de Inspección y Visor Multimedia
     const [activeReport, setActiveReport] = useState<FeedbackReporte | null>(null);
@@ -88,15 +91,40 @@ export const AdminFeedbackPage: React.FC = () => {
         setActiveMediaIndex(mediaIdx);
     };
 
-    const toggleThread = (id?: number) => {
+    const toggleThread = (id?: number, report?: FeedbackReporte) => {
         if (!id) return;
         setExpandedThreadIds(prev => {
             const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
+            const willExpand = !next.has(id);
+            if (willExpand) {
+                next.add(id);
+                markReportAsRead(id, report?.conversacion);
+            } else {
+                next.delete(id);
+            }
             return next;
         });
     };
+
+    // Auto-expandir y enfocar incidencia si viene referenciada en la URL desde una notificación
+    const targetIdParam = searchParams.get('id');
+    useEffect(() => {
+        if (!targetIdParam || reportes.length === 0) return;
+        const targetId = Number(targetIdParam);
+        if (!isNaN(targetId) && targetId > 0) {
+            setExpandedThreadIds(prev => new Set(prev).add(targetId));
+            const rep = reportes.find(r => (r.id_feedback || r.idFeedback) === targetId);
+            if (rep) {
+                markReportAsRead(targetId, rep.conversacion);
+            }
+            setTimeout(() => {
+                const el = document.getElementById(`report-card-${targetId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 300);
+        }
+    }, [targetIdParam, reportes, markReportAsRead]);
 
     const handleStatusChange = async (idFeedback: number, nuevoEstado: string) => {
         setUpdatingId(idFeedback);
@@ -224,7 +252,7 @@ export const AdminFeedbackPage: React.FC = () => {
                             }) : '';
 
                             return (
-                                <div key={r.uuid || id} className="bento-card static p-5 space-y-4">
+                                <div key={r.uuid || id} id={`report-card-${id}`} className="bento-card static p-5 space-y-4">
                                     {/* Header de la tarjeta */}
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-thin pb-3.5">
                                         <div className="flex items-center gap-2 flex-wrap">
@@ -323,22 +351,37 @@ export const AdminFeedbackPage: React.FC = () => {
                                                 <span className="font-mono text-[10.5px]">{formattedDate}</span>
                                             </div>
 
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleThread(id)}
-                                                className={`inline-flex items-center gap-1.5 font-medium py-1 px-2 rounded-md text-[11.5px] transition-colors cursor-pointer ${
-                                                    expandedThreadIds.has(id)
-                                                        ? 'text-brand font-semibold hover:text-brand/80'
-                                                        : 'text-text-dim hover:text-text-main hover:bg-surface-hover'
-                                                }`}
-                                            >
-                                                <MessageSquare size={13} />
-                                                <span>{expandedThreadIds.has(id) ? 'Ocultar conversación' : 'Conversación'}</span>
-                                                <ChevronDown 
-                                                    size={13} 
-                                                    className={`transition-transform duration-200 ${expandedThreadIds.has(id) ? 'rotate-180 text-brand' : ''}`} 
-                                                />
-                                            </button>
+                                            {(() => {
+                                                const unreadCount = getUnreadCount(r);
+                                                const isExpanded = expandedThreadIds.has(id);
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleThread(id, r)}
+                                                        className={`inline-flex items-center gap-1.5 font-medium py-1 px-2 rounded-md text-[11.5px] transition-colors cursor-pointer ${
+                                                            isExpanded
+                                                                ? 'text-brand font-semibold hover:text-brand/80'
+                                                                : 'text-text-dim hover:text-text-main hover:bg-surface-hover'
+                                                        }`}
+                                                        title={isExpanded ? "Ocultar conversación" : "Abrir conversación"}
+                                                    >
+                                                        <MessageSquare size={13} />
+                                                        <span>{isExpanded ? 'Ocultar conversación' : 'Conversación'}</span>
+                                                        {unreadCount > 0 && !isExpanded && (
+                                                            <span 
+                                                                className="inline-flex items-center justify-center min-w-[17px] h-[17px] px-1 text-[10px] font-bold font-mono text-white bg-red-500 dark:bg-red-600 rounded-full shadow-xs animate-scale-in"
+                                                                title={`${unreadCount} ${unreadCount === 1 ? 'nuevo mensaje' : 'nuevos mensajes'}`}
+                                                            >
+                                                                {unreadCount > 99 ? '99+' : unreadCount}
+                                                            </span>
+                                                        )}
+                                                        <ChevronDown 
+                                                            size={13} 
+                                                            className={`transition-transform duration-200 ${isExpanded ? 'rotate-180 text-brand' : ''}`} 
+                                                        />
+                                                    </button>
+                                                );
+                                            })()}
 
                                             <button
                                                 type="button"

@@ -12,6 +12,10 @@ interface User {
     roles: string[];
     usuario?: string;
     id_usuario?: number;
+    id?: number;
+    id_sigafi?: string;
+    idSigafi?: string;
+    cedula?: string;
     role_codes?: string[];
     acepto_lopdp?: boolean;
     total_revisiones?: number;

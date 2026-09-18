@@ -27,6 +27,7 @@ import { useProjectPreferences } from '../hooks/useProjectPreferences';
 import WorkspaceHeader from './components/WorkspaceHeader';
 import WorkspaceTitle from './components/WorkspaceTitle';
 import CacesWorkflow from './components/CacesWorkflow';
+import InnovationWorkflow from './components/InnovationWorkflow';
 import TeamManagement from './components/TeamManagement';
 import WorkspaceSidebar from './components/WorkspaceSidebar';
 import DirectorTransferModal from './components/DirectorTransferModal';
@@ -403,22 +404,38 @@ export const ProjectWorkspace: React.FC = () => {
 
                     <div className="flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-4 lg:items-start">
                         <div className="flex flex-col gap-3">
-                            <CacesWorkflow
-                                currentProject={currentProject}
-                                projectDocuments={projectDocuments}
-                                templateCode={templateCode}
-                                assignedRevisionUuid={assignedRevisionUuid}
-                                assignedRevisionStatus={assignedRevisionStatus}
-                                isAdmin={isAdmin}
-                                iniciandoEjecucion={iniciandoEjecucion}
-                                resolvingDocument={resolvingDocument}
-                                urlPrefix={urlPrefix}
-                                resolvedProjectUuid={resolvedProjectUuid}
-                                setActiveDocument={setActiveDocument}
-                                resolveDocumentInstance={resolveDocumentInstance}
-                                handleIniciarEjecucion={handleIniciarEjecucion}
-                                navigate={navigate}
-                            />
+                            {currentProject?.modalidad === 'INNOVACION' ? (
+                                <InnovationWorkflow
+                                    currentProject={currentProject}
+                                    projectDocuments={projectDocuments}
+                                    templateCode={templateCode}
+                                    isAdmin={isAdmin}
+                                    resolvingDocument={resolvingDocument}
+                                    urlPrefix={urlPrefix}
+                                    resolvedProjectUuid={resolvedProjectUuid || ''}
+                                    setActiveDocument={setActiveDocument}
+                                    resolveDocumentInstance={resolveDocumentInstance}
+                                    handleIniciarEjecucion={handleIniciarEjecucion}
+                                    navigate={navigate}
+                                />
+                            ) : (
+                                <CacesWorkflow
+                                    currentProject={currentProject}
+                                    projectDocuments={projectDocuments}
+                                    templateCode={templateCode}
+                                    assignedRevisionUuid={assignedRevisionUuid}
+                                    assignedRevisionStatus={assignedRevisionStatus}
+                                    isAdmin={isAdmin}
+                                    iniciandoEjecucion={iniciandoEjecucion}
+                                    resolvingDocument={resolvingDocument}
+                                    urlPrefix={urlPrefix}
+                                    resolvedProjectUuid={resolvedProjectUuid}
+                                    setActiveDocument={setActiveDocument}
+                                    resolveDocumentInstance={resolveDocumentInstance}
+                                    handleIniciarEjecucion={handleIniciarEjecucion}
+                                    navigate={navigate}
+                                />
+                            )}
 
                             <TeamManagement
                                 currentProject={currentProject}

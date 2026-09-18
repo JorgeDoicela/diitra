@@ -49,7 +49,6 @@ const DocumentMaintenancePage = lazy(() => import('./pages/Admin/DocumentMainten
 const DocumentTemplatesPage   = lazy(() => import('./pages/Admin/Templates/DocumentTemplatesPage'));
 const MyCertificatesPage      = lazy(() => import('./pages/User/Certificates/MyCertificatesPage'));
 const InnovationPage          = lazy(() => import('./pages/Innovacion/InnovationPage'));
-const InnovationWorkspace     = lazy(() => import('./pages/Innovacion/Workspace/InnovationWorkspace'));
 const AdminFeedbackPage       = lazy(() => import('./pages/Admin/Feedback/AdminFeedbackPage').then(m => ({ default: m.AdminFeedbackPage })));
 const UserFeedbackPage        = lazy(() => import('./pages/Feedback/UserFeedbackPage').then(m => ({ default: m.UserFeedbackPage })));
 const SolicitudesPage         = lazy(() => import('./pages/Solicitudes/SolicitudesPage'));
@@ -282,7 +281,6 @@ function App() {
                         }>
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/innovacion" element={<InnovationPage />} />
-                            <Route path="/innovacion/workspace/:assetUuid" element={<InnovationWorkspace />} />
                             <Route path="/mis-certificados" element={<MyCertificatesPage />} />
                             <Route path="/calendario" element={<CalendarioPage />} />
                             <Route path="/papelera" element={<RecycleBinPage />} />

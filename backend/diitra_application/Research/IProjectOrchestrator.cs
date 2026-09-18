@@ -18,12 +18,12 @@ namespace Diitra.Application.Research
         /// <summary>
         /// Obtiene todos los proyectos registrados (vista de Administrador/Director).
         /// </summary>
-        Task<List<ProyectoResumenDto>> GetAllProjectsAsync();
+        Task<List<ProyectoResumenDto>> GetAllProjectsAsync(string? modalidad = null);
 
         /// <summary>
         /// Obtiene los proyectos en los que participa el usuario autenticado (docente/estudiante).
         /// </summary>
-        Task<List<ProyectoResumenDto>> GetMyProjectsAsync(string userIdReferencia);
+        Task<List<ProyectoResumenDto>> GetMyProjectsAsync(string userIdReferencia, string? modalidad = null);
 
         /// <summary>
         /// Obtiene el detalle completo de un proyecto por UUID.

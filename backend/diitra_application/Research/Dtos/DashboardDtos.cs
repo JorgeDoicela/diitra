@@ -13,6 +13,7 @@ namespace Diitra.Application.Research.Dtos
         public string Uuid { get; set; } = string.Empty;
         public string? CodigoInstitucional { get; set; }
         public string Titulo { get; set; } = string.Empty;
+        public string Modalidad { get; set; } = "INVESTIGACION";
         public string Estado { get; set; } = "Borrador";
         public string? LineaInvestigacion { get; set; }
         public string? TipoInvestigacion { get; set; }

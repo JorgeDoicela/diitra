@@ -82,6 +82,10 @@ namespace diitra_infrastructure.Research.Subservices
             }
 
             // Mapeo de Atributos Nucleares Básicos
+            if (!string.IsNullOrWhiteSpace(dto.Modalidad))
+            {
+                project.Modalidad = dto.Modalidad.Trim().ToUpperInvariant();
+            }
             project.Titulo = dto.Titulo ?? "PROYECTO SIN TÍTULO";
             project.CodigoInstitucional = string.IsNullOrWhiteSpace(dto.CodigoInstitucional) ? null : dto.CodigoInstitucional.Trim();
             project.TiempoEjecucion = dto.TiempoEjecucion;

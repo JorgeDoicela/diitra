@@ -69,7 +69,7 @@ export const CacesWorkflow: React.FC<CacesWorkflowProps> = ({
     handleIniciarEjecucion,
     navigate
 }) => {
-    const isInnovacion = templateCode.startsWith('INNOVACION') || templateCode.startsWith('TRANSFERENCIA');
+    const isInnovacion = currentProject.modalidad === 'INNOVACION' || (currentProject.linea || '').toLowerCase().includes('innov') || templateCode.includes('INNOVACION');
     const finalReportTemplateCode = isInnovacion ? 'INFORME_FINAL_INNOVACION' : 'INFORME_FINAL_INVESTIGACION';
 
     const [asyncFinalReportSigned, setAsyncFinalReportSigned] = useState(false);

@@ -368,6 +368,7 @@ CREATE TABLE inv_proyectos (
     -- ADAPTABILIDAD CACES: VARCHAR en lugar de ENUM.
     -- Agregar nuevos estados solo requiere insertar en inv_config_workflow,
     -- NO requiere alterar esta tabla ni redesplegar el backend.
+    modalidad             VARCHAR(30)   NOT NULL DEFAULT 'INVESTIGACION' COMMENT 'Modalidad del proceso: INVESTIGACION o INNOVACION',
     estado                VARCHAR(50)   NOT NULL DEFAULT 'Borrador' COMMENT 'Estado del ciclo de vida. Valores válidos definidos en inv_config_workflow.',
     disponibleAdopcion    TINYINT(1)    DEFAULT 0 COMMENT 'Indica si el proyecto inconcluso esta disponible para adopcion por otros profesores',
     puntajeEvaluacion     DECIMAL(5,2)  NULL,
@@ -410,7 +411,8 @@ CREATE TABLE inv_proyectos (
     idDspaceHandle       VARCHAR(255)  NULL COMMENT 'Handle del Repositorio Digital DSpace',
     metadataCacesJson    JSON          NULL COMMENT 'Snapshot de indicadores para acreditación',
     FOREIGN KEY (firmadoPor) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
-    FOREIGN KEY (eliminadoPorUsuarioId) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
+    FOREIGN KEY (eliminadoPorUsuarioId) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
+    KEY idx_proyectos_modalidad (modalidad)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Matriz de Marco Lógico (MML) - Requisito SENESCYT

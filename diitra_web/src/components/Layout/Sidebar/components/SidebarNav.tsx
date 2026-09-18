@@ -135,7 +135,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             };
 
             const relevantProjects = sidebarProjects.filter(p => {
-                const isProjInnovacion = (p.template_code || p.templateCode) === 'PROTOCOLO_INNOVACION';
+                const isProjInnovacion = (p.modalidad || (p as any).modalidad_proyecto || '').toUpperCase() === 'INNOVACION' || (p.template_code || p.templateCode || '').includes('INNOVACION');
                 return isInnovacion ? isProjInnovacion : !isProjInnovacion;
             });
 

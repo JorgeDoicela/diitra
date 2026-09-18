@@ -14,6 +14,7 @@ namespace Diitra.Application.Research.Dtos
 
         // ── Identificación básica ──
         public string? Uuid { get; set; }
+        public string Modalidad { get; set; } = "INVESTIGACION";
         public string? Estado { get; set; }
         public string? CodigoInstitucional { get; set; }
         public int? IdConvocatoria { get; set; }

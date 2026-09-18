@@ -85,7 +85,7 @@ const ResearchProjectsPage = () => {
         }
         setError(null);
         try {
-            const res = await api.get('/projects');
+            const res = await api.get('/projects?modalidad=INVESTIGACION');
             setProyectos(res.data || []);
             lastFetchRef.current = Date.now();
         } catch (err: any) {
@@ -148,7 +148,10 @@ const ResearchProjectsPage = () => {
         return proyectos
             .filter(p => {
                 // Desacoplamiento estricto: Solo proyectos de Investigación I+D+i
-                const isInnovacion = (p.template_code || (p as any).templateCode) === 'PROTOCOLO_INNOVACION' || ((p as any).tipo_investigacion || '').toUpperCase() === 'INNOVACION';
+                const mod = ((p as any).modalidad || (p as any).modalidad_proyecto || '').toUpperCase();
+                const code = (p.template_code || (p as any).templateCode || '').toUpperCase();
+                const tipo = ((p as any).tipo_investigacion || '').toUpperCase();
+                const isInnovacion = mod === 'INNOVACION' || code.includes('INNOVACION') || tipo === 'INNOVACION';
                 if (isInnovacion) return false;
 
                 const query = search.toLowerCase();

@@ -8,8 +8,8 @@ export function slugToTemplateCode(slug: string): string {
     return slug.replace(/-/g, '_').toUpperCase();
 }
 
-export function buildWorkspacePath(templateCode: string, documentUuid: string, search = '', prefix?: string): string {
-    const isInnovacion = (templateCode || '').toUpperCase().includes('INNOVACION');
+export function buildWorkspacePath(templateCode: string, documentUuid: string, search = '', prefix?: string, modalidad?: string): string {
+    const isInnovacion = (modalidad || '').toUpperCase() === 'INNOVACION' || (prefix || '').startsWith('/innovacion') || (templateCode || '').toUpperCase().includes('INNOVACION');
     const resolvedPrefix = prefix ?? (isInnovacion ? '/innovacion' : '/investigacion');
     return `${resolvedPrefix}/workspace/${templateCodeToSlug(templateCode)}/${documentUuid}${search}`;
 }

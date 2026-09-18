@@ -38,7 +38,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     const [asyncOficioSigned, setAsyncOficioSigned] = useState(false);
     const [asyncFinalReportSigned, setAsyncFinalReportSigned] = useState(false);
 
-    const isInnovacion = currentProject.template_code?.startsWith('INNOVACION') || currentProject.linea?.toLowerCase().includes('innov');
+    const isInnovacion = currentProject.modalidad === 'INNOVACION' || (currentProject.template_code || '').includes('INNOVACION') || currentProject.linea?.toLowerCase().includes('innov');
     const finalReportCode = isInnovacion ? 'INFORME_FINAL_INNOVACION' : 'INFORME_FINAL_INVESTIGACION';
 
     const isDocValidlySigned = (doc: any): boolean => {

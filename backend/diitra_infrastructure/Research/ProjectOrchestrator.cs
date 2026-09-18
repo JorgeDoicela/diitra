@@ -27,11 +27,11 @@ namespace diitra_infrastructure.Research
         public Task<SyncResult> SyncProjectWizardDataAsync(ProyectoDto dto, string? creatorUserIdRef = null)
             => _wizardService.SyncProjectWizardDataAsync(dto, creatorUserIdRef);
 
-        public Task<List<ProyectoResumenDto>> GetAllProjectsAsync()
-            => _queryService.GetAllProjectsAsync();
+        public Task<List<ProyectoResumenDto>> GetAllProjectsAsync(string? modalidad = null)
+            => _queryService.GetAllProjectsAsync(modalidad);
 
-        public Task<List<ProyectoResumenDto>> GetMyProjectsAsync(string userIdReferencia)
-            => _queryService.GetMyProjectsAsync(userIdReferencia);
+        public Task<List<ProyectoResumenDto>> GetMyProjectsAsync(string userIdReferencia, string? modalidad = null)
+            => _queryService.GetMyProjectsAsync(userIdReferencia, modalidad);
 
         public Task<ProyectoDto?> GetProjectDetailAsync(string uuid)
             => _queryService.GetProjectDetailAsync(uuid);

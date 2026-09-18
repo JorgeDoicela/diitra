@@ -26,6 +26,8 @@ public class InvProyectoConfiguration : IEntityTypeConfiguration<InvProyecto>
         entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
         entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
         entity.Property(e => e.TiempoEjecucion).HasColumnName("tiempoEjecucion").HasMaxLength(100);
+        entity.Property(e => e.Modalidad).HasColumnName("modalidad").HasMaxLength(30).HasDefaultValue("INVESTIGACION");
+        entity.HasIndex(e => e.Modalidad).HasDatabaseName("idx_proyectos_modalidad");
         entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("varchar(50)").HasMaxLength(50).HasDefaultValueSql("'Borrador'");
         entity.Property(e => e.DisponibleAdopcion).HasColumnName("disponibleAdopcion").HasColumnType("tinyint(1)").HasDefaultValue(false);
         entity.Property(e => e.PuntajeEvaluacion).HasColumnName("puntajeEvaluacion").HasPrecision(5, 2);

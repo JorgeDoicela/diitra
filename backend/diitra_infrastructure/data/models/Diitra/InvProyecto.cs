@@ -21,6 +21,7 @@ public partial class InvProyecto
     public DateOnly? FechaInicio { get; set; }
     public DateOnly? FechaFin { get; set; }
     public string? TiempoEjecucion { get; set; }
+    public string Modalidad { get; set; } = "INVESTIGACION";
     public string Estado { get; set; } = "Borrador";
     public decimal? PuntajeEvaluacion { get; set; }
     public decimal? ValorEjecucion { get; set; }

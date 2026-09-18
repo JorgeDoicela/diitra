@@ -58,9 +58,17 @@ namespace diitra_infrastructure.Research.Subservices
             return null;
         }
 
-        public async Task<List<ProyectoResumenDto>> GetAllProjectsAsync()
+        public async Task<List<ProyectoResumenDto>> GetAllProjectsAsync(string? modalidad = null)
         {
-            return await _context.InvProyectos
+            var query = _context.InvProyectos.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(modalidad))
+            {
+                var modClean = modalidad.Trim().ToUpperInvariant();
+                query = query.Where(p => p.Modalidad == modClean);
+            }
+
+            return await query
                 .Include(p => p.IdSublineaNavigation)
                 .Include(p => p.IdConvocatoriaNavigation)
                 .Include(p => p.IdObjetivoPndNavigation)
@@ -76,6 +84,7 @@ namespace diitra_infrastructure.Research.Subservices
                     Uuid = p.Uuid,
                     CodigoInstitucional = p.CodigoInstitucional,
                     Titulo = p.Titulo,
+                    Modalidad = p.Modalidad ?? "INVESTIGACION",
                     Estado = p.Estado,
                     LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
                     Carrera = p.InvProyectosCarreras.Select(pc => pc.IdCarreraNavigation.Carrera1).FirstOrDefault(),
@@ -116,7 +125,7 @@ namespace diitra_infrastructure.Research.Subservices
                 .ToListAsync();
         }
 
-        public async Task<List<ProyectoResumenDto>> GetMyProjectsAsync(string userIdReferencia)
+        public async Task<List<ProyectoResumenDto>> GetMyProjectsAsync(string userIdReferencia, string? modalidad = null)
         {
             var userId = await _context.Users
                 .Where(u => u.IdSigafi == userIdReferencia)
@@ -140,7 +149,15 @@ namespace diitra_infrastructure.Research.Subservices
                 .Distinct()
                 .ToListAsync();
 
-            return await _context.InvProyectos
+            var query = _context.InvProyectos.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(modalidad))
+            {
+                var modClean = modalidad.Trim().ToUpperInvariant();
+                query = query.Where(p => p.Modalidad == modClean);
+            }
+
+            return await query
                 .Include(p => p.IdSublineaNavigation)
                 .Include(p => p.IdConvocatoriaNavigation)
                 .Include(p => p.IdObjetivoPndNavigation)
@@ -157,6 +174,7 @@ namespace diitra_infrastructure.Research.Subservices
                     Uuid = p.Uuid,
                     CodigoInstitucional = p.CodigoInstitucional,
                     Titulo = p.Titulo,
+                    Modalidad = p.Modalidad ?? "INVESTIGACION",
                     Estado = p.Estado,
                     LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
                     Carrera = p.InvProyectosCarreras.Select(pc => pc.IdCarreraNavigation.Carrera1).FirstOrDefault(),

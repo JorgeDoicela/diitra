@@ -41,7 +41,27 @@ export function useProjectCore() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const isInnovacion = location.pathname.startsWith('/innovacion') || templateCode.includes('INNOVACION');
+    // Estados fundamentales del workspace
+    const [currentProject, setCurrentProject] = useState<any>(null);
+    const [projectDocuments, setProjectDocuments] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(projectUuid || null);
+    const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
+    const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
+    const [isUnauthorized, setIsUnauthorized] = useState(false);
+    const [isNotFound, setIsNotFound] = useState(false);
+    const [assignedRevisionUuid, setAssignedRevisionUuid] = useState<string | null>(null);
+    const [assignedRevisionStatus, setAssignedRevisionStatus] = useState<string | null>(null);
+    const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
+    const [isPublishingDSpace, setIsPublishingDSpace] = useState(false);
+
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+        return localStorage.getItem('sidebar_collapsed') === 'true';
+    });
+
+    const isInnovacion = location.pathname.startsWith('/innovacion') || 
+        (currentProject && (currentProject.modalidad === 'INNOVACION' || (currentProject as any).modalidad_proyecto === 'INNOVACION')) || 
+        templateCode.includes('INNOVACION');
     const isMisProyectos = location.pathname.startsWith('/investigacion/mis-proyectos');
     const urlPrefix = isInnovacion ? '/innovacion' : (isMisProyectos ? '/investigacion/mis-proyectos' : '/investigacion');
 
@@ -52,16 +72,17 @@ export function useProjectCore() {
         ? editParamToTemplateCode(editParam, templateCode)
         : (sectionParam ? templateCode : null);
 
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
-        return localStorage.getItem('sidebar_collapsed') === 'true';
-    });
-
     useEffect(() => {
-        if (templateCode.includes('INNOVACION') && location.pathname.startsWith('/investigacion')) {
+        if (!currentProject) return;
+        const proModalidad = (currentProject.modalidad || (currentProject as any).modalidad_proyecto || '').toUpperCase();
+        if (proModalidad === 'INNOVACION' && location.pathname.startsWith('/investigacion')) {
             const newPath = location.pathname.replace(/^\/investigacion(\/mis-proyectos)?/, '/innovacion');
             navigate(`${newPath}${location.search}`, { replace: true });
+        } else if (proModalidad === 'INVESTIGACION' && location.pathname.startsWith('/innovacion')) {
+            const newPath = location.pathname.replace(/^\/innovacion/, '/investigacion');
+            navigate(`${newPath}${location.search}`, { replace: true });
         }
-    }, [templateCode, location.pathname, location.search, navigate]);
+    }, [currentProject, location.pathname, location.search, navigate]);
 
     useEffect(() => {
         const handleStateChange = (e: Event) => {
@@ -85,19 +106,6 @@ export function useProjectCore() {
         searchParams.set('edit', templateCodeToEditParam(editParamToTemplateCode(editParam, templateCode)));
         navigate({ search: searchParams.toString() }, { replace: true });
     }, [editParam, templateCode, location.search, navigate]);
-
-    const [currentProject, setCurrentProject] = useState<any>(null);
-    const [projectDocuments, setProjectDocuments] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(projectUuid || null);
-    const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
-    const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
-    const [isUnauthorized, setIsUnauthorized] = useState(false);
-    const [isNotFound, setIsNotFound] = useState(false);
-    const [assignedRevisionUuid, setAssignedRevisionUuid] = useState<string | null>(null);
-    const [assignedRevisionStatus, setAssignedRevisionStatus] = useState<string | null>(null);
-    const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
-    const [isPublishingDSpace, setIsPublishingDSpace] = useState(false);
 
     const isPreproposalState = currentProject?.status === 'Prepropuesta' || currentProject?.status === 'Prepropuesta Rechazada';
 
@@ -170,8 +178,8 @@ export function useProjectCore() {
                 ? (directorObj.nombres_completos || directorObj.nombresCompletos || `${directorObj.nombre || ''} ${directorObj.apellido || ''}`.trim())
                 : '';
 
-            const userCedula = user?.idSigafi || user?.id_sigafi || (user as any)?.cedula || '';
-            const userInternalId = user?.id?.toString() || (user as any)?.id_usuario?.toString() || '';
+            const userCedula = user?.id_referencia || user?.idSigafi || user?.id_sigafi || user?.cedula || user?.usuario || '';
+            const userInternalId = user?.id_usuario?.toString() || user?.id?.toString() || '';
             const isUserInInvestigadores = (res.data.investigadores || []).some((inv: any) =>
                 (inv.cedula && inv.cedula === userCedula) ||
                 (inv.idUsuario && inv.idUsuario.toString() === userInternalId) ||
@@ -212,6 +220,7 @@ export function useProjectCore() {
                 fechaLimiteSubsanacion: res.data.fecha_limite_subsanacion || res.data.fechaLimiteSubsanacion || null,
                 fechaLimiteInformeFinal: res.data.fecha_limite_informe_final || res.data.fechaLimiteInformeFinal || null,
                 fechaLimiteSubsanacionFinal: res.data.fecha_limite_subsanacion_final || res.data.fechaLimiteSubsanacionFinal || null,
+                modalidad: res.data.modalidad || res.data.Modalidad || (res.data.template_code?.includes('INNOVACION') ? 'INNOVACION' : 'INVESTIGACION'),
                 investigadores: res.data.investigadores || []
             };
             setCurrentProject(projectData);

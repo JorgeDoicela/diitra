@@ -347,7 +347,7 @@ namespace diitra_api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> List()
+        public async Task<IActionResult> List([FromQuery] string? modalidad = null)
         {
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!string.IsNullOrEmpty(userIdRef))
@@ -361,17 +361,17 @@ namespace diitra_api.Controllers
 
                 if (!isSystemAdmin && !isRoleAdmin)
                 {
-                    var myProjects = await _projectOrchestrator.GetMyProjectsAsync(userIdRef);
+                    var myProjects = await _projectOrchestrator.GetMyProjectsAsync(userIdRef, modalidad);
                     return Ok(myProjects);
                 }
             }
 
-            var projects = await _projectOrchestrator.GetAllProjectsAsync();
+            var projects = await _projectOrchestrator.GetAllProjectsAsync(modalidad);
             return Ok(projects);
         }
 
         [HttpGet("my")]
-        public async Task<IActionResult> GetMyProjects()
+        public async Task<IActionResult> GetMyProjects([FromQuery] string? modalidad = null)
         {
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
@@ -379,11 +379,11 @@ namespace diitra_api.Controllers
             var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userIdRef);
             if (isSystemAdmin)
             {
-                var allProjects = await _projectOrchestrator.GetAllProjectsAsync();
+                var allProjects = await _projectOrchestrator.GetAllProjectsAsync(modalidad);
                 return Ok(allProjects);
             }
 
-            var projects = await _projectOrchestrator.GetMyProjectsAsync(userIdRef);
+            var projects = await _projectOrchestrator.GetMyProjectsAsync(userIdRef, modalidad);
             return Ok(projects);
         }
 

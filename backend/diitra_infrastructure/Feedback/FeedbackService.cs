@@ -161,13 +161,14 @@ public class FeedbackService : IFeedbackService
             var tipoLabel = entidad.Tipo == "ERROR" ? "Algo no funciona" : (entidad.Tipo == "DUDA" ? "Falta una opción" : "Incidencia");
             var notifTitulo = $"Incidencia: {tipoLabel}";
             var notifMensaje = $"{entidad.NombreUsuario} ({entidad.RolUsuario}) reportó: {entidad.Titulo}";
-            var notifUrl = "/admin/incidencias";
+            var notifUrl = $"/admin/incidencias?id={entidad.IdFeedback}";
             var notifExtra = new Dictionary<string, string>
             {
                 { "Categoria", "SOPORTE" },
                 { "Tipo", entidad.Tipo },
                 { "FeedbackId", entidad.IdFeedback.ToString() },
-                { "FeedbackUuid", entidad.Uuid }
+                { "FeedbackUuid", entidad.Uuid },
+                { "SkipEmail", "true" }
             };
 
             await _notificationService.NotifyByRoleCodesAsync(
@@ -356,19 +357,27 @@ public class FeedbackService : IFeedbackService
                 { "Categoria", "SOPORTE" },
                 { "Tipo", entidad.Tipo },
                 { "FeedbackId", entidad.IdFeedback.ToString() },
-                { "FeedbackUuid", entidad.Uuid }
+                { "FeedbackUuid", entidad.Uuid },
+                { "SkipEmail", "true" }
             };
 
             if (isSuperAdmin)
             {
-                if (entidad.IdUsuario.HasValue)
+                var targetUserId = entidad.IdUsuario;
+                if (!targetUserId.HasValue && !string.IsNullOrWhiteSpace(entidad.Cedula))
+                {
+                    var destUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.IdSigafi == entidad.Cedula);
+                    if (destUser != null) targetUserId = destUser.IdUsuario;
+                }
+
+                if (targetUserId.HasValue)
                 {
                     await _notificationService.NotifyUserAsync(
-                        userId: entidad.IdUsuario.Value,
-                        title: "Nuevo mensaje",
+                        userId: targetUserId.Value,
+                        title: $"Nuevo mensaje en: {entidad.Titulo}",
                         body: nuevoMensaje.Mensaje,
                         category: "SOPORTE",
-                        url: "/incidencias",
+                        url: $"/incidencias?id={entidad.IdFeedback}",
                         extraData: notifExtra
                     );
                 }
@@ -376,10 +385,10 @@ public class FeedbackService : IFeedbackService
             else
             {
                 await _notificationService.NotifyByRoleCodesAsync(
-                    title: "Nuevo mensaje",
-                    body: nuevoMensaje.Mensaje,
+                    title: $"Nuevo mensaje en: {entidad.Titulo}",
+                    body: $"{nuevoMensaje.NombreAutor} ({entidad.RolUsuario}): {nuevoMensaje.Mensaje}",
                     roleCodes: new[] { "DIITRA_SUPER_ADMIN", "SUPERADMIN" },
-                    url: "/admin/incidencias",
+                    url: $"/admin/incidencias?id={entidad.IdFeedback}",
                     extraData: notifExtra,
                     excludeUserId: idUsuario
                 );

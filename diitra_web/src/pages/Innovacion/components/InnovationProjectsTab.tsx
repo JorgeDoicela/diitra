@@ -43,6 +43,7 @@ export interface ProyectoInnovacionResumen {
     trl_actual?: number;
     trl_meta?: number;
     director_nombre?: string;
+    modalidad?: string;
     template_code?: string;
 }
 
@@ -69,21 +70,23 @@ export const InnovationProjectsTab: React.FC<Props> = ({ onCountChange }) => {
     const loadProjects = useCallback(async () => {
         try {
             setLoading(true);
-            const endpoint = isAdmin ? '/projects' : '/projects/my';
+            const endpoint = isAdmin ? '/projects?modalidad=INNOVACION' : '/projects/my?modalidad=INNOVACION';
             const res = await api.get(endpoint);
             const allProjects: any[] = res.data || [];
             
-            // Filtrar exclusivamente proyectos de Innovación (PROTOCOLO_INNOVACION)
+            // Filtrar exclusivamente proyectos de Innovación por modalidad de proceso
             const innovacionProjects = allProjects.filter((p: any) => {
-                const code = p.template_code || p.templateCode || '';
+                const mod = (p.modalidad || p.modalidad_proyecto || '').toUpperCase();
+                const code = (p.template_code || p.templateCode || '').toUpperCase();
                 const tipo = (p.tipo_investigacion || p.tipoInvestigacion || '').toUpperCase();
-                return code === 'PROTOCOLO_INNOVACION' || tipo === 'INNOVACION';
+                return mod === 'INNOVACION' || code.includes('INNOVACION') || tipo === 'INNOVACION';
             }).map((p: any) => ({
                 id_proyecto: p.id_proyecto ?? p.idProyecto,
                 uuid: p.uuid,
                 codigo_institucional: p.codigo_institucional ?? p.codigoInstitucional,
                 titulo: p.titulo,
                 estado: p.estado,
+                modalidad: p.modalidad || 'INNOVACION',
                 linea_investigacion: p.linea_investigacion ?? p.lineaInvestigacion,
                 tipo_investigacion: p.tipo_investigacion ?? p.tipoInvestigacion,
                 carrera: p.carrera,

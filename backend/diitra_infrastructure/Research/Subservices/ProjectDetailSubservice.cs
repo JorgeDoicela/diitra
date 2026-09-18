@@ -86,6 +86,7 @@ namespace diitra_infrastructure.Research.Subservices
                 var lightDto = new ProyectoDto
                 {
                     Uuid = basicProject.Uuid,
+                    Modalidad = basicProject.Modalidad ?? "INVESTIGACION",
                     Estado = basicProject.Estado,
                     IdConvocatoria = basicProject.IdConvocatoria,
                     ConvocatoriaTitulo = basicProject.IdConvocatoriaNavigation?.Titulo,
@@ -541,6 +542,7 @@ namespace diitra_infrastructure.Research.Subservices
                 }
             }
 
+            dto.Modalidad = p.Modalidad ?? "INVESTIGACION";
             dto.CostoTotal = p.InvPresupuestoItems.Any()
                 ? p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad)
                 : p.PresupuestoEstimado ?? 0;

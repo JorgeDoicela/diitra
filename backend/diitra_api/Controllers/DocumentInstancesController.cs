@@ -193,6 +193,13 @@ namespace diitra_api.Controllers
                                 dto.Uuid = instance.EntityUuid;
                             }
 
+                            if (string.IsNullOrWhiteSpace(dto.Modalidad))
+                            {
+                                dto.Modalidad = instance.TemplateCode.Contains("INNOVACION", StringComparison.OrdinalIgnoreCase)
+                                    ? "INNOVACION"
+                                    : "INVESTIGACION";
+                            }
+
                             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
                             if (!isNewProject && !string.IsNullOrEmpty(dto.Uuid) && !string.IsNullOrEmpty(userIdRef))
                             {
