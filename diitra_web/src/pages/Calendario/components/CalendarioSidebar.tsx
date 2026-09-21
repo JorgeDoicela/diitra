@@ -1,7 +1,6 @@
 import React from 'react';
 import {
-    Folder, Bell, BarChart3, BookOpen, Calendar as CalendarIcon,
-    TrendingUp, Edit2, Trash2, ChevronRight, RotateCcw
+    Edit2, Trash2, ChevronRight, RotateCcw
 } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -102,7 +101,10 @@ export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
             <div
                 className={`sidebar-section sticky-notes-section ${isOverInboxDropZone ? 'drop-target-active' : ''}`}
                 onDragOver={(e) => {
-                    if (draggingType === 'kanban' || e.dataTransfer.types.includes('diitra/kanban-event')) {
+                    const hasType = draggingType === 'kanban' || 
+                        Array.from(e.dataTransfer.types || []).includes('diitra/kanban-event') ||
+                        Array.from(e.dataTransfer.types || []).includes('text/plain');
+                    if (hasType) {
                         e.preventDefault();
                         e.dataTransfer.dropEffect = 'move';
                         if (!isOverInboxDropZone) setIsOverInboxDropZone(true);
@@ -124,7 +126,7 @@ export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
                 }}
             >
                 <h3>Notas Rápidas</h3>
-                <p className="ical-help-text mb-3">Arrastra las notas al tablero <strong>Kanban</strong> para planificarlas.</p>
+                <p className="ical-help-text mb-3">Arrastra las notas al <strong>Calendario</strong> o <strong>Kanban</strong> para planificarlas.</p>
 
                 {isOverInboxDropZone && (
                     <div className="sticky-notes-drop-overlay">

@@ -2,7 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import {
     X, RotateCcw, Calendar as CalendarIcon, Info, Bell,
-    CheckCircle, Edit2, Trash2, ArrowRight
+    CheckCircle, Edit2, Trash2, ArrowRight, LayoutGrid
 } from 'lucide-react';
 import { PRIORIDAD_COLORS, ESTADO_LABELS, getContextDescription, resolveEventUrl } from '../../../services/calendarioService';
 import { useAuth } from '../../../api/AuthContext';
@@ -17,6 +17,7 @@ interface EventoDetailDrawerProps {
     handleDeleteEvent: (uuid: string) => void;
     handleGoToEventAction: (ev: Evento) => void;
     handleDevolverAInbox?: (uuid: string) => void;
+    onGoToKanban?: () => void;
 }
 
 export const EventoDetailDrawer: React.FC<EventoDetailDrawerProps> = ({
@@ -27,10 +28,18 @@ export const EventoDetailDrawer: React.FC<EventoDetailDrawerProps> = ({
     handleDeleteEvent,
     handleGoToEventAction,
     handleDevolverAInbox,
+    onGoToKanban,
 }) => {
     const { isAdmin } = useAuth();
     if (!selectedEvent) return null;
     const hasAction = !!resolveEventUrl(selectedEvent, isAdmin);
+    const isPersonalTask = 
+        selectedEvent.categoria_global === 'Personal' ||
+        selectedEvent.subcategoria === 'Personal' ||
+        selectedEvent.estado === 'Inbox' ||
+        selectedEvent.estado === 'inbox' ||
+        (!selectedEvent.id_entidad_origen && !selectedEvent.tipo_entidad_origen) ||
+        selectedEvent.tipo_entidad_origen === 'CALENDARIO_NORMATIVO';
 
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex justify-end">
@@ -46,9 +55,9 @@ export const EventoDetailDrawer: React.FC<EventoDetailDrawerProps> = ({
                             className="px-2.5 py-1 text-[10px] font-mono uppercase rounded-md border text-white font-bold"
                             style={{ backgroundColor: selectedEvent.color_hex || '#6B7280', borderColor: selectedEvent.color_hex || '#6B7280' }}
                         >
-                            {selectedEvent.categoria_global === 'Personal' ? 'Mi Tarea' : selectedEvent.categoria_global}
+                            {isPersonalTask ? 'Mi Tarea' : (selectedEvent.categoria_global || 'Evento')}
                         </span>
-                        {selectedEvent.subcategoria && selectedEvent.categoria_global !== 'Personal' && (
+                        {selectedEvent.subcategoria && !isPersonalTask && (
                             <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-brand">
                                 • {selectedEvent.subcategoria}
                             </div>
@@ -165,7 +174,7 @@ export const EventoDetailDrawer: React.FC<EventoDetailDrawerProps> = ({
                 </div>
 
                 <div className="p-6 border-t border-border-thin bg-surface shrink-0 flex flex-col gap-3">
-                    {selectedEvent.categoria_global === 'Personal' ? (
+                    {isPersonalTask ? (
                         <div className="flex flex-col gap-2.5 w-full">
                             <div className="flex gap-3 w-full">
                                 {selectedEvent.estado !== 'Completado' && (
@@ -190,19 +199,34 @@ export const EventoDetailDrawer: React.FC<EventoDetailDrawerProps> = ({
                                     <Trash2 size={15} />
                                 </button>
                             </div>
-                            {handleDevolverAInbox && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        handleDevolverAInbox(selectedEvent.uuid);
-                                        onClose();
-                                    }}
-                                    className="w-full py-2 bg-surface text-text-dim hover:text-brand border border-dashed border-border hover:border-brand/40 hover:bg-surface-hover rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
-                                    title="Regresar a notas"
-                                >
-                                    <RotateCcw size={13} /> Devolver a Notas
-                                </button>
-                            )}
+                            <div className="flex items-center gap-2 w-full">
+                                {onGoToKanban && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onClose();
+                                            onGoToKanban();
+                                        }}
+                                        className="flex-1 py-2 bg-surface text-text-dim hover:text-text-main border border-border hover:bg-surface-hover rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+                                        title="Ver en Tablero Kanban"
+                                    >
+                                        <LayoutGrid size={13} /> Ver en Tablero Kanban
+                                    </button>
+                                )}
+                                {handleDevolverAInbox && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            handleDevolverAInbox(selectedEvent.uuid);
+                                            onClose();
+                                        }}
+                                        className="flex-1 py-2 bg-surface text-text-dim hover:text-brand border border-dashed border-border hover:border-brand/40 hover:bg-surface-hover rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+                                        title="Regresar a notas"
+                                    >
+                                        <RotateCcw size={13} /> Devolver a Notas
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <>

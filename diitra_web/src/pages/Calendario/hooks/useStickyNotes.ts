@@ -30,7 +30,12 @@ export const useStickyNotes = (setLoading?: (l: boolean) => void) => {
         try {
             setLoadingNotes(true);
             const data = await getStickyNotes();
-            setStickyNotes(data);
+            const normalized = data.map(n => ({
+                ...n,
+                categoria_global: n.categoria_global || 'Personal',
+                subcategoria: n.subcategoria || (n as any).tipo_evento || 'Personal',
+            }));
+            setStickyNotes(normalized);
         } catch (err) {
             console.error('Error al cargar notas adhesivas:', err);
         } finally {

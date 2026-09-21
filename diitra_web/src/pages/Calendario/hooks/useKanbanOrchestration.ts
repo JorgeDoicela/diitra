@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { useNotifications } from '../../../api/NotificationsContext';
 import {
     devolverAInbox,
     updateEvento,
@@ -16,16 +19,19 @@ interface UseKanbanOrchestrationOptions {
     fetchEventos: (date: Date) => void;
     currentDate: Date;
     handleGlobalDragEndFromNotes?: () => void;
+    onPlanNoteInCalendar?: (note: Evento, fechaStr: string) => void;
 }
 
 export const useKanbanOrchestration = ({
     eventos,
     setEventos,
+    stickyNotes,
     setStickyNotes,
     fetchStickyNotes,
     fetchEventos,
     currentDate,
     handleGlobalDragEndFromNotes,
+    onPlanNoteInCalendar,
 }: UseKanbanOrchestrationOptions) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const urlViewMode = searchParams.get('view') as CalendarViewMode;
@@ -41,9 +47,11 @@ export const useKanbanOrchestration = ({
 
     const [draggingUuid, setDraggingUuid] = useState<string | null>(null);
     const [draggingType, setDraggingType] = useState<'note' | 'kanban' | null>(null);
+    const draggingNoteRef = useRef<Evento | null>(null);
     const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
     const [planificando, setPlanificando] = useState<PlanificandoState | null>(null);
+    const { addToast } = useNotifications();
 
     const createDragGhost = (e: React.DragEvent) => {
         try {
@@ -86,6 +94,7 @@ export const useKanbanOrchestration = ({
         e.dataTransfer.setData('text/plain', note.uuid);
         e.dataTransfer.effectAllowed = 'copyMove';
         createDragGhost(e);
+        draggingNoteRef.current = note;
         setTimeout(() => {
             setDraggingUuid(note.uuid);
             setDraggingType('note');
@@ -104,15 +113,109 @@ export const useKanbanOrchestration = ({
         }, 0);
     };
 
-    const handleGlobalDragEnd = async () => {
+    const handleGlobalDragEnd = useCallback(async () => {
         setDraggingUuid(null);
         setDraggingType(null);
         setDragOverColumn(null);
         document.body.classList.remove('body-dragging-active');
+        setTimeout(() => {
+            draggingNoteRef.current = null;
+        }, 150);
         if (handleGlobalDragEndFromNotes) {
             handleGlobalDragEndFromNotes();
         }
-    };
+    }, [handleGlobalDragEndFromNotes]);
+
+    React.useEffect(() => {
+        const handleWindowDragEnd = () => {
+            handleGlobalDragEnd();
+        };
+        window.addEventListener('dragend', handleWindowDragEnd);
+        return () => window.removeEventListener('dragend', handleWindowDragEnd);
+    }, [handleGlobalDragEnd]);
+
+    const handleDropNoteOnCalendar = useCallback(async (args: { start: any }) => {
+        const note = draggingNoteRef.current;
+        if (!note) return;
+
+        const dateObj = args.start instanceof Date ? args.start : new Date(args.start);
+        const fechaElegida = format(dateObj, 'yyyy-MM-dd');
+
+        handleGlobalDragEnd();
+
+        // Normalización para span estricto de 1 día (medianoche local)
+        const [y, m, d] = fechaElegida.split('-').map(Number);
+        const start = new Date(y, m - 1, d, 0, 0, 0);
+        const end = start;
+
+        // Actualización optimista inmediata en UI
+        const updatedResource: Evento = {
+            ...note,
+            fecha_inicio: fechaElegida,
+            fecha_fin: fechaElegida,
+            estado: 'Pendiente',
+            categoria_global: 'Personal',
+            subcategoria: note.subcategoria || 'General',
+            es_todo_el_dia: true,
+        };
+
+        const newCalEvent: CalendarEventExtended = {
+            title: note.titulo,
+            start,
+            end,
+            allDay: true,
+            resource: updatedResource,
+        };
+
+        setStickyNotes(prev => prev.filter(n => n.uuid !== note.uuid));
+        setEventos(prev => [...prev.filter(ev => ev.resource.uuid !== note.uuid), newCalEvent]);
+
+        // Persistencia asíncrona en backend
+        try {
+            const payload = buildPayload({
+                titulo: note.titulo,
+                descripcion: note.descripcion || note.nota_detalle || '',
+                tipo: note.subcategoria || 'General',
+                fechaInicio: fechaElegida,
+                fechaFin: fechaElegida,
+                esTodoElDia: true,
+                colorHex: note.color_hex || '#F59E0B',
+                esPrivado: true,
+                prioridad: note.prioridad || 'Media',
+                estado: 'Pendiente',
+                alertaDias: note.alerta_dias ?? '',
+                recurrenciaAnual: false,
+                urlAccion: note.url_accion,
+            });
+
+            await updateEvento(note.uuid, payload);
+            addToast(
+                'Nota planificada',
+                `Programada para el ${format(dateObj, "d 'de' MMMM", { locale: es })}`,
+                'success'
+            );
+            window.dispatchEvent(new CustomEvent('diitra:note-created'));
+            fetchStickyNotes();
+            fetchEventos(currentDate);
+        } catch (err) {
+            console.error('Error al planificar nota en calendario:', err);
+            addToast('Error', 'No se pudo planificar la nota en el calendario', 'error');
+            fetchStickyNotes();
+            fetchEventos(currentDate);
+        }
+    }, [handleGlobalDragEnd, setStickyNotes, setEventos, addToast, currentDate, fetchStickyNotes, fetchEventos]);
+
+    const dragFromOutsideItem = useCallback(() => {
+        const note = draggingNoteRef.current;
+        if (!note) return null;
+        return {
+            title: note.titulo,
+            start: new Date(),
+            end: new Date(),
+            allDay: true,
+            resource: note,
+        };
+    }, []);
 
     const handleDragOver = (e: React.DragEvent, columnId: string) => {
         e.preventDefault();
@@ -255,10 +358,13 @@ export const useKanbanOrchestration = ({
         });
     };
 
-    const handleDevolverAInbox = async (uuid: string) => {
+    const handleDevolverAInbox = useCallback(async (uuid: string) => {
         setDraggingUuid(null);
         setDraggingType(null);
         document.body.classList.remove('body-dragging-active');
+        const sidebarZone = document.querySelector('.sticky-notes-section');
+        if (sidebarZone) sidebarZone.classList.remove('drop-target-active');
+
         try {
             const eventFound = eventos.find(ev => ev.resource.uuid === uuid);
             // Actualización optimista: quitar de eventos
@@ -284,7 +390,47 @@ export const useKanbanOrchestration = ({
             fetchStickyNotes();
             fetchEventos(currentDate);
         }
-    };
+    }, [eventos, setEventos, setStickyNotes, fetchStickyNotes, fetchEventos, currentDate]);
+
+    // Soporte para devolver al soltar arrastrando con mouse desde el Calendario
+    React.useEffect(() => {
+        if (!draggingUuid || draggingType !== 'kanban') return;
+
+        const handleWindowMouseMove = (e: MouseEvent) => {
+            const targetEl = document.elementFromPoint(e.clientX, e.clientY);
+            const isOver = !!targetEl?.closest('.sticky-notes-section');
+            const sidebarZone = document.querySelector('.sticky-notes-section');
+            if (sidebarZone) {
+                if (isOver) {
+                    sidebarZone.classList.add('drop-target-active');
+                } else {
+                    sidebarZone.classList.remove('drop-target-active');
+                }
+            }
+        };
+
+        const handleWindowMouseUp = (e: MouseEvent) => {
+            const targetEl = document.elementFromPoint(e.clientX, e.clientY);
+            const dropZone = targetEl?.closest('.sticky-notes-section');
+            const sidebarZone = document.querySelector('.sticky-notes-section');
+            if (sidebarZone) sidebarZone.classList.remove('drop-target-active');
+
+            if (dropZone && draggingUuid) {
+                const uuidToRestore = draggingUuid;
+                handleGlobalDragEnd();
+                handleDevolverAInbox(uuidToRestore);
+            }
+        };
+
+        window.addEventListener('mousemove', handleWindowMouseMove);
+        window.addEventListener('mouseup', handleWindowMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleWindowMouseMove);
+            window.removeEventListener('mouseup', handleWindowMouseUp);
+            const sidebarZone = document.querySelector('.sticky-notes-section');
+            if (sidebarZone) sidebarZone.classList.remove('drop-target-active');
+        };
+    }, [draggingUuid, draggingType, handleGlobalDragEnd, handleDevolverAInbox]);
 
     return {
         viewMode,
@@ -304,5 +450,7 @@ export const useKanbanOrchestration = ({
         handleDrop,
         handleConfirmPlanificacion,
         handleDevolverAInbox,
+        handleDropNoteOnCalendar,
+        dragFromOutsideItem,
     };
 };

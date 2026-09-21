@@ -367,7 +367,7 @@ public class CalendarioService : ICalendarioService
         // 5. HITOS NORMATIVOS Y PERSONALES (inv_calendario_eventos_normativos)
         var normativos = await _context.Set<InvCalendarioEventoNormativo>()
             .AsNoTracking()
-            .Where(e => e.Activo)
+            .Where(e => e.Activo && e.Estado != "Inbox" && e.Estado != "inbox")
             .ToListAsync();
 
         foreach (var norm in normativos)

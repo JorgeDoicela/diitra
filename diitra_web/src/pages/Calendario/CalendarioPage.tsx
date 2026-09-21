@@ -113,16 +113,17 @@ export const CalendarioPage: React.FC = () => {
         isDraggable,
         handleNavigateClick,
         getLabelFecha,
+        handlePlanNoteInCalendar,
     } = useCalendarioEvents(fetchStickyNotes);
-
-
 
     // 4. Hook de Orquestación Kanban y Asignación
     const {
         viewMode,
         setViewMode,
         draggingUuid,
+        setDraggingUuid,
         draggingType,
+        setDraggingType,
         dragOverColumn,
         setDragOverColumn,
         planificando,
@@ -134,6 +135,8 @@ export const CalendarioPage: React.FC = () => {
         handleDrop,
         handleConfirmPlanificacion,
         handleDevolverAInbox,
+        handleDropNoteOnCalendar,
+        dragFromOutsideItem,
     } = useKanbanOrchestration({
         eventos,
         setEventos,
@@ -143,6 +146,7 @@ export const CalendarioPage: React.FC = () => {
         fetchEventos,
         currentDate,
         handleGlobalDragEndFromNotes,
+        onPlanNoteInCalendar: handlePlanNoteInCalendar,
     });
 
     return (
@@ -203,6 +207,13 @@ export const CalendarioPage: React.FC = () => {
                             handleEventDrop={handleEventDrop}
                             handleEventResize={handleEventResize}
                             isDraggable={isDraggable}
+                            onDropFromOutside={handleDropNoteOnCalendar}
+                            dragFromOutsideItem={dragFromOutsideItem}
+                            onCalendarEventDragStart={(uuid) => {
+                                setDraggingUuid(uuid);
+                                setDraggingType('kanban');
+                                document.body.classList.add('body-dragging-active');
+                            }}
                         />
                     ) : viewMode === 'kanban' ? (
                         <KanbanView
@@ -257,6 +268,7 @@ export const CalendarioPage: React.FC = () => {
                 handleDeleteEvent={handleDeleteEvent}
                 handleGoToEventAction={handleGoToEventAction}
                 handleDevolverAInbox={handleDevolverAInbox}
+                onGoToKanban={() => setViewMode('kanban')}
             />
 
             {/* Event Form Drawer */}

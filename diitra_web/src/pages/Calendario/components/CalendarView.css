@@ -153,6 +153,17 @@
     transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
 }
 
+.rbc-event.rbc-event-spacious {
+    border-radius: 8px !important;
+    padding: 6px 10px !important;
+    margin: 3px 5px !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.rbc-event.rbc-event-spacious .rbc-event-content {
+    font-size: 12.5px !important;
+}
+
 .rbc-event:hover {
     filter: brightness(1.08);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -228,6 +239,8 @@
     gap: 4px;
     width: 100%;
     overflow: hidden;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .evento-titulo-text {
@@ -261,18 +274,110 @@
     opacity: 0.85;
 }
 
-/* Drag & Drop: cursor de arrastre */
+/* Drag & Drop: cursor y estados de arrastre */
 .rbc-addons-dnd .rbc-addons-dnd-dragged-event {
-    opacity: 0.6 !important;
+    opacity: 0.15 !important;
+    outline: 1.5px dashed var(--border-hover) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    filter: grayscale(0.5);
 }
 
-.rbc-addons-dnd-drag-preview {
-    opacity: 0.85;
-    border-radius: 6px;
+.rbc-addons-dnd .rbc-event[draggable="true"] {
+    cursor: grab !important;
+    user-select: none;
+}
+
+.rbc-addons-dnd .rbc-event[draggable="true"]:active {
+    cursor: grabbing !important;
 }
 
 .rbc-addons-dnd .rbc-event:not([draggable="true"]) {
     cursor: default;
+}
+
+/* ==========================================================================
+   TIRADOR DE REDIMENSIONADO PROFESIONAL (ESTILO VERCEL / GEIST)
+   ========================================================================== */
+
+/* Contenedor resizable de RBC */
+.rbc-addons-dnd .rbc-addons-dnd-resizable {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* 1. Ocultar tiradores verticales innecesarios en vistas que no apliquen */
+.rbc-addons-dnd-resize-ns-anchor {
+    display: none !important;
+    pointer-events: none !important;
+    height: 0 !important;
+}
+
+/* 2. Estilo base compartido para tiradores laterales (Izquierdo y Derecho) */
+.rbc-addons-dnd-resizable > .rbc-addons-dnd-resize-ew-anchor {
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 11px !important;
+    height: 100% !important;
+    cursor: ew-resize !important;
+    z-index: 10 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    transition: opacity 0.15s ease, background-color 0.15s ease !important;
+}
+
+/* Tirador Izquierdo (ajustar fecha de inicio) */
+.rbc-addons-dnd-resizable > .rbc-addons-dnd-resize-ew-anchor:first-child {
+    left: 0 !important;
+    right: auto !important;
+    border-top-left-radius: inherit !important;
+    border-bottom-left-radius: inherit !important;
+}
+
+/* Tirador Derecho (ajustar fecha de fin) */
+.rbc-addons-dnd-resizable > .rbc-addons-dnd-resize-ew-anchor:last-child {
+    right: 0 !important;
+    left: auto !important;
+    border-top-right-radius: inherit !important;
+    border-bottom-right-radius: inherit !important;
+}
+
+/* Revelar sutilmente ambos tiradores al pasar el mouse por la tarjeta */
+.rbc-event:hover .rbc-addons-dnd-resizable > .rbc-addons-dnd-resize-ew-anchor {
+    opacity: 0.75 !important;
+}
+
+/* Resaltar al posarse directamente sobre cualquiera de los tiradores */
+.rbc-event:hover .rbc-addons-dnd-resizable > .rbc-addons-dnd-resize-ew-anchor:hover {
+    opacity: 1 !important;
+    background: rgba(255, 255, 255, 0.22) !important;
+}
+
+/* Icono moderno de píldora vertical (reemplaza las dos líneas toscas '||') */
+.rbc-addons-dnd-resizable > .rbc-addons-dnd-resize-ew-anchor .rbc-addons-dnd-resize-ew-icon {
+    display: block !important;
+    border: none !important;
+    width: 3px !important;
+    height: 11px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+    margin: 0 !important;
+    pointer-events: none !important;
+    transition: transform 0.15s ease, background-color 0.15s ease !important;
+}
+
+.rbc-event:hover .rbc-addons-dnd-resizable > .rbc-addons-dnd-resize-ew-anchor:hover .rbc-addons-dnd-resize-ew-icon {
+    background: #ffffff !important;
+    transform: scaleY(1.2) !important;
 }
 
 /* Overrides de react-big-calendar agenda */
@@ -411,4 +516,23 @@
     font-size: 11px !important;
     color: var(--text-dim) !important;
     font-weight: 400 !important;
+}
+
+/* Drag & Drop de notas rápidas sobre las celdas del calendario */
+body.body-dragging-active .rbc-day-bg:hover {
+    background-color: color-mix(in srgb, var(--brand) 10%, var(--surface)) !important;
+    outline: 2px dashed color-mix(in srgb, var(--brand) 50%, transparent);
+    outline-offset: -2px;
+    transition: background-color 0.12s ease, outline 0.12s ease;
+}
+
+.rbc-addons-dnd-drag-preview {
+    border-radius: 8px !important;
+    opacity: 0.95 !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25), 0 6px 12px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    transform: scale(1.02) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 6px 10px !important;
 }

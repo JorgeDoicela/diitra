@@ -11,7 +11,7 @@ export interface EventoCalendario {
     descripcion: string;
     categoria_global: string;
     subcategoria: string;
-    fecha_inicio: string;
+    fecha_inicio: string | null;
     fecha_fin: string | null;
     es_todo_el_dia: boolean;
     color_hex: string | null;
@@ -28,6 +28,7 @@ export interface EventoCalendario {
     // Notas Rápidas — campos extendidos
     nota_detalle?: string | null;
     orden_bandeja?: number | null;
+    roles_visibles?: string | null;
 }
 
 export interface EventoPayload {
@@ -151,6 +152,7 @@ export const buildPayload = (fields: {
     urlAccion?: string | null;
     notaDetalle?: string | null;
     ordenBandeja?: number | null;
+    rolesVisibles?: string | null;
 }): EventoPayload => ({
     titulo: fields.titulo,
     descripcion: fields.descripcion,
@@ -160,7 +162,7 @@ export const buildPayload = (fields: {
     es_todo_el_dia: fields.esTodoElDia,
     recurrencia_anual: fields.recurrenciaAnual,
     recurrencia_hasta: null,
-    roles_visibles: null,
+    roles_visibles: (fields.rolesVisibles as any) ?? null,
     modulo_origen: 'PERSONAL',
     url_accion: fields.urlAccion ?? null,
     color_hex: fields.colorHex,

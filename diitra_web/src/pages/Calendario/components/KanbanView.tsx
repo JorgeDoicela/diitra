@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, CheckCircle, Edit2, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle, Edit2, Trash2, RotateCcw } from 'lucide-react';
 import { PRIORIDAD_COLORS } from '../../../services/calendarioService';
 import { KANBAN_COLUMNAS, type CalendarEventExtended, type Evento } from '../types/calendarioTypes';
 import './KanbanView.css';
@@ -178,6 +178,16 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                                                             >
                                                                 <Edit2 size={13} />
                                                             </button>
+                                                            {handleDevolverAInbox && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="kanban-action-btn"
+                                                                    onClick={() => handleDevolverAInbox(r.uuid)}
+                                                                    title="Devolver a notas rápidas"
+                                                                >
+                                                                    <RotateCcw size={13} />
+                                                                </button>
+                                                            )}
                                                         </>
                                                     )}
                                                     {isPersonal && !isCompleted && (

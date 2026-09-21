@@ -6,17 +6,24 @@ import { resolveEventUrl } from '../../services/calendarioService';
 import './ProximosEventosWidget.css';
 
 interface Evento {
-    id_evento_calendario: string;
+    id_evento_calendario?: string;
+    idEventoCalendario?: string;
     uuid: string;
     titulo: string;
-    descripcion: string;
-    categoria_global: string;
-    subcategoria: string;
-    fecha_inicio: string;
+    descripcion?: string | null;
+    categoria_global?: string;
+    categoriaGlobal?: string;
+    subcategoria?: string;
+    fecha_inicio: string | null;
+    fechaInicio?: string | null;
     fecha_fin: string | null;
-    es_todo_el_dia: boolean;
+    fechaFin?: string | null;
+    es_todo_el_dia?: boolean;
+    esTodoElDia?: boolean;
     color_hex: string | null;
-    url_accion: string | null;
+    colorHex?: string | null;
+    url_accion?: string | null;
+    urlAccion?: string | null;
     tipo_entidad_origen?: string | null;
     uuid_entidad_origen?: string | null;
     id_entidad_origen?: number | null;
@@ -52,7 +59,13 @@ export const ProximosEventosWidget: React.FC<ProximosEventosWidgetProps> = ({ cl
         const response = await api.get('/calendario/eventos', {
           params: { desde: desdeStr, hasta: hastaStr }
         });
-        setEventos(response.data || []);
+        const data: Evento[] = Array.isArray(response.data) ? response.data : [];
+        // Filtrar exclusivamente eventos con fecha de inicio definida en el rango
+        const eventosValidos = data.filter((ev) => {
+          const f = ev.fecha_inicio ?? ev.fechaInicio;
+          return typeof f === 'string' && f.trim().length > 0;
+        });
+        setEventos(eventosValidos);
       } catch (error) {
         console.error('Error al obtener próximos eventos:', error);
       } finally {
@@ -76,10 +89,21 @@ export const ProximosEventosWidget: React.FC<ProximosEventosWidgetProps> = ({ cl
     }
   };
 
-  const formatearFecha = (fechaStr: string) => {
-    const [year, month, day] = fechaStr.split('-').map(Number);
+  const getFechaDisplay = (fechaStr: string | null | undefined) => {
+    if (!fechaStr) return { day: '--', month: '' };
+    const cleanDate = fechaStr.split('T')[0];
+    const parts = cleanDate.split('-');
+    if (parts.length < 3) return { day: '--', month: '' };
+
+    const [year, month, day] = parts.map(Number);
     const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('es-EC', { day: 'numeric', month: 'short' });
+
+    const dayStr = !isNaN(day) ? String(day).padStart(2, '0') : '--';
+    const monthStr = !isNaN(date.getTime())
+      ? date.toLocaleDateString('es-EC', { month: 'short' }).replace('.', '').toUpperCase()
+      : '';
+
+    return { day: dayStr, month: monthStr };
   };
 
   if (loading) {
@@ -105,28 +129,34 @@ export const ProximosEventosWidget: React.FC<ProximosEventosWidgetProps> = ({ cl
                     </div>
                 ) : (
                     <div className="eventos-list">
-                        {eventos.map((ev) => (
-                            <div
-                                key={ev.id_evento_calendario}
-                                className="evento-row-item"
-                                onClick={() => handleEventoClick(ev)}
-                                style={{ '--accent-color': ev.color_hex || '#6B7280' } as React.CSSProperties}
-                            >
-                                <div className="evento-date">
-                                    <span className="day">{ev.fecha_inicio.split('-')[2]}</span>
-                                    <span className="month">
-                                        {formatearFecha(ev.fecha_inicio).split(' ')[1]}
-                                    </span>
+                        {eventos.map((ev) => {
+                            const fInicio = ev.fecha_inicio ?? ev.fechaInicio;
+                            const { day, month } = getFechaDisplay(fInicio);
+                            const idKey = ev.id_evento_calendario ?? ev.idEventoCalendario ?? ev.uuid;
+                            const color = ev.color_hex ?? ev.colorHex ?? '#6B7280';
+                            const categoria = ev.categoria_global ?? ev.categoriaGlobal ?? 'Evento';
+
+                            return (
+                                <div
+                                    key={idKey}
+                                    className="evento-row-item"
+                                    onClick={() => handleEventoClick(ev)}
+                                    style={{ '--accent-color': color } as React.CSSProperties}
+                                >
+                                    <div className="evento-date">
+                                        <span className="day">{day}</span>
+                                        <span className="month">{month}</span>
+                                    </div>
+                                    <div className="evento-info">
+                                        <h4 className="evento-title">{ev.titulo}</h4>
+                                        {ev.descripcion && (
+                                            <p className="evento-desc">{ev.descripcion}</p>
+                                        )}
+                                        <span className="evento-tag">{categoria}</span>
+                                    </div>
                                 </div>
-                                <div className="evento-info">
-                                    <h4 className="evento-title">{ev.titulo}</h4>
-                                    {ev.descripcion && (
-                                        <p className="evento-desc">{ev.descripcion}</p>
-                                    )}
-                                    <span className="evento-tag">{ev.categoria_global}</span>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

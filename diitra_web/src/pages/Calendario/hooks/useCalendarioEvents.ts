@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { View, SlotInfo } from 'react-big-calendar';
 import { format, startOfWeek, addDays, isAfter, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -59,6 +59,59 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
     const [formEsNormativo, setFormEsNormativo] = useState(false);
     const [formRolesVisibles, setFormRolesVisibles] = useState<string>('');
 
+    const fetchEventos = useCallback(async (date: Date) => {
+        try {
+            setLoading(true);
+            const raw = await getEventos(date);
+            const parsed: CalendarEventExtended[] = raw
+                .map((ev) => {
+                    const fInicio = (ev.fecha_inicio || (ev as any).fechaInicio) as string | null;
+                    const fFin = (ev.fecha_fin || (ev as any).fechaFin) as string | null;
+                    let start: Date;
+                    let end: Date;
+                    if (fInicio) {
+                        const [yI, mI, dI] = fInicio.split('-').map(Number);
+                        start = new Date(yI, mI - 1, dI, 0, 0, 0);
+                        end = start;
+                        if (fFin && fFin !== fInicio) {
+                            const [yF, mF, dF] = fFin.split('-').map(Number);
+                            end = new Date(yF, mF - 1, dF, 0, 0, 0);
+                        }
+                    } else {
+                        // Fecha centinela para tareas sin fecha (usadas en Kanban)
+                        start = new Date(0);
+                        end = new Date(0);
+                    }
+                    const normalizedResource: Evento = {
+                        ...ev,
+                        categoria_global: ev.categoria_global || (ev as any).categoriaGlobal || 'Personal',
+                        subcategoria: ev.subcategoria || (ev as any).subcategoria || 'General',
+                        fecha_inicio: fInicio,
+                        fecha_fin: fFin,
+                        es_todo_el_dia: ev.es_todo_el_dia ?? (ev as any).esTodoElDia ?? true,
+                        color_hex: ev.color_hex || (ev as any).colorHex || null,
+                        url_accion: ev.url_accion || (ev as any).urlAccion || null,
+                    };
+                    return {
+                        title: ev.titulo,
+                        start,
+                        end,
+                        allDay: normalizedResource.es_todo_el_dia,
+                        resource: normalizedResource
+                    };
+                });
+            setEventos(parsed);
+        } catch (error) {
+            console.error('Error al cargar eventos del calendario:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchEventos(currentDate);
+    }, [currentDate, fetchEventos]);
+
     const resetForm = () => {
         setFormTitulo('');
         setFormDescripcion('');
@@ -113,6 +166,27 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
         setIsFormOpen(true);
         setSelectedEvent(null);
     };
+
+    const handlePlanNoteInCalendar = useCallback((note: Evento, fechaStr: string) => {
+        setFormTitulo(note.titulo);
+        setFormDescripcion(note.descripcion || note.nota_detalle || '');
+        setFormTipo(note.subcategoria || 'Personal');
+        setFormFechaInicio(fechaStr);
+        setFormFechaFin(fechaStr);
+        setFormEsTodoElDia(note.es_todo_el_dia ?? true);
+        setFormColorHex(note.color_hex || '#F59E0B');
+        setFormEsPrivado(note.es_privado ?? true);
+        setFormPrioridad(note.prioridad || 'Media');
+        setFormEstado('Pendiente');
+        setFormAlertaDias(note.alerta_dias ?? '');
+        setFormRecurrenciaAnual(note.recurrencia_anual ?? false);
+        setFormEsNormativo(false);
+        setFormRolesVisibles('');
+        setEditingUuid(note.uuid);
+        setIsEditing(true);
+        setIsFormOpen(true);
+        setSelectedEvent(null);
+    }, []);
 
     const getFormPayload = () => buildPayload({
         titulo: formTitulo,
@@ -208,17 +282,61 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
         }
     };
 
-    const handleEventDrop = useCallback(async ({ event, start, end }: any) => {
+    const handleEventDrop = useCallback(async ({ event, start }: any) => {
         const ev: Evento = event.resource;
-        if (ev.categoria_global !== 'Personal') return;
+        const isPersonal = 
+            ev.categoria_global === 'Personal' ||
+            ev.subcategoria === 'Personal' ||
+            ev.estado === 'Inbox' ||
+            ev.estado === 'inbox' ||
+            (!ev.id_entidad_origen && !ev.tipo_entidad_origen) ||
+            ev.tipo_entidad_origen === 'CALENDARIO_NORMATIVO';
 
-        const nuevaInicio = format(start as Date, 'yyyy-MM-dd');
-        const nuevaFin = format(end as Date, 'yyyy-MM-dd');
+        if (!isPersonal) return;
+
+        const startObj = start as Date;
+        const nuevaInicio = format(startObj, 'yyyy-MM-dd');
+
+        // Para eventos de 1 día, fin = inicio
+        const duracionOriginal = (ev.fecha_inicio && ev.fecha_fin && ev.fecha_fin !== ev.fecha_inicio)
+            ? Math.max(1, Math.round((new Date(ev.fecha_fin + 'T00:00:00').getTime() - new Date(ev.fecha_inicio + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)) + 1)
+            : 1;
+
+        let nuevaFin: string;
+        let endObj: Date;
+        if (duracionOriginal <= 1) {
+            nuevaFin = nuevaInicio;
+            endObj = startObj;
+        } else {
+            const fFinDate = new Date(startObj);
+            fFinDate.setDate(fFinDate.getDate() + duracionOriginal - 1);
+            nuevaFin = format(fFinDate, 'yyyy-MM-dd');
+            endObj = fFinDate;
+        }
+
+        // Actualización optimista inmediata: mueve el evento en pantalla de inmediato sin duplicar
+        const updatedResource: Evento = {
+            ...ev,
+            fecha_inicio: nuevaInicio,
+            fecha_fin: nuevaFin,
+        };
+
+        setEventos(prev => prev.map(item => {
+            if (item.resource.uuid === ev.uuid) {
+                return {
+                    ...item,
+                    start: startObj,
+                    end: endObj,
+                    resource: updatedResource,
+                };
+            }
+            return item;
+        }));
 
         const payload = buildPayload({
             titulo: ev.titulo,
             descripcion: ev.descripcion,
-            tipo: ev.subcategoria,
+            tipo: ev.subcategoria || 'Personal',
             fechaInicio: nuevaInicio,
             fechaFin: nuevaFin,
             esTodoElDia: ev.es_todo_el_dia,
@@ -236,20 +354,68 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
             fetchEventos(currentDate);
         } catch (error) {
             console.error('Error al mover evento:', error);
+            fetchEventos(currentDate);
         }
-    }, [currentDate]);
+    }, [currentDate, fetchEventos, setEventos]);
 
     const handleEventResize = useCallback(async ({ event, start, end }: any) => {
         const ev: Evento = event.resource;
-        if (ev.categoria_global !== 'Personal') return;
+        const isPersonal = 
+            ev.categoria_global === 'Personal' ||
+            ev.subcategoria === 'Personal' ||
+            ev.estado === 'Inbox' ||
+            ev.estado === 'inbox' ||
+            (!ev.id_entidad_origen && !ev.tipo_entidad_origen) ||
+            ev.tipo_entidad_origen === 'CALENDARIO_NORMATIVO';
 
-        const nuevaInicio = format(start as Date, 'yyyy-MM-dd');
-        const nuevaFin = format(end as Date, 'yyyy-MM-dd');
+        if (!isPersonal) return;
+
+        const startObj = start as Date;
+        let endObj = end as Date;
+
+        const origEnd = event.end instanceof Date ? event.end : new Date(event.end);
+        // Si RBC modificó la fecha de fin (tirador derecho), RBC envía la fecha exclusiva (+1 día a medianoche).
+        // Si se estiró desde la izquierda, endObj se mantiene igual a origEnd y no debe restarse 1 día.
+        const isRightResize = endObj.getTime() !== origEnd.getTime();
+
+        if (isRightResize && endObj.getHours() === 0 && endObj.getMinutes() === 0 && endObj.getSeconds() === 0) {
+            const prevDay = addDays(endObj, -1);
+            if (prevDay >= startObj) {
+                endObj = prevDay;
+            }
+        }
+
+        // Si la fecha de inicio supera la de fin tras el movimiento, normalizar
+        if (startObj > endObj) {
+            endObj = startObj;
+        }
+
+        const nuevaInicio = format(startObj, 'yyyy-MM-dd');
+        const nuevaFin = format(endObj, 'yyyy-MM-dd');
+
+        // Actualización optimista inmediata en UI
+        const updatedResource: Evento = {
+            ...ev,
+            fecha_inicio: nuevaInicio,
+            fecha_fin: nuevaFin,
+        };
+
+        setEventos(prev => prev.map(item => {
+            if (item.resource.uuid === ev.uuid) {
+                return {
+                    ...item,
+                    start: startObj,
+                    end: endObj,
+                    resource: updatedResource,
+                };
+            }
+            return item;
+        }));
 
         const payload = buildPayload({
             titulo: ev.titulo,
             descripcion: ev.descripcion,
-            tipo: ev.subcategoria,
+            tipo: ev.subcategoria || 'Personal',
             fechaInicio: nuevaInicio,
             fechaFin: nuevaFin,
             esTodoElDia: ev.es_todo_el_dia,
@@ -261,66 +427,15 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
             recurrenciaAnual: ev.recurrencia_anual ?? false,
             urlAccion: ev.url_accion,
         });
+
         try {
             await updateEvento(ev.uuid, payload);
             fetchEventos(currentDate);
         } catch (error) {
             console.error('Error al redimensionar evento:', error);
+            fetchEventos(currentDate);
         }
-    }, [currentDate]);
-
-    const fetchEventos = useCallback(async (date: Date) => {
-        try {
-            setLoading(true);
-            const raw = await getEventos(date);
-            const parsed: CalendarEventExtended[] = raw
-                .map((ev) => {
-                    const fInicio = (ev.fecha_inicio || (ev as any).fechaInicio) as string | null;
-                    const fFin = (ev.fecha_fin || (ev as any).fechaFin) as string | null;
-                    let start: Date;
-                    let end: Date;
-                    if (fInicio) {
-                        const [yI, mI, dI] = fInicio.split('-').map(Number);
-                        start = new Date(yI, mI - 1, dI);
-                        end = start;
-                        if (fFin) {
-                            const [yF, mF, dF] = fFin.split('-').map(Number);
-                            end = new Date(yF, mF - 1, dF);
-                        }
-                    } else {
-                        // Fecha centinela para tareas sin fecha (usadas en Kanban)
-                        start = new Date(0);
-                        end = new Date(0);
-                    }
-                    const normalizedResource: Evento = {
-                        ...ev,
-                        categoria_global: ev.categoria_global || (ev as any).categoriaGlobal || 'Personal',
-                        subcategoria: ev.subcategoria || (ev as any).subcategoria || 'General',
-                        fecha_inicio: fInicio,
-                        fecha_fin: fFin,
-                        es_todo_el_dia: ev.es_todo_el_dia ?? (ev as any).esTodoElDia ?? true,
-                        color_hex: ev.color_hex || (ev as any).colorHex || null,
-                        url_accion: ev.url_accion || (ev as any).urlAccion || null,
-                    };
-                    return {
-                        title: ev.titulo,
-                        start,
-                        end,
-                        allDay: normalizedResource.es_todo_el_dia,
-                        resource: normalizedResource
-                    };
-                });
-            setEventos(parsed);
-        } catch (error) {
-            console.error('Error al cargar eventos del calendario:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchEventos(currentDate);
-    }, [currentDate, fetchEventos]);
+    }, [currentDate, fetchEventos, setEventos]);
 
     const handleNavigate = (newDate: Date) => setCurrentDate(newDate);
     const handleSelectEvent = (event: CalendarEventExtended) => setSelectedEvent(event.resource);
@@ -337,23 +452,41 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
         }
     };
 
+    const eventCountsByDate = useMemo(() => {
+        const counts: Record<string, number> = {};
+        for (const ev of eventos) {
+            const dateStr = ev.resource?.fecha_inicio;
+            if (dateStr) {
+                counts[dateStr] = (counts[dateStr] || 0) + 1;
+            }
+        }
+        return counts;
+    }, [eventos]);
+
     const eventStyleGetter = (event: CalendarEventExtended) => {
         const ev = event.resource;
         const isCompleted = ev.estado === 'Completado';
         const color = ev.color_hex || CATEGORIAS_CONFIG[ev.categoria_global]?.color || '#6B7280';
+        const dateStr = ev.fecha_inicio;
+        const countOnDay = (dateStr && eventCountsByDate[dateStr]) || 1;
+        const isSpacious = countOnDay <= 2;
+
         return {
+            className: isSpacious ? 'rbc-event-spacious' : 'rbc-event-compact',
             style: {
                 backgroundColor: isCompleted ? 'transparent' : color,
-                borderRadius: '6px',
+                borderRadius: isSpacious ? '8px' : '6px',
                 opacity: categoriasVisibles[ev.categoria_global] !== false ? 1 : 0.15,
                 color: isCompleted ? color : '#ffffff',
                 border: isCompleted ? `1.5px solid ${color}` : '0px',
                 display: 'block',
-                fontSize: '11.5px',
-                padding: '2px 6px',
-                fontWeight: '500',
-                transition: 'opacity 0.2s',
+                fontSize: isSpacious ? '12.5px' : '11.5px',
+                padding: isSpacious ? '6px 10px' : '2.5px 7px',
+                minHeight: isSpacious ? '32px' : '22px',
+                fontWeight: isSpacious ? '600' : '500',
+                transition: 'all 0.15s ease',
                 textDecoration: isCompleted ? 'line-through' : 'none',
+                boxShadow: isSpacious ? '0 2px 4px rgba(0, 0, 0, 0.1)' : '0 1px 2px rgba(0, 0, 0, 0.05)',
             }
         };
     };
@@ -373,7 +506,16 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
         .slice(0, 7);
 
     const isDraggable = (event: object) => {
-        return (event as CalendarEventExtended).resource?.categoria_global === 'Personal';
+        const ev = (event as CalendarEventExtended).resource;
+        if (!ev) return false;
+        return (
+            ev.categoria_global === 'Personal' ||
+            ev.subcategoria === 'Personal' ||
+            ev.estado === 'Inbox' ||
+            ev.estado === 'inbox' ||
+            (!ev.id_entidad_origen && !ev.tipo_entidad_origen) ||
+            ev.tipo_entidad_origen === 'CALENDARIO_NORMATIVO'
+        );
     };
 
     const handleNavigateClick = (action: 'PREV' | 'NEXT' | 'TODAY') => {
@@ -474,5 +616,6 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
         isDraggable,
         handleNavigateClick,
         getLabelFecha,
+        handlePlanNoteInCalendar,
     };
 };
