@@ -8,7 +8,9 @@ import { useConfirm } from '../../../api/ConfirmContext';
 import {
     getEventos,
     createEvento,
+    createNormativo,
     updateEvento,
+    updateNormativo,
     deleteEvento,
     buildPayload,
     resolveEventUrl,
@@ -54,6 +56,8 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
     const [formEstado, setFormEstado] = useState('Pendiente');
     const [formAlertaDias, setFormAlertaDias] = useState<number | ''>('');
     const [formRecurrenciaAnual, setFormRecurrenciaAnual] = useState(false);
+    const [formEsNormativo, setFormEsNormativo] = useState(false);
+    const [formRolesVisibles, setFormRolesVisibles] = useState<string>('');
 
     const resetForm = () => {
         setFormTitulo('');
@@ -68,6 +72,8 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
         setFormEstado('Pendiente');
         setFormAlertaDias('');
         setFormRecurrenciaAnual(false);
+        setFormEsNormativo(false);
+        setFormRolesVisibles('');
         setIsEditing(false);
         setEditingUuid(null);
     };
@@ -87,18 +93,21 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
     }, []);
 
     const handleEditEventClick = (ev: Evento) => {
+        const isNorm = ev.categoria_global === 'Normativo' || ev.tipo_entidad_origen === 'CALENDARIO_NORMATIVO';
         setFormTitulo(ev.titulo);
         setFormDescripcion(ev.descripcion || '');
-        setFormTipo(ev.subcategoria || 'Personal');
+        setFormTipo(ev.subcategoria || (isNorm ? 'Normativo' : 'Personal'));
         setFormFechaInicio(ev.fecha_inicio || '');
         setFormFechaFin(ev.fecha_fin || ev.fecha_inicio || '');
         setFormEsTodoElDia(ev.es_todo_el_dia);
-        setFormColorHex(ev.color_hex || '#F59E0B');
-        setFormEsPrivado(ev.es_privado);
+        setFormColorHex(ev.color_hex || (isNorm ? '#1E3A8A' : '#F59E0B'));
+        setFormEsPrivado(isNorm ? false : ev.es_privado);
         setFormPrioridad(ev.prioridad || 'Media');
         setFormEstado(ev.estado || 'Pendiente');
         setFormAlertaDias(ev.alerta_dias ?? '');
         setFormRecurrenciaAnual(ev.recurrencia_anual ?? false);
+        setFormEsNormativo(isNorm);
+        setFormRolesVisibles(ev.roles_visibles || '');
         setEditingUuid(ev.uuid);
         setIsEditing(true);
         setIsFormOpen(true);
@@ -113,11 +122,12 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
         fechaFin: formFechaFin,
         esTodoElDia: formEsTodoElDia,
         colorHex: formColorHex,
-        esPrivado: formEsPrivado,
+        esPrivado: formEsNormativo ? false : formEsPrivado,
         prioridad: formPrioridad,
         estado: formEstado,
         alertaDias: formAlertaDias,
         recurrenciaAnual: formRecurrenciaAnual,
+        rolesVisibles: formRolesVisibles,
     });
 
     const handleSaveEvent = async (e: React.FormEvent) => {
@@ -125,15 +135,23 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
         if (!formTitulo.trim()) return;
         try {
             setLoading(true);
-            if (isEditing && editingUuid) {
-                await updateEvento(editingUuid, getFormPayload());
+            if (isAdmin && formEsNormativo) {
+                if (isEditing && editingUuid) {
+                    await updateNormativo(editingUuid, getFormPayload());
+                } else {
+                    await createNormativo(getFormPayload());
+                }
             } else {
-                await createEvento(getFormPayload());
+                if (isEditing && editingUuid) {
+                    await updateEvento(editingUuid, getFormPayload());
+                } else {
+                    await createEvento(getFormPayload());
+                }
             }
             setIsFormOpen(false);
             fetchEventos(currentDate);
         } catch (error) {
-            console.error('Error al guardar evento de usuario:', error);
+            console.error('Error al guardar evento:', error);
         } finally {
             setLoading(false);
         }
@@ -256,16 +274,23 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
             setLoading(true);
             const raw = await getEventos(date);
             const parsed: CalendarEventExtended[] = raw
-                .filter(ev => Boolean(ev.fecha_inicio || (ev as any).fechaInicio))
                 .map((ev) => {
-                    const fInicio = (ev.fecha_inicio || (ev as any).fechaInicio) as string;
+                    const fInicio = (ev.fecha_inicio || (ev as any).fechaInicio) as string | null;
                     const fFin = (ev.fecha_fin || (ev as any).fechaFin) as string | null;
-                    const [yI, mI, dI] = fInicio.split('-').map(Number);
-                    const start = new Date(yI, mI - 1, dI);
-                    let end = start;
-                    if (fFin) {
-                        const [yF, mF, dF] = fFin.split('-').map(Number);
-                        end = new Date(yF, mF - 1, dF);
+                    let start: Date;
+                    let end: Date;
+                    if (fInicio) {
+                        const [yI, mI, dI] = fInicio.split('-').map(Number);
+                        start = new Date(yI, mI - 1, dI);
+                        end = start;
+                        if (fFin) {
+                            const [yF, mF, dF] = fFin.split('-').map(Number);
+                            end = new Date(yF, mF - 1, dF);
+                        }
+                    } else {
+                        // Fecha centinela para tareas sin fecha (usadas en Kanban)
+                        start = new Date(0);
+                        end = new Date(0);
                     }
                     const normalizedResource: Evento = {
                         ...ev,
@@ -343,7 +368,7 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
 
     const hoy = startOfDay(new Date());
     const proximosEventos = [...eventos]
-        .filter(ev => isAfter(ev.start as Date, hoy) || format(ev.start as Date, 'yyyy-MM-dd') === format(hoy, 'yyyy-MM-dd'))
+        .filter(ev => ev.resource.fecha_inicio && (isAfter(ev.start as Date, hoy) || format(ev.start as Date, 'yyyy-MM-dd') === format(hoy, 'yyyy-MM-dd')))
         .sort((a, b) => (a.start as Date).getTime() - (b.start as Date).getTime())
         .slice(0, 7);
 
@@ -428,6 +453,10 @@ export const useCalendarioEvents = (fetchStickyNotesRefetch?: () => void) => {
         setFormAlertaDias,
         formRecurrenciaAnual,
         setFormRecurrenciaAnual,
+        formEsNormativo,
+        setFormEsNormativo,
+        formRolesVisibles,
+        setFormRolesVisibles,
         resetForm,
         handleNewEventClick,
         handleSelectSlot,

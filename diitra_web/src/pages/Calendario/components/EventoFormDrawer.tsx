@@ -4,6 +4,7 @@ import { X, Bell, RotateCcw } from 'lucide-react';
 import { COLORES_OPCIONES } from '../../../services/calendarioService';
 import { GeistSelect } from '../../../components/Common/GeistSelect';
 import { GeistDatePicker } from '../../../components/Common/GeistDatePicker';
+import { useAuth } from '../../../api/AuthContext';
 import './EventoDrawers.css';
 
 const toDisplayDate = (val?: string) => {
@@ -31,6 +32,7 @@ const TIPO_OPCIONES = [
     { value: 'Tarea', label: 'Tarea de Investigación' },
     { value: 'Reunion', label: 'Reunión / Tutoría' },
     { value: 'Hito', label: 'Hito de Proyecto' },
+    { value: 'Normativo', label: 'Hito Normativo / CACES' },
 ];
 
 const PRIORIDAD_OPCIONES = [
@@ -73,6 +75,10 @@ interface EventoFormDrawerProps {
     setFormRecurrenciaAnual: (v: boolean) => void;
     formEsPrivado: boolean;
     setFormEsPrivado: (v: boolean) => void;
+    formEsNormativo?: boolean;
+    setFormEsNormativo?: (v: boolean) => void;
+    formRolesVisibles?: string;
+    setFormRolesVisibles?: (v: string) => void;
 }
 
 export const EventoFormDrawer: React.FC<EventoFormDrawerProps> = ({
@@ -102,7 +108,12 @@ export const EventoFormDrawer: React.FC<EventoFormDrawerProps> = ({
     setFormRecurrenciaAnual,
     formEsPrivado,
     setFormEsPrivado,
+    formEsNormativo = false,
+    setFormEsNormativo,
+    formRolesVisibles = '',
+    setFormRolesVisibles,
 }) => {
+    const { isAdmin } = useAuth();
     if (!isOpen) return null;
 
     return createPortal(
@@ -118,7 +129,9 @@ export const EventoFormDrawer: React.FC<EventoFormDrawerProps> = ({
             >
                 <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
                     <h2 className="text-xl font-bold tracking-tight text-text-main font-sans">
-                        {isEditing ? 'Editar Tarea o Evento' : 'Nueva Tarea / Evento de Agenda'}
+                        {isEditing
+                            ? (formEsNormativo ? 'Editar Hito Institucional' : 'Editar Tarea o Evento')
+                            : (formEsNormativo ? 'Nuevo Hito Normativo Institucional' : 'Nueva Tarea / Evento de Agenda')}
                     </h2>
                     <button
                         type="button"
@@ -130,13 +143,61 @@ export const EventoFormDrawer: React.FC<EventoFormDrawerProps> = ({
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-surface">
+                    {/* Selector de Ámbito para Administradores */}
+                    {isAdmin && setFormEsNormativo && (
+                        <div className="space-y-2 pb-4 border-b border-border-thin">
+                            <label className="section-label block">Ámbito del Evento</label>
+                            <div className="grid grid-cols-2 gap-2 p-1 bg-bg-deep rounded-xl border border-border-thin">
+                                <button
+                                    type="button"
+                                    className={`py-2 px-3 text-xs font-semibold rounded-lg transition-all ${!formEsNormativo ? 'bg-surface text-text-main shadow-sm border border-border-thin font-bold' : 'text-text-dim hover:text-text-main'}`}
+                                    onClick={() => {
+                                        setFormEsNormativo(false);
+                                        setFormEsPrivado(true);
+                                        if (formTipo === 'Normativo') setFormTipo('Personal');
+                                    }}
+                                >
+                                    Mi Tarea Personal
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`py-2 px-3 text-xs font-semibold rounded-lg transition-all ${formEsNormativo ? 'bg-brand text-white shadow-sm font-bold' : 'text-text-dim hover:text-text-main'}`}
+                                    onClick={() => {
+                                        setFormEsNormativo(true);
+                                        setFormEsPrivado(false);
+                                        setFormTipo('Normativo');
+                                        setFormColorHex('#1E3A8A');
+                                    }}
+                                >
+                                    Hito Institucional (Público)
+                                </button>
+                            </div>
+
+                            {formEsNormativo && setFormRolesVisibles && (
+                                <div className="pt-2 space-y-1">
+                                    <label className="section-label mb-1.5 block">Destinatarios Visibles</label>
+                                    <GeistSelect
+                                        value={formRolesVisibles || 'TODOS'}
+                                        onChange={(v) => setFormRolesVisibles(v === 'TODOS' ? '' : String(v))}
+                                        options={[
+                                            { value: 'TODOS', label: 'Toda la Comunidad (Docentes, Revisores, Estudiantes)' },
+                                            { value: 'DIITRA_DOCENTE', label: 'Solo Docentes Investigadores' },
+                                            { value: 'DIITRA_REVISOR_EXTERNO', label: 'Solo Evaluadores y Revisores Pares' },
+                                            { value: 'DIITRA_ESTUDIANTE', label: 'Solo Estudiantes / Semilleristas' },
+                                        ]}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Título */}
                     <div className="space-y-1">
                         <label className="section-label mb-1.5 block">Título *</label>
                         <input
                             type="text"
                             required
-                            placeholder="Ej: Reunión de Avance del Proyecto"
+                            placeholder={formEsNormativo ? "Ej: Plazo de Cierre CACES / Entrega Semestral" : "Ej: Reunión de Avance del Proyecto"}
                             value={formTitulo}
                             onChange={(e) => setFormTitulo(e.target.value)}
                             className="input-vercel text-sm"
@@ -256,24 +317,37 @@ export const EventoFormDrawer: React.FC<EventoFormDrawerProps> = ({
                         </div>
                     </div>
 
-                    {/* Es Privado */}
-                    <div className="flex items-center gap-3 p-4 bg-surface border border-border-thin rounded-lg">
-                        <input
-                            type="checkbox"
-                            id="es_privado"
-                            checked={formEsPrivado}
-                            onChange={(e) => setFormEsPrivado(e.target.checked)}
-                            className="w-5 h-5 border border-border rounded accent-brand cursor-pointer"
-                        />
-                        <div className="flex flex-col">
-                            <label htmlFor="es_privado" className="text-sm font-bold text-text-main cursor-pointer select-none">
-                                Evento Privado / Personal
-                            </label>
-                            <span className="text-[11px] text-text-dim leading-snug">
-                                Si está marcado, solo tú podrás ver este evento.
-                            </span>
+                    {/* Es Privado o Hito Institucional */}
+                    {formEsNormativo ? (
+                        <div className="flex items-center gap-3 p-4 bg-brand-subtle/50 border border-brand/20 rounded-xl text-brand">
+                            <div className="flex flex-col">
+                                <span className="text-xs font-bold font-sans">
+                                    Hito Institucional Oficial
+                                </span>
+                                <span className="text-[11px] opacity-80 leading-snug">
+                                    Este evento se publicará en el calendario institucional de los roles seleccionados y se sincronizará con los feeds iCal correspondientes.
+                                </span>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="flex items-center gap-3 p-4 bg-surface border border-border-thin rounded-lg">
+                            <input
+                                type="checkbox"
+                                id="es_privado"
+                                checked={formEsPrivado}
+                                onChange={(e) => setFormEsPrivado(e.target.checked)}
+                                className="w-5 h-5 border border-border rounded accent-brand cursor-pointer"
+                            />
+                            <div className="flex flex-col">
+                                <label htmlFor="es_privado" className="text-sm font-bold text-text-main cursor-pointer select-none">
+                                    Evento Privado / Personal
+                                </label>
+                                <span className="text-[11px] text-text-dim leading-snug">
+                                    Si está marcado, solo tú podrás ver este evento en tu agenda y tablero.
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="p-6 border-t border-border-thin bg-surface shrink-0 flex gap-4">

@@ -116,8 +116,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     handleEventResize,
     isDraggable,
 }) => {
+    const calendarEventos = React.useMemo(() => {
+        return filteredEventos.filter(ev => Boolean(ev.resource.fecha_inicio));
+    }, [filteredEventos]);
+
     if (view === 'agenda') {
-        const sortedEvents = [...filteredEventos].sort(
+        const sortedEvents = [...calendarEventos].sort(
             (a, b) => (a.start as Date).getTime() - (b.start as Date).getTime()
         );
         let lastDateStr = '';
@@ -130,7 +134,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     <div className="custom-agenda-th th-evento">Evento</div>
                 </div>
                 <div className="custom-agenda-body">
-                    {filteredEventos.length === 0 ? (
+                    {calendarEventos.length === 0 ? (
                         <div className="custom-agenda-empty">No hay eventos en este rango de fechas.</div>
                     ) : (
                         sortedEvents.map(event => {
@@ -188,7 +192,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     return (
         <DnDCalendar
             localizer={localizer}
-            events={filteredEventos}
+            events={calendarEventos}
             startAccessor="start"
             endAccessor="end"
             style={{ height: '100%' }}

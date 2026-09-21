@@ -628,8 +628,8 @@ public class AdminService : IAdminService
                     : 0;
 
                 var profCarList = profCareers.Where(pc => pc.IdProfesor == pId).ToList();
-                var istpetCarList = profCarList.Where(pc => pc.EsInstituto == 1).Select(pc => pc.Carrera).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
-                var nonConduccionList = profCarList.Where(pc => pc.EsInstituto != 0 && (pc.Carrera == null || !pc.Carrera.ToLower().Contains("conducci"))).Select(pc => pc.Carrera).Where(c => !string.IsNullOrEmpty(c)).Distinct().ToList();
+                var istpetCarList = profCarList.Where(pc => pc.EsInstituto == 1).Select(pc => pc.Carrera).Where(c => !string.IsNullOrEmpty(c)).Select(c => c!).Distinct().ToList();
+                var nonConduccionList = profCarList.Where(pc => pc.EsInstituto != 0 && (pc.Carrera == null || !pc.Carrera.ToLower().Contains("conducci"))).Select(pc => pc.Carrera).Where(c => !string.IsNullOrEmpty(c)).Select(c => c!).Distinct().ToList();
                 var linkedCareers = istpetCarList.Any() ? istpetCarList : nonConduccionList.Any() ? nonConduccionList : new List<string> { "Planta Docente" };
                 var carreraNom = string.Join(", ", linkedCareers);
 

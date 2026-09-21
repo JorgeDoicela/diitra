@@ -10,6 +10,7 @@ import type { Evento } from '../types/calendarioTypes';
 
 export const useStickyNotes = (setLoading?: (l: boolean) => void) => {
     const [stickyNotes, setStickyNotes] = useState<Evento[]>([]);
+    const [loadingNotes, setLoadingNotes] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedFilterContext, setSelectedFilterContext] = useState<string | null>(null);
     const [selectedFilterColor, setSelectedFilterColor] = useState<string | null>(null);
@@ -27,10 +28,13 @@ export const useStickyNotes = (setLoading?: (l: boolean) => void) => {
 
     const fetchStickyNotes = useCallback(async () => {
         try {
+            setLoadingNotes(true);
             const data = await getStickyNotes();
             setStickyNotes(data);
         } catch (err) {
             console.error('Error al cargar notas adhesivas:', err);
+        } finally {
+            setLoadingNotes(false);
         }
     }, []);
 
@@ -272,6 +276,7 @@ export const useStickyNotes = (setLoading?: (l: boolean) => void) => {
     return {
         stickyNotes,
         setStickyNotes,
+        loadingNotes,
         fetchStickyNotes,
         searchQuery,
         setSearchQuery,

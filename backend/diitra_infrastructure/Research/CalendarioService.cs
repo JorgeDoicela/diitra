@@ -76,17 +76,20 @@ public class CalendarioService : ICalendarioService
 
         foreach (var p in proyectos)
         {
-            // 1.1 Plazo de Subsanación de Protocolo (Fase 1 y 2) — Exclusivo para el Docente/Equipo de Proyecto
-            if (rolUsuario != "DIITRA_ADMIN" &&
-                p.FechaLimiteSubsanacion.HasValue &&
+            // 1.1 Plazo de Subsanación de Protocolo (Fase 1 y 2)
+            if (p.FechaLimiteSubsanacion.HasValue &&
                 p.FechaLimiteSubsanacion.Value >= desde &&
                 p.FechaLimiteSubsanacion.Value <= hasta &&
                 (p.Estado == "En Corrección" || p.Estado == "En Correccion"))
             {
+                var urlAccion = rolUsuario == "DIITRA_ADMIN"
+                    ? $"/investigacion/revision-tecnica/{p.Uuid}"
+                    : $"/investigacion/mis-proyectos/workspace/protocolo-investigacion/{p.Uuid}";
+
                 resultado.Add(new CalendarioEventoDto(
                     $"SUB-PROT-{p.IdProyecto}",
                     p.Uuid,
-                    $"Plazo de Subsanación: {p.Titulo}",
+                    rolUsuario == "DIITRA_ADMIN" ? $"Subsanación: {p.Titulo}" : $"Plazo de Subsanación: {p.Titulo}",
                     "Fecha límite para corregir y reenviar el protocolo de investigación.",
                     "Proyecto",
                     "SubsanacionProtocolo",
@@ -97,7 +100,7 @@ public class CalendarioService : ICalendarioService
                     p.IdProyecto,
                     p.Uuid,
                     "PROYECTO",
-                    $"/investigacion/workspace/protocolo-investigacion/{p.Uuid}",
+                    urlAccion,
                     null,
                     false,
                     "Alta",
@@ -170,14 +173,17 @@ public class CalendarioService : ICalendarioService
                 ));
             }
 
-            // 1.4 Entrega Informe Final (Fases 6 y 7) — Exclusivo para el Docente/Equipo de Proyecto
+            // 1.4 Entrega Informe Final (Fases 6 y 7)
             var fechaInformeFinal = p.FechaLimiteSubsanacionFinal ?? p.FechaLimiteInformeFinal;
-            if (rolUsuario != "DIITRA_ADMIN" &&
-                fechaInformeFinal.HasValue &&
+            if (fechaInformeFinal.HasValue &&
                 fechaInformeFinal.Value >= desde &&
                 fechaInformeFinal.Value <= hasta &&
                 p.Estado == "En Ejecución")
             {
+                var urlAccion = rolUsuario == "DIITRA_ADMIN"
+                    ? $"/investigacion/revision-informe-final/{p.Uuid}"
+                    : $"/investigacion/mis-proyectos/workspace/informe-final-investigacion/{p.Uuid}";
+
                 resultado.Add(new CalendarioEventoDto(
                     $"INF-FIN-{p.IdProyecto}",
                     p.Uuid,
@@ -192,7 +198,7 @@ public class CalendarioService : ICalendarioService
                     p.IdProyecto,
                     p.Uuid,
                     "PROYECTO",
-                    $"/investigacion/workspace/informe-final/{p.Uuid}",
+                    urlAccion,
                     null,
                     false,
                     "Alta",
@@ -366,14 +372,32 @@ public class CalendarioService : ICalendarioService
 
         foreach (var norm in normativos)
         {
-            if (!norm.FechaInicio.HasValue) continue;
-
             // Filtro de roles visibles
             if (!string.IsNullOrEmpty(norm.RolesVisibles) &&
                 !norm.RolesVisibles.Split(',').Select(r => r.Trim()).Contains(rolUsuario)) continue;
 
             // Filtro de privacidad
             if (norm.EsPrivado && norm.CreadoPor != idUsuario) continue;
+
+            // Tareas sin fecha de inicio pero activas en Kanban (no Inbox)
+            if (!norm.FechaInicio.HasValue)
+            {
+                if (norm.CreadoPor == idUsuario && norm.Estado != "Inbox" && norm.Estado != "inbox")
+                {
+                    var categoriaGlobal = (norm.TipoEvento is "Normativo" or "Academico" or "Institucional" or "Feriado") ? "Normativo" : "Personal";
+                    resultado.Add(new CalendarioEventoDto(
+                        $"NORM-{norm.IdEvento}", norm.Uuid, norm.Titulo, norm.Descripcion,
+                        categoriaGlobal, norm.TipoEvento,
+                        null, null,
+                        norm.EsTodoElDia, norm.ColorHex,
+                        norm.IdEvento, norm.Uuid, "CALENDARIO_NORMATIVO",
+                        norm.UrlAccion, norm.RolesVisibles,
+                        norm.EsPrivado, norm.Prioridad, norm.Estado, norm.CreadoPor,
+                        norm.AlertaDias, norm.RecurrenciaAnual
+                    ));
+                }
+                continue;
+            }
 
             if (norm.RecurrenciaAnual)
             {
@@ -422,7 +446,7 @@ public class CalendarioService : ICalendarioService
             }
         }
 
-        return resultado.OrderBy(e => e.FechaInicio);
+        return resultado.OrderBy(e => e.FechaInicio == null ? 1 : 0).ThenBy(e => e.FechaInicio);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -468,13 +492,15 @@ public class CalendarioService : ICalendarioService
 
         foreach (var ev in eventos)
         {
+            if (!ev.FechaInicio.HasValue) continue;
+
             sb.AppendLine("BEGIN:VEVENT");
             sb.AppendLine($"UID:{ev.IdEventoCalendario}@diitra.isttraversari.edu.ec");
-            sb.AppendLine($"DTSTART;VALUE=DATE:{ev.FechaInicio:yyyyMMdd}");
+            sb.AppendLine($"DTSTART;VALUE=DATE:{ev.FechaInicio.Value:yyyyMMdd}");
             if (ev.FechaFin.HasValue)
                 sb.AppendLine($"DTEND;VALUE=DATE:{ev.FechaFin.Value.AddDays(1):yyyyMMdd}");
             else
-                sb.AppendLine($"DTEND;VALUE=DATE:{ev.FechaInicio.AddDays(1):yyyyMMdd}");
+                sb.AppendLine($"DTEND;VALUE=DATE:{ev.FechaInicio.Value.AddDays(1):yyyyMMdd}");
             sb.AppendLine($"SUMMARY:{EscapeIcal(ev.Titulo)}");
             if (!string.IsNullOrEmpty(ev.Descripcion))
                 sb.AppendLine($"DESCRIPTION:{EscapeIcal(ev.Descripcion)}");
@@ -721,10 +747,10 @@ public class CalendarioService : ICalendarioService
 
     public async Task<IEnumerable<EventoNormativoDto>> GetStickyNotesAsync(int idUsuario)
     {
-        // Notas sin fecha = Inbox. Se ordenan primero por OrdenBandeja (manual),
-        // luego por fecha de registro descendente como fallback.
+        // Solo las notas que estén en Inbox (o que no tengan estado asignado y sin fecha).
+        // Las tareas en Pendiente/EnProgreso/Completado pertenecen a Kanban aunque no tengan fecha.
         return await _context.Set<InvCalendarioEventoNormativo>()
-            .Where(e => e.CreadoPor == idUsuario && e.FechaInicio == null && e.Activo)
+            .Where(e => e.CreadoPor == idUsuario && e.Activo && (e.Estado == "Inbox" || e.Estado == "inbox" || (e.Estado == null && e.FechaInicio == null)))
             .OrderBy(e => e.OrdenBandeja == null ? 1 : 0)
             .ThenBy(e => e.OrdenBandeja)
             .ThenByDescending(e => e.FechaRegistro)
@@ -751,7 +777,7 @@ public class CalendarioService : ICalendarioService
     {
         var uuids = items.Select(i => i.Uuid).ToList();
         var entities = await _context.Set<InvCalendarioEventoNormativo>()
-            .Where(e => uuids.Contains(e.Uuid) && e.CreadoPor == idUsuario && e.FechaInicio == null)
+            .Where(e => uuids.Contains(e.Uuid) && e.CreadoPor == idUsuario && (e.Estado == "Inbox" || e.Estado == "inbox" || e.FechaInicio == null))
             .ToListAsync();
 
         foreach (var item in items)

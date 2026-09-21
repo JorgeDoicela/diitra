@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, CheckCircle, RotateCcw, Edit2, Trash2, ArrowRight } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle, Edit2, Trash2 } from 'lucide-react';
 import { PRIORIDAD_COLORS } from '../../../services/calendarioService';
 import { KANBAN_COLUMNAS, type CalendarEventExtended, type Evento } from '../types/calendarioTypes';
 import './KanbanView.css';
@@ -39,21 +39,52 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     handleDeleteEvent,
     handleGoToEventAction,
 }) => {
-    return (
-        <div className="kanban-board-container">
-            {KANBAN_COLUMNAS.map(col => {
-                const colEvents = filteredEventos.filter(ev => {
-                    if (ev.resource.categoria_global !== 'Personal') return false;
+    const [filterScope, setFilterScope] = React.useState<'personal' | 'all'>('personal');
 
-                    const estado = ev.resource.estado;
-                    if (col.id === 'EnProgreso') {
-                        return estado === 'EnProgreso' || estado === 'En Ejecución';
-                    }
-                    if (col.id === 'Pendiente') {
-                        return estado === 'Pendiente' || !estado;
-                    }
-                    return estado === col.id;
-                });
+    const totalCardsCount = filteredEventos.filter(ev => filterScope === 'all' || ev.resource.categoria_global === 'Personal').length;
+
+    return (
+        <div className="flex flex-col flex-1 h-full min-h-0 overflow-hidden">
+            {/* Barra de control superior de Kanban */}
+            <div className="flex items-center justify-between px-1 pb-3 shrink-0">
+                <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-text-dim font-sans">Mostrar en tablero:</span>
+                    <div className="flex p-0.5 bg-surface border border-border-thin rounded-lg shadow-xs">
+                        <button
+                            type="button"
+                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${filterScope === 'personal' ? 'bg-bg-deep text-text-main shadow-xs font-bold' : 'text-text-dim hover:text-text-main'}`}
+                            onClick={() => setFilterScope('personal')}
+                        >
+                            Solo mis tareas
+                        </button>
+                        <button
+                            type="button"
+                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${filterScope === 'all' ? 'bg-bg-deep text-text-main shadow-xs font-bold' : 'text-text-dim hover:text-text-main'}`}
+                            onClick={() => setFilterScope('all')}
+                        >
+                            Todos los hitos y plazos
+                        </button>
+                    </div>
+                </div>
+                <span className="text-[11px] font-mono text-text-dim">
+                    {totalCardsCount} {totalCardsCount === 1 ? 'tarjeta visible' : 'tarjetas visibles'}
+                </span>
+            </div>
+
+            <div className="kanban-board-container flex-1 min-h-0">
+                {KANBAN_COLUMNAS.map(col => {
+                    const colEvents = filteredEventos.filter(ev => {
+                        if (filterScope === 'personal' && ev.resource.categoria_global !== 'Personal') return false;
+
+                        const estado = ev.resource.estado;
+                        if (col.id === 'EnProgreso') {
+                            return estado === 'EnProgreso' || estado === 'En Ejecución' || estado === 'En Corrección' || estado === 'En Correccion';
+                        }
+                        if (col.id === 'Pendiente') {
+                            return estado === 'Pendiente' || !estado || estado === 'Abierta';
+                        }
+                        return estado === col.id || (col.id === 'Completado' && (estado === 'Cerrada' || estado === 'Aprobado'));
+                    });
 
                 return (
                     <div
@@ -79,9 +110,12 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                                     const r = ev.resource;
                                     const isCompleted = r.estado === 'Completado';
                                     const isPersonal = r.categoria_global === 'Personal';
-                                    const formattedDate = r.fecha_fin && r.fecha_fin !== r.fecha_inicio
-                                        ? `${format(ev.start as Date, 'd MMM', { locale: es })} - ${format(ev.end as Date, 'd MMM', { locale: es })}`
-                                        : format(ev.start as Date, 'd MMM', { locale: es });
+                                    const hasDate = Boolean(r.fecha_inicio && ev.start && (ev.start as Date).getTime() > 0);
+                                    const formattedDate = hasDate
+                                        ? (r.fecha_fin && r.fecha_fin !== r.fecha_inicio
+                                            ? `${format(ev.start as Date, 'd MMM', { locale: es })} - ${format(ev.end as Date, 'd MMM', { locale: es })}`
+                                            : format(ev.start as Date, 'd MMM', { locale: es }))
+                                        : 'Sin fecha';
 
                                     return (
                                         <div
@@ -121,57 +155,39 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                                                 )}
                                             </div>
                                             <div className="kanban-card-footer">
-                                                <span className="kanban-card-date">
+                                                <span className={`kanban-card-date ${!hasDate ? 'kanban-card-sin-fecha' : ''}`}>
                                                     <CalendarIcon size={10} />
                                                     {formattedDate}
                                                 </span>
                                                 <div className="kanban-card-actions" onClick={(e) => e.stopPropagation()}>
-                                                    {isPersonal && !isCompleted && (
-                                                        <button
-                                                            type="button"
-                                                            className="kanban-action-btn complete"
-                                                            onClick={() => handleQuickComplete(r)}
-                                                            title="Marcar como Completado"
-                                                        >
-                                                            <CheckCircle size={12} />
-                                                        </button>
-                                                    )}
                                                     {isPersonal && (
                                                         <>
                                                             <button
                                                                 type="button"
-                                                                className="kanban-action-btn"
-                                                                onClick={() => handleDevolverAInbox(r.uuid)}
-                                                                title="Devolver a la bandeja Inbox"
+                                                                className="kanban-action-btn delete"
+                                                                onClick={() => handleDeleteEvent(r.uuid)}
+                                                                title="Eliminar tarea"
                                                             >
-                                                                <RotateCcw size={12} />
+                                                                <Trash2 size={13} />
                                                             </button>
                                                             <button
                                                                 type="button"
                                                                 className="kanban-action-btn"
                                                                 onClick={() => handleEditEventClick(r)}
-                                                                title="Editar"
+                                                                title="Editar tarea"
                                                             >
-                                                                <Edit2 size={12} />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                className="kanban-action-btn delete"
-                                                                onClick={() => handleDeleteEvent(r.uuid)}
-                                                                title="Eliminar"
-                                                            >
-                                                                <Trash2 size={12} />
+                                                                <Edit2 size={13} />
                                                             </button>
                                                         </>
                                                     )}
-                                                    {(r.url_accion || (!isPersonal && r.categoria_global === 'Proyecto' && r.uuid)) && (
+                                                    {isPersonal && !isCompleted && (
                                                         <button
                                                             type="button"
-                                                            className="kanban-action-btn"
-                                                            onClick={() => handleGoToEventAction(r)}
-                                                            title="Ir al Contexto de Trabajo"
+                                                            className="kanban-action-btn complete"
+                                                            onClick={() => handleQuickComplete(r)}
+                                                            title="Marcar como completada"
                                                         >
-                                                            <ArrowRight size={12} />
+                                                            <CheckCircle size={13} />
                                                         </button>
                                                     )}
                                                 </div>
@@ -184,6 +200,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                     </div>
                 );
             })}
+            </div>
         </div>
     );
 };

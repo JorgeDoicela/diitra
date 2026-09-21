@@ -7,7 +7,7 @@ public record CalendarioEventoDto(
     string? Descripcion,
     string CategoriaGlobal,
     string Subcategoria,
-    DateOnly FechaInicio,
+    DateOnly? FechaInicio,
     DateOnly? FechaFin,
     bool EsTodoElDia,
     string? ColorHex,

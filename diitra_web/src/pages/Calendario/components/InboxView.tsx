@@ -2,14 +2,30 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import {
-    Search, X, Folder, Bell, BarChart3, BookOpen, Calendar as CalendarIcon,
-    RotateCcw, FileText, Clock, Edit2, Trash2, TrendingUp
+    Search, X, RotateCcw, FileText, Clock, Edit2, Trash2, Loader2,
+    FlaskConical, Sparkles, Megaphone, ShieldCheck, TrendingUp, Inbox as InboxIcon, Settings, Calendar as CalendarIcon,
+    Award, Users
 } from 'lucide-react';
 import { COLORES_OPCIONES } from '../../../services/calendarioService';
+import { getModuleContext } from '../../../utils/moduleContext';
 import type { Evento, PlanificandoState } from '../types/calendarioTypes';
 import './InboxView.css';
 
+const ALL_CATEGORIES = [
+    { key: 'investigacion', label: 'Investigación', icon: FlaskConical },
+    { key: 'innovacion', label: 'Innovación', icon: Sparkles },
+    { key: 'convocatorias', label: 'Convocatorias', icon: Megaphone },
+    { key: 'evaluacion', label: 'Evaluación Pares', icon: ShieldCheck },
+    { key: 'calendario', label: 'Calendario', icon: CalendarIcon },
+    { key: 'certificados', label: 'Certificados', icon: Award },
+    { key: 'analiticas', label: 'Analíticas', icon: TrendingUp },
+    { key: 'solicitudes', label: 'Solicitudes', icon: InboxIcon },
+    { key: 'usuarios', label: 'Usuarios', icon: Users },
+    { key: 'admin', label: 'Admin / Sistema', icon: Settings },
+];
+
 interface InboxViewProps {
+    loadingNotes?: boolean;
     stickyNotes: Evento[];
     searchQuery: string;
     setSearchQuery: (q: string) => void;
@@ -32,6 +48,7 @@ interface InboxViewProps {
 }
 
 export const InboxView: React.FC<InboxViewProps> = ({
+    loadingNotes = false,
     stickyNotes,
     searchQuery,
     setSearchQuery,
@@ -52,82 +69,191 @@ export const InboxView: React.FC<InboxViewProps> = ({
     handleQuickPriorityChange,
     handleQuickColorChange,
 }) => {
+    const [selectedSubmodule, setSelectedSubmodule] = React.useState<string | null>(null);
+
+    // Resetear filtro de submódulo al cambiar la categoría principal
+    const handleSelectCategory = (catKey: string | null) => {
+        setSelectedFilterContext(catKey);
+        setSelectedSubmodule(null);
+    };
+
+    // Conteos reactivos por categoría y submódulo
+    const { moduleCounts, submoduleCountsByCat } = React.useMemo(() => {
+        const mCounts: Record<string, number> = {};
+        const sCounts: Record<string, Record<string, number>> = {};
+
+        stickyNotes.forEach(note => {
+            const info = getModuleContext(note.url_accion || '');
+            const cat = info.categoryKey;
+            mCounts[cat] = (mCounts[cat] || 0) + 1;
+
+            if (info.submodulo) {
+                if (!sCounts[cat]) sCounts[cat] = {};
+                sCounts[cat][info.submodulo] = (sCounts[cat][info.submodulo] || 0) + 1;
+            }
+        });
+
+        return { moduleCounts: mCounts, submoduleCountsByCat: sCounts };
+    }, [stickyNotes]);
+
+    // Submódulos existentes para la categoría seleccionada
+    const currentSubmodules = React.useMemo(() => {
+        if (!selectedFilterContext || !submoduleCountsByCat[selectedFilterContext]) return [];
+        return Object.entries(submoduleCountsByCat[selectedFilterContext]).map(([name, count]) => ({
+            name,
+            count
+        }));
+    }, [selectedFilterContext, submoduleCountsByCat]);
+
+    // Categorías visibles: ÚNICAMENTE aquellas donde el usuario realmente posee notas
+    const visibleCategories = React.useMemo(() => {
+        return ALL_CATEGORIES.filter(cat => (moduleCounts[cat.key] || 0) > 0);
+    }, [moduleCounts]);
+
+    // Colores disponibles de forma inteligente: basados en las notas del contexto activo
+    const availableColors = React.useMemo(() => {
+        const counts: Record<string, number> = {};
+        stickyNotes.forEach(note => {
+            if (selectedFilterContext) {
+                const info = getModuleContext(note.url_accion || '');
+                if (info.categoryKey !== selectedFilterContext) return;
+                if (selectedSubmodule && info.submodulo !== selectedSubmodule) return;
+            }
+            const col = (note.color_hex || '#F59E0B').toUpperCase();
+            counts[col] = (counts[col] || 0) + 1;
+        });
+
+        return COLORES_OPCIONES.map(c => ({
+            ...c,
+            count: counts[c.value.toUpperCase()] || 0
+        })).filter(c => c.count > 0);
+    }, [stickyNotes, selectedFilterContext, selectedSubmodule]);
+
+    // Limpiar filtro de color si el color seleccionado ya no tiene notas en la sección activa
+    React.useEffect(() => {
+        if (selectedFilterColor && !availableColors.some(c => c.value.toLowerCase() === selectedFilterColor.toLowerCase())) {
+            setSelectedFilterColor(null);
+        }
+    }, [availableColors, selectedFilterColor, setSelectedFilterColor]);
+
     return (
         <div className="sticky-inbox-view">
             {/* ── Barra de herramientas premium (Búsqueda + Filtros) ── */}
-            <div className="sticky-inbox-toolbar animate-slide-up">
-                <div className="sticky-inbox-search-wrapper">
-                    <Search size={14} className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Buscar por título o contenido de la nota..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="sticky-inbox-search-input"
-                    />
-                    {searchQuery && (
-                        <button
-                            type="button"
-                            onClick={() => setSearchQuery('')}
-                            className="search-clear-btn"
-                        >
-                            <X size={12} />
-                        </button>
-                    )}
-                </div>
-
-                <div className="sticky-inbox-filters-wrapper">
-                    {/* Filtro por módulo de origen */}
-                    <div className="sticky-inbox-context-filters">
-                        <button
-                            type="button"
-                            className={`inbox-filter-chip ${selectedFilterContext === null ? 'active' : ''}`}
-                            onClick={() => setSelectedFilterContext(null)}
-                        >
-                            Todos
-                        </button>
-                        {[
-                            { key: 'Proyectos', label: 'Proyectos', icon: Folder },
-                            { key: 'Convocatorias', label: 'Convocatorias', icon: Bell },
-                            { key: 'Monitoreo', label: 'Monitoreo', icon: BarChart3 },
-                            { key: 'Investigacion', label: 'Investigación', icon: BookOpen },
-                            { key: 'Agenda', label: 'Agenda', icon: CalendarIcon },
-                        ].map(ctx => (
+            <div className="sticky-inbox-toolbar animate-slide-up flex flex-col gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-4 w-full">
+                    <div className="sticky-inbox-search-wrapper">
+                        <Search size={14} className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Buscar por título o contenido de la nota..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="sticky-inbox-search-input"
+                        />
+                        {searchQuery && (
                             <button
-                                key={ctx.key}
                                 type="button"
-                                className={`inbox-filter-chip ${selectedFilterContext === ctx.key ? 'active' : ''}`}
-                                onClick={() => setSelectedFilterContext(ctx.key)}
+                                onClick={() => setSearchQuery('')}
+                                className="search-clear-btn"
                             >
-                                <ctx.icon size={11} className="mr-1.5 opacity-70" />
-                                {ctx.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Filtro por color de tarjeta */}
-                    <div className="sticky-inbox-color-filters">
-                        {COLORES_OPCIONES.map(col => (
-                            <button
-                                key={col.value}
-                                type="button"
-                                className={`inbox-color-filter-dot ${selectedFilterColor === col.value ? 'active' : ''}`}
-                                style={{ backgroundColor: col.value }}
-                                onClick={() => setSelectedFilterColor(prev => prev === col.value ? null : col.value)}
-                                title={`Filtrar por ${col.label}`}
-                            />
-                        ))}
-                        {selectedFilterColor && (
-                            <button
-                                type="button"
-                                className="inbox-color-filter-clear"
-                                onClick={() => setSelectedFilterColor(null)}
-                                title="Limpiar filtro de color"
-                            >
-                                <RotateCcw size={10} />
+                                <X size={12} />
                             </button>
                         )}
                     </div>
+
+                    <div className="sticky-inbox-filters-wrapper">
+                        {/* Filtro por color de tarjeta inteligente */}
+                        {loadingNotes ? (
+                            <div className="h-6 w-16 bg-surface-hover rounded-full animate-pulse" />
+                        ) : availableColors.length > 0 && (
+                            <div className="sticky-inbox-color-filters">
+                                {availableColors.map(col => (
+                                    <button
+                                        key={col.value}
+                                        type="button"
+                                        className={`inbox-color-filter-dot ${selectedFilterColor === col.value ? 'active' : ''}`}
+                                        style={{ backgroundColor: col.value }}
+                                        onClick={() => setSelectedFilterColor(prev => prev === col.value ? null : col.value)}
+                                        title={`${col.label} (${col.count})`}
+                                    />
+                                ))}
+                                {selectedFilterColor && (
+                                    <button
+                                        type="button"
+                                        className="inbox-color-filter-clear"
+                                        onClick={() => setSelectedFilterColor(null)}
+                                        title="Limpiar filtro de color"
+                                    >
+                                        <RotateCcw size={10} />
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Filtro por módulo de origen (Nivel 1) */}
+                <div className="flex flex-col gap-2 w-full pt-1 border-t border-border-thin">
+                    {loadingNotes ? (
+                        <div className="flex items-center gap-2 py-0.5">
+                            <div className="h-6 w-14 bg-surface-hover rounded-full animate-pulse" />
+                            <div className="h-6 w-24 bg-surface-hover rounded-full animate-pulse" />
+                        </div>
+                    ) : (
+                        <div className="sticky-inbox-context-filters">
+                            <button
+                                type="button"
+                                className={`inbox-filter-chip ${selectedFilterContext === null ? 'active' : ''}`}
+                                onClick={() => handleSelectCategory(null)}
+                            >
+                                <span>Todos</span>
+                                <span className="inbox-filter-badge">{stickyNotes.length}</span>
+                            </button>
+                            {visibleCategories.map(ctx => {
+                                const count = moduleCounts[ctx.key] || 0;
+                                return (
+                                    <button
+                                        key={ctx.key}
+                                        type="button"
+                                        className={`inbox-filter-chip ${selectedFilterContext === ctx.key ? 'active' : ''}`}
+                                        onClick={() => handleSelectCategory(selectedFilterContext === ctx.key ? null : ctx.key)}
+                                    >
+                                        <ctx.icon size={11} className="mr-1.5 opacity-70" />
+                                        <span>{ctx.label}</span>
+                                        {count > 0 && (
+                                            <span className="inbox-filter-badge">{count}</span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Filtro por submódulo granular (Nivel 2) */}
+                    {selectedFilterContext && currentSubmodules.length > 0 && (
+                        <div className="flex items-center gap-1.5 pt-2 border-t border-border-thin/60 flex-wrap animate-slide-up">
+                            <span className="text-[11px] font-semibold text-text-dim mr-1">Submódulos:</span>
+                            <button
+                                type="button"
+                                className={`inbox-subfilter-chip ${selectedSubmodule === null ? 'active' : ''}`}
+                                onClick={() => setSelectedSubmodule(null)}
+                            >
+                                <span>Todos en {ALL_CATEGORIES.find(c => c.key === selectedFilterContext)?.label}</span>
+                                <span className="ml-1 opacity-70 font-mono text-[9.5px]">({moduleCounts[selectedFilterContext] || 0})</span>
+                            </button>
+                            {currentSubmodules.map(sub => (
+                                <button
+                                    key={sub.name}
+                                    type="button"
+                                    className={`inbox-subfilter-chip ${selectedSubmodule === sub.name ? 'active' : ''}`}
+                                    onClick={() => setSelectedSubmodule(prev => prev === sub.name ? null : sub.name)}
+                                >
+                                    <span>{sub.name}</span>
+                                    <span className="ml-1 opacity-70 font-mono text-[9.5px]">({sub.count})</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -138,20 +264,27 @@ export const InboxView: React.FC<InboxViewProps> = ({
                         const matchesSearch = note.titulo.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             (note.nota_detalle || '').toLowerCase().includes(searchQuery.toLowerCase());
 
-                        const matchesContext = !selectedFilterContext ? true : (() => {
-                            const url = note.url_accion || '';
-                            if (selectedFilterContext === 'Proyectos') return url.startsWith('/investigacion/proyectos');
-                            if (selectedFilterContext === 'Convocatorias') return url.startsWith('/investigacion/convocatorias');
-                            if (selectedFilterContext === 'Monitoreo') return url.startsWith('/investigacion/monitoreo');
-                            if (selectedFilterContext === 'Investigacion') return url.startsWith('/investigacion') && !url.includes('/proyectos') && !url.includes('/convocatorias');
-                            if (selectedFilterContext === 'Agenda') return url.startsWith('/agenda');
-                            return false;
+                        const matchesContext = (() => {
+                            if (!selectedFilterContext) return true;
+                            const info = getModuleContext(note.url_accion || '');
+                            if (info.categoryKey !== selectedFilterContext) return false;
+                            if (selectedSubmodule && info.submodulo !== selectedSubmodule) return false;
+                            return true;
                         })();
 
                         const matchesColor = !selectedFilterColor ? true : note.color_hex === selectedFilterColor;
 
                         return matchesSearch && matchesContext && matchesColor;
                     });
+
+                    if (loadingNotes) {
+                        return (
+                            <div className="sticky-inbox-empty col-span-full py-16 flex flex-col items-center justify-center gap-3">
+                                <Loader2 size={24} className="animate-spin text-brand" />
+                                <span className="text-xs text-text-dim font-medium">Cargando bandeja de notas...</span>
+                            </div>
+                        );
+                    }
 
                     if (filteredNotes.length === 0) {
                         return (
@@ -186,16 +319,7 @@ export const InboxView: React.FC<InboxViewProps> = ({
                     return filteredNotes.map((note, index) => {
                         const indexReal = stickyNotes.findIndex(n => n.uuid === note.uuid);
 
-                        const contextoChip = (() => {
-                            const url = note.url_accion || '';
-                            if (url.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: Folder };
-                            if (url.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: Bell };
-                            if (url.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: BarChart3 };
-                            if (url.startsWith('/investigacion')) return { label: 'Investigación', icon: BookOpen };
-                            if (url.startsWith('/agenda')) return { label: 'Agenda', icon: CalendarIcon };
-                            if (url.startsWith('/analiticas')) return { label: 'Analíticas', icon: TrendingUp };
-                            return null;
-                        })();
+                        const contextoInfo = getModuleContext(note.url_accion || '');
 
                         return (
                             <motion.div
@@ -261,10 +385,16 @@ export const InboxView: React.FC<InboxViewProps> = ({
 
                                 <div className="inbox-note-footer">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        {contextoChip && (
-                                            <div className="inbox-note-context">
-                                                <contextoChip.icon size={10} className="opacity-70" />
-                                                <span>{contextoChip.label}</span>
+                                        {contextoInfo && (
+                                            <div className="inbox-note-context" title={`${contextoInfo.modulo}${contextoInfo.submodulo ? ` › ${contextoInfo.submodulo}` : ''}`}>
+                                                <contextoInfo.Icon size={10} className="opacity-70" />
+                                                <span>{contextoInfo.modulo}</span>
+                                                {contextoInfo.submodulo && (
+                                                    <>
+                                                        <span className="opacity-40">›</span>
+                                                        <span className="font-semibold">{contextoInfo.submodulo}</span>
+                                                    </>
+                                                )}
                                             </div>
                                         )}
 

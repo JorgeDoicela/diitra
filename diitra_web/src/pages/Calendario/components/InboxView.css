@@ -14,7 +14,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 180px;
+    max-height: 420px;
     overflow-y: auto;
     padding-right: 4px;
 }
@@ -49,6 +49,14 @@
 
 .sticky-note-card:active {
     cursor: grabbing;
+}
+
+.sticky-note-card.dragging {
+    opacity: 0.15 !important;
+    border: 1.5px dashed var(--border-hover) !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    transform: none !important;
 }
 
 .sticky-note-content {
@@ -408,6 +416,44 @@
     background: var(--fg);
     color: var(--bg);
     border-color: var(--fg);
+}
+
+.inbox-filter-badge {
+    margin-left: 6px;
+    font-size: 9.5px;
+    font-family: var(--font-mono, monospace);
+    opacity: 0.8;
+    background: color-mix(in srgb, currentColor 15%, transparent);
+    padding: 1px 5.5px;
+    border-radius: 9999px;
+    font-weight: 700;
+}
+
+.inbox-subfilter-chip {
+    background: var(--surface);
+    border: 1px solid var(--border-thin);
+    border-radius: 14px;
+    padding: 2.5px 9px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.15s ease;
+}
+
+.inbox-subfilter-chip:hover {
+    background: var(--surface-hover);
+    color: var(--fg);
+    border-color: var(--border-hover);
+}
+
+.inbox-subfilter-chip.active {
+    background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+    border-color: var(--brand);
+    color: var(--brand);
+    font-weight: 700;
 }
 
 .sticky-inbox-color-filters {

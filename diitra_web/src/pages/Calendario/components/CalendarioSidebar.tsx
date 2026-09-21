@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Folder, Bell, BarChart3, BookOpen, Calendar as CalendarIcon,
-    TrendingUp, Edit2, Trash2, ChevronRight
+    TrendingUp, Edit2, Trash2, ChevronRight, RotateCcw
 } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -9,6 +9,7 @@ import {
     type EventoCalendario,
     CATEGORIAS_CONFIG
 } from '../../../services/calendarioService';
+import { getModuleContext } from '../../../utils/moduleContext';
 import type { Event as BigCalendarEvent } from 'react-big-calendar';
 import type { CalendarViewMode } from '../types/calendarioTypes';
 import './CalendarioSidebar.css';
@@ -23,6 +24,8 @@ interface CalendarioSidebarProps {
     toggleCategoria: (key: string) => void;
     stickyNotes: EventoCalendario[];
     draggingUuid: string | null;
+    draggingType?: 'note' | 'kanban' | null;
+    onDropEventToInbox?: (uuid: string) => void;
     handleNoteDragStart: (e: React.DragEvent, note: EventoCalendario) => void;
     handleGlobalDragEnd: () => void;
     handleEditEventClick: (note: EventoCalendario) => void;
@@ -42,6 +45,8 @@ export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
     toggleCategoria,
     stickyNotes,
     draggingUuid,
+    draggingType,
+    onDropEventToInbox,
     handleNoteDragStart,
     handleGlobalDragEnd,
     handleEditEventClick,
@@ -52,15 +57,18 @@ export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
     copied,
     generatingToken,
     handleCopyIcal,
-    handleGenerarToken
+    handleGenerarToken,
 }) => {
     const hoy = startOfDay(new Date());
+    const [isOverInboxDropZone, setIsOverInboxDropZone] = React.useState(false);
 
     return (
-        <div className="calendario-sidebar">
+        <aside className="calendario-sidebar" aria-label="Panel lateral de calendario">
             {/* Próximos Eventos */}
             <div className="sidebar-section proximos-section">
-                <h3>Próximos Eventos</h3>
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="!mb-0">Próximos Eventos</h3>
+                </div>
                 {proximosEventos.length === 0 ? (
                     <p className="proximos-empty">Sin eventos próximos</p>
                 ) : (
@@ -90,27 +98,47 @@ export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
                 )}
             </div>
 
-            {/* Notas Rápidas (Inbox) */}
-            <div className="sidebar-section sticky-notes-section">
+            {/* Notas Rápidas (Inbox) con Soporte de Drop para Devolver */}
+            <div
+                className={`sidebar-section sticky-notes-section ${isOverInboxDropZone ? 'drop-target-active' : ''}`}
+                onDragOver={(e) => {
+                    if (draggingType === 'kanban' || e.dataTransfer.types.includes('diitra/kanban-event')) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        if (!isOverInboxDropZone) setIsOverInboxDropZone(true);
+                    }
+                }}
+                onDragLeave={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                        setIsOverInboxDropZone(false);
+                    }
+                }}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    setIsOverInboxDropZone(false);
+                    const uuid = e.dataTransfer.getData('diitra/kanban-event') || e.dataTransfer.getData('text/plain') || draggingUuid;
+                    handleGlobalDragEnd();
+                    if (uuid && onDropEventToInbox) {
+                        onDropEventToInbox(uuid);
+                    }
+                }}
+            >
                 <h3>Notas Rápidas</h3>
                 <p className="ical-help-text mb-3">Arrastra las notas al tablero <strong>Kanban</strong> para planificarlas.</p>
+
+                {isOverInboxDropZone && (
+                    <div className="sticky-notes-drop-overlay">
+                        <RotateCcw size={20} className="text-brand" />
+                        <span className="drop-overlay-title">Soltar para devolver</span>
+                    </div>
+                )}
 
                 <div className="sticky-notes-grid">
                     {stickyNotes.length === 0 ? (
                         <p className="proximos-empty">Bandeja vacía</p>
                     ) : (
                         stickyNotes.map(note => {
-                            // Derivar chip de contexto desde url_accion
-                            const contextoChip = (() => {
-                                const url = note.url_accion || '';
-                                if (url.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', icon: Folder };
-                                if (url.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', icon: Bell };
-                                if (url.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', icon: BarChart3 };
-                                if (url.startsWith('/investigacion')) return { label: 'Investigación', icon: BookOpen };
-                                if (url.startsWith('/agenda')) return { label: 'Agenda', icon: CalendarIcon };
-                                if (url.startsWith('/analiticas')) return { label: 'Analíticas', icon: TrendingUp };
-                                return null;
-                            })();
+                            const ctx = getModuleContext(note.url_accion || '');
 
                             return (
                                 <div
@@ -126,10 +154,16 @@ export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
                                         {note.nota_detalle && (
                                             <p className="sticky-note-detalle">{note.nota_detalle}</p>
                                         )}
-                                        {contextoChip && (
-                                            <div className="sticky-note-ctx-chip">
-                                                <contextoChip.icon size={10} className="opacity-70" />
-                                                <span>{contextoChip.label}</span>
+                                        {ctx && (
+                                            <div className="sticky-note-ctx-chip" title={`${ctx.modulo}${ctx.submodulo ? ` › ${ctx.submodulo}` : ''}`}>
+                                                <ctx.Icon size={10} className="opacity-70 shrink-0" />
+                                                <span className="truncate">{ctx.modulo}</span>
+                                                {ctx.submodulo && (
+                                                    <>
+                                                        <span className="opacity-40">›</span>
+                                                        <span className="font-semibold truncate">{ctx.submodulo}</span>
+                                                    </>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -208,6 +242,6 @@ export const CalendarioSidebar: React.FC<CalendarioSidebarProps> = ({
                     )}
                 </div>
             )}
-        </div>
+        </aside>
     );
 };

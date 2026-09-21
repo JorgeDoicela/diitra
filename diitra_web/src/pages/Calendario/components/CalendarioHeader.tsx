@@ -1,6 +1,13 @@
 import React from 'react';
 import type { View } from 'react-big-calendar';
-import { Calendar as CalendarIcon, Layers, FileText, Plus } from 'lucide-react';
+import {
+    Calendar as CalendarIcon,
+    Layers,
+    FileText,
+    Plus,
+    ChevronLeft,
+    ChevronRight
+} from 'lucide-react';
 import type { CalendarViewMode } from '../types/calendarioTypes';
 
 interface CalendarioHeaderProps {
@@ -24,7 +31,8 @@ export const CalendarioHeader: React.FC<CalendarioHeaderProps> = ({
 }) => {
     return (
         <div className="calendario-header-actions">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+
                 <div className="view-selector-pill">
                     <button
                         type="button"
@@ -53,38 +61,41 @@ export const CalendarioHeader: React.FC<CalendarioHeaderProps> = ({
                 </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
                 {viewMode === 'calendar' && (
                     <>
                         {/* Navegador Temporal */}
                         <div className="view-selector-pill">
                             <button
+                                type="button"
                                 onClick={() => handleNavigateClick('PREV')}
-                                className="view-selector-btn font-semibold"
-                                title="Anterior"
+                                className="view-selector-btn !px-2 flex items-center justify-center"
+                                title="Periodo anterior"
                             >
-                                &lt;
+                                <ChevronLeft size={13} />
                             </button>
-                            <span className="text-xs font-semibold px-2 min-w-[120px] text-center text-fg font-sans select-none flex items-center justify-center">
+                            <span className="text-xs font-semibold px-2.5 min-w-[130px] text-center text-fg font-sans select-none flex items-center justify-center tracking-tight">
                                 {getLabelFecha()}
                             </span>
                             <button
+                                type="button"
                                 onClick={() => handleNavigateClick('NEXT')}
-                                className="view-selector-btn font-semibold"
-                                title="Siguiente"
+                                className="view-selector-btn !px-2 flex items-center justify-center"
+                                title="Periodo siguiente"
                             >
-                                &gt;
+                                <ChevronRight size={13} />
                             </button>
                             <button
+                                type="button"
                                 onClick={() => handleNavigateClick('TODAY')}
-                                className="view-selector-btn text-[10px] font-bold uppercase"
+                                className="view-selector-btn text-[10px] font-bold uppercase tracking-wider !px-2.5"
                             >
                                 Hoy
                             </button>
                         </div>
 
-                        {/* Selector Sub-vistas (Agenda al inicio, luego Mes, Semana, Día) */}
-                        <div className="view-selector-pill">
+                        {/* Selector Sub-vistas */}
+                        <div className="view-selector-pill hidden sm:flex">
                             {(['agenda', 'month', 'week', 'day'] as const).map(v => (
                                 <button
                                     key={v}

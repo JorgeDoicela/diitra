@@ -16,6 +16,7 @@ interface EventoDetailDrawerProps {
     handleEditEventClick: (ev: Evento) => void;
     handleDeleteEvent: (uuid: string) => void;
     handleGoToEventAction: (ev: Evento) => void;
+    handleDevolverAInbox?: (uuid: string) => void;
 }
 
 export const EventoDetailDrawer: React.FC<EventoDetailDrawerProps> = ({
@@ -25,6 +26,7 @@ export const EventoDetailDrawer: React.FC<EventoDetailDrawerProps> = ({
     handleEditEventClick,
     handleDeleteEvent,
     handleGoToEventAction,
+    handleDevolverAInbox,
 }) => {
     const { isAdmin } = useAuth();
     if (!selectedEvent) return null;
@@ -164,28 +166,43 @@ export const EventoDetailDrawer: React.FC<EventoDetailDrawerProps> = ({
 
                 <div className="p-6 border-t border-border-thin bg-surface shrink-0 flex flex-col gap-3">
                     {selectedEvent.categoria_global === 'Personal' ? (
-                        <div className="flex gap-3 w-full">
-                            {selectedEvent.estado !== 'Completado' && (
+                        <div className="flex flex-col gap-2.5 w-full">
+                            <div className="flex gap-3 w-full">
+                                {selectedEvent.estado !== 'Completado' && (
+                                    <button
+                                        onClick={() => handleQuickComplete(selectedEvent)}
+                                        className="flex-1 py-3 bg-success text-white hover:bg-success/90 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <CheckCircle size={15} /> Completar
+                                    </button>
+                                )}
                                 <button
-                                    onClick={() => handleQuickComplete(selectedEvent)}
-                                    className="flex-1 py-3 bg-success text-white hover:bg-success/90 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
+                                    onClick={() => handleEditEventClick(selectedEvent)}
+                                    className="flex-1 py-3 bg-surface text-fg border border-border hover:bg-surface-hover rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
                                 >
-                                    <CheckCircle size={15} /> Completar
+                                    <Edit2 size={15} /> Editar
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteEvent(selectedEvent.uuid)}
+                                    className="py-3 px-4 bg-error-subtle text-error hover:bg-error hover:text-white rounded-lg text-sm font-bold transition-all flex items-center justify-center"
+                                    title="Eliminar tarea"
+                                >
+                                    <Trash2 size={15} />
+                                </button>
+                            </div>
+                            {handleDevolverAInbox && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        handleDevolverAInbox(selectedEvent.uuid);
+                                        onClose();
+                                    }}
+                                    className="w-full py-2 bg-surface text-text-dim hover:text-brand border border-dashed border-border hover:border-brand/40 hover:bg-surface-hover rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5"
+                                    title="Regresar a notas"
+                                >
+                                    <RotateCcw size={13} /> Devolver a Notas
                                 </button>
                             )}
-                            <button
-                                onClick={() => handleEditEventClick(selectedEvent)}
-                                className="flex-1 py-3 bg-surface text-fg border border-border hover:bg-surface-hover rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
-                            >
-                                <Edit2 size={15} /> Editar
-                            </button>
-                            <button
-                                onClick={() => handleDeleteEvent(selectedEvent.uuid)}
-                                className="py-3 px-4 bg-error-subtle text-error hover:bg-error hover:text-white rounded-lg text-sm font-bold transition-all flex items-center justify-center"
-                                title="Eliminar tarea"
-                            >
-                                <Trash2 size={15} />
-                            </button>
                         </div>
                     ) : (
                         <>

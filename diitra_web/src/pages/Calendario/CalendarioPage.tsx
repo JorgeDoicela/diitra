@@ -33,6 +33,7 @@ export const CalendarioPage: React.FC = () => {
     const {
         stickyNotes,
         setStickyNotes,
+        loadingNotes,
         fetchStickyNotes,
         searchQuery,
         setSearchQuery,
@@ -92,6 +93,10 @@ export const CalendarioPage: React.FC = () => {
         setFormRecurrenciaAnual,
         formEsPrivado,
         setFormEsPrivado,
+        formEsNormativo,
+        setFormEsNormativo,
+        formRolesVisibles,
+        setFormRolesVisibles,
         handleNewEventClick,
         handleSelectSlot,
         handleEditEventClick,
@@ -110,11 +115,14 @@ export const CalendarioPage: React.FC = () => {
         getLabelFecha,
     } = useCalendarioEvents(fetchStickyNotes);
 
+
+
     // 4. Hook de Orquestación Kanban y Asignación
     const {
         viewMode,
         setViewMode,
         draggingUuid,
+        draggingType,
         dragOverColumn,
         setDragOverColumn,
         planificando,
@@ -138,7 +146,7 @@ export const CalendarioPage: React.FC = () => {
     });
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-10 flex flex-col h-[calc(100vh-56px)] overflow-hidden font-sans gap-6">
+        <main className="flex-1 bg-bg-deep p-4 md:p-8 flex flex-col h-[calc(100vh-56px)] overflow-hidden font-sans gap-4">
             <PageHeader
                 kicker="Planificación y Seguimiento"
                 icon={Calendar}
@@ -147,14 +155,17 @@ export const CalendarioPage: React.FC = () => {
                 className="mb-0"
             />
 
+
             {/* Contenedor de dos columnas por debajo del título */}
-            <div className="flex flex-1 gap-6 min-h-0 overflow-hidden">
+            <div className="flex flex-1 gap-4 min-h-0 overflow-hidden">
                 <CalendarioSidebar
                     viewMode={viewMode}
                     categoriasVisibles={categoriasVisibles}
                     toggleCategoria={toggleCategoria}
                     stickyNotes={stickyNotes}
                     draggingUuid={draggingUuid}
+                    draggingType={draggingType}
+                    onDropEventToInbox={handleDevolverAInbox}
                     handleNoteDragStart={handleNoteDragStart}
                     handleGlobalDragEnd={handleGlobalDragEnd}
                     handleEditEventClick={handleEditEventClick}
@@ -212,6 +223,7 @@ export const CalendarioPage: React.FC = () => {
                         />
                     ) : (
                         <InboxView
+                            loadingNotes={loadingNotes}
                             stickyNotes={stickyNotes}
                             searchQuery={searchQuery}
                             setSearchQuery={setSearchQuery}
@@ -244,6 +256,7 @@ export const CalendarioPage: React.FC = () => {
                 handleEditEventClick={handleEditEventClick}
                 handleDeleteEvent={handleDeleteEvent}
                 handleGoToEventAction={handleGoToEventAction}
+                handleDevolverAInbox={handleDevolverAInbox}
             />
 
             {/* Event Form Drawer */}
@@ -274,6 +287,10 @@ export const CalendarioPage: React.FC = () => {
                 setFormRecurrenciaAnual={setFormRecurrenciaAnual}
                 formEsPrivado={formEsPrivado}
                 setFormEsPrivado={setFormEsPrivado}
+                formEsNormativo={formEsNormativo}
+                setFormEsNormativo={setFormEsNormativo}
+                formRolesVisibles={formRolesVisibles}
+                setFormRolesVisibles={setFormRolesVisibles}
             />
 
             {/* Popover de Planificación */}

@@ -1,27 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-    FileText, X, Plus, ChevronDown, ChevronUp,
-    Folder, Megaphone, BarChart3, FlaskConical, Calendar, TrendingUp, Settings
+    FileText, X, Plus, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { createEvento, buildPayload, COLORES_OPCIONES } from '../../services/calendarioService';
+import { getModuleContext } from '../../utils/moduleContext';
 import './StickyNotesFloatingButton.css';
 
 interface StickyNotesFloatingButtonProps {
     pendingCount?: number;
 }
-
-/** Deriva un label corto de la pathname actual para mostrar como chip de contexto */
-const getContextoLabel = (pathname: string): { label: string; Icon: React.ComponentType<{ size?: number }> } | null => {
-    if (pathname.startsWith('/investigacion/proyectos')) return { label: 'Proyectos', Icon: Folder };
-    if (pathname.startsWith('/investigacion/convocatorias')) return { label: 'Convocatorias', Icon: Megaphone };
-    if (pathname.startsWith('/investigacion/monitoreo')) return { label: 'Monitoreo', Icon: BarChart3 };
-    if (pathname.startsWith('/investigacion')) return { label: 'Investigación', Icon: FlaskConical };
-    if (pathname.startsWith('/agenda')) return { label: 'Agenda', Icon: Calendar };
-    if (pathname.startsWith('/analiticas')) return { label: 'Analíticas', Icon: TrendingUp };
-    if (pathname.startsWith('/admin')) return { label: 'Admin', Icon: Settings };
-    return null;
-};
 
 export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps> = ({
     pendingCount = 0,
@@ -34,7 +22,7 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
     const [detalleExpanded, setDetalleExpanded] = useState(false);
     const [color, setColor] = useState('#F59E0B');
 
-    const contexto = getContextoLabel(location.pathname);
+    const contexto = getModuleContext(location.pathname, location.search);
 
     // Cerrar con Escape
     useEffect(() => {
@@ -71,7 +59,7 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
             estado: 'Inbox',
             alertaDias: '',
             recurrenciaAnual: false,
-            urlAccion: location.pathname,
+            urlAccion: `${location.pathname}${location.search}`,
             notaDetalle: detalle.trim() || null,
         });
 
@@ -103,11 +91,17 @@ export const StickyNotesFloatingButton: React.FC<StickyNotesFloatingButtonProps>
                         </div>
                     </div>
 
-                    {/* Chip de contexto de página */}
+                    {/* Chip de contexto de página profesional (Módulo › Submódulo) */}
                     {contexto && (
-                        <div className="sticky-context-chip">
-                            <contexto.Icon size={12} />
-                            <span>{contexto.label}</span>
+                        <div className="sticky-context-chip" title={`${contexto.modulo}${contexto.submodulo ? ` › ${contexto.submodulo}` : ''}`}>
+                            <contexto.Icon size={12} className="shrink-0 opacity-80" />
+                            <span>{contexto.modulo}</span>
+                            {contexto.submodulo && (
+                                <>
+                                    <span className="opacity-40">›</span>
+                                    <span className="font-semibold text-text-main">{contexto.submodulo}</span>
+                                </>
+                            )}
                         </div>
                     )}
 

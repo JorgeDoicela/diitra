@@ -40,30 +40,73 @@ export const useKanbanOrchestration = ({
     };
 
     const [draggingUuid, setDraggingUuid] = useState<string | null>(null);
+    const [draggingType, setDraggingType] = useState<'note' | 'kanban' | null>(null);
     const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
     const [planificando, setPlanificando] = useState<PlanificandoState | null>(null);
 
+    const createDragGhost = (e: React.DragEvent) => {
+        try {
+            const target = e.currentTarget as HTMLElement;
+            const rect = target.getBoundingClientRect();
+            const clone = target.cloneNode(true) as HTMLElement;
+
+            clone.classList.remove('dragging');
+            // Replica el estilo flotante elevado y con rotación de Notas (Keep style)
+            clone.style.position = 'fixed';
+            clone.style.top = `${rect.top}px`;
+            clone.style.left = `${rect.left}px`;
+            clone.style.width = `${rect.width}px`;
+            clone.style.boxSizing = 'border-box';
+            clone.style.transform = 'rotate(2deg) scale(1.02)';
+            clone.style.transformOrigin = 'center center';
+            clone.style.boxShadow = '0 30px 60px rgba(0, 0, 0, 0.18), 0 15px 30px rgba(0, 0, 0, 0.12)';
+            clone.style.opacity = '1';
+            clone.style.pointerEvents = 'none';
+            clone.style.zIndex = '999999';
+
+            document.body.appendChild(clone);
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+            e.dataTransfer.setDragImage(clone, offsetX, offsetY);
+
+            setTimeout(() => {
+                if (document.body.contains(clone)) {
+                    document.body.removeChild(clone);
+                }
+            }, 0);
+        } catch (err) {
+            console.error('Error creating drag ghost:', err);
+        }
+    };
+
     const handleNoteDragStart = (e: React.DragEvent, note: Evento) => {
         document.body.classList.add('body-dragging-active');
         e.dataTransfer.setData('diitra/note', JSON.stringify(note));
+        e.dataTransfer.setData('text/plain', note.uuid);
         e.dataTransfer.effectAllowed = 'copyMove';
+        createDragGhost(e);
         setTimeout(() => {
             setDraggingUuid(note.uuid);
+            setDraggingType('note');
         }, 0);
     };
 
     const handleDragStart = (e: React.DragEvent, uuid: string) => {
         document.body.classList.add('body-dragging-active');
+        e.dataTransfer.setData('diitra/kanban-event', uuid);
         e.dataTransfer.setData('text/plain', uuid);
         e.dataTransfer.effectAllowed = 'move';
+        createDragGhost(e);
         setTimeout(() => {
             setDraggingUuid(uuid);
+            setDraggingType('kanban');
         }, 0);
     };
 
     const handleGlobalDragEnd = async () => {
         setDraggingUuid(null);
+        setDraggingType(null);
         setDragOverColumn(null);
         document.body.classList.remove('body-dragging-active');
         if (handleGlobalDragEndFromNotes) {
@@ -154,17 +197,19 @@ export const useKanbanOrchestration = ({
         });
     };
 
-    const handleConfirmPlanificacion = async (fechaElegida: string) => {
+    const handleConfirmPlanificacion = async (fechaElegida: string | null, tituloEditado?: string) => {
         if (!planificando) return;
         const { note, targetEstado } = planificando;
         setPlanificando(null);
 
+        const finalTitulo = (tituloEditado && tituloEditado.trim()) ? tituloEditado.trim() : note.titulo;
+
         const payload = buildPayload({
-            titulo: note.titulo,
+            titulo: finalTitulo,
             descripcion: note.descripcion || '',
             tipo: note.subcategoria || 'Personal',
-            fechaInicio: fechaElegida,
-            fechaFin: fechaElegida,
+            fechaInicio: fechaElegida || null,
+            fechaFin: fechaElegida || null,
             esTodoElDia: note.es_todo_el_dia,
             colorHex: note.color_hex || '#F59E0B',
             esPrivado: note.es_privado,
@@ -177,16 +222,16 @@ export const useKanbanOrchestration = ({
         });
 
         setStickyNotes(prev => prev.filter(n => n.uuid !== note.uuid));
-        const fechaDate = new Date(fechaElegida + 'T12:00:00');
+        const fechaDate = fechaElegida ? new Date(fechaElegida + 'T12:00:00') : new Date(0);
         const newEv: Evento = {
             id_evento_calendario: '0',
             uuid: note.uuid,
-            titulo: note.titulo,
+            titulo: finalTitulo,
             descripcion: note.descripcion || '',
             categoria_global: 'Personal',
             subcategoria: note.subcategoria || 'Personal',
-            fecha_inicio: fechaElegida,
-            fecha_fin: fechaElegida,
+            fecha_inicio: fechaElegida || null,
+            fecha_fin: fechaElegida || null,
             es_todo_el_dia: note.es_todo_el_dia,
             color_hex: note.color_hex || '#F59E0B',
             es_privado: note.es_privado,
@@ -197,7 +242,7 @@ export const useKanbanOrchestration = ({
             alerta_dias: note.alerta_dias,
             recurrencia_anual: note.recurrencia_anual,
         };
-        setEventos(prev => [...prev, { title: note.titulo, start: fechaDate, end: fechaDate, allDay: true, resource: newEv }]);
+        setEventos(prev => [...prev, { title: finalTitulo, start: fechaDate, end: fechaDate, allDay: true, resource: newEv }]);
 
         updateEvento(note.uuid, payload).then(() => {
             fetchStickyNotes();
@@ -211,8 +256,25 @@ export const useKanbanOrchestration = ({
     };
 
     const handleDevolverAInbox = async (uuid: string) => {
+        setDraggingUuid(null);
+        setDraggingType(null);
+        document.body.classList.remove('body-dragging-active');
         try {
+            const eventFound = eventos.find(ev => ev.resource.uuid === uuid);
+            // Actualización optimista: quitar de eventos
             setEventos(prev => prev.filter(ev => ev.resource.uuid !== uuid));
+
+            // Actualización optimista: reincorporar a notas rápidas inmediatamente
+            if (eventFound) {
+                const noteRestored: Evento = {
+                    ...eventFound.resource,
+                    estado: 'inbox',
+                    fecha_inicio: '',
+                    fecha_fin: '',
+                };
+                setStickyNotes(prev => [noteRestored, ...prev.filter(n => n.uuid !== uuid)]);
+            }
+
             await devolverAInbox(uuid);
             fetchStickyNotes();
             fetchEventos(currentDate);
@@ -229,6 +291,8 @@ export const useKanbanOrchestration = ({
         setViewMode,
         draggingUuid,
         setDraggingUuid,
+        draggingType,
+        setDraggingType,
         dragOverColumn,
         setDragOverColumn,
         planificando,

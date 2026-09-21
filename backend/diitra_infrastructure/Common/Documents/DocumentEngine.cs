@@ -270,8 +270,9 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
 
                 // 1. Obtener y Sincronizar Plantilla
-                var template = await _templateRepository.FindByCodeAsync(request.TemplateCode, cancellationToken);
-                if (template == null || !template.IsActive)
+                var templateDb = await _templateRepository.FindByCodeAsync(request.TemplateCode, cancellationToken);
+                DocumentTemplate template;
+                if (templateDb == null || !templateDb.IsActive)
                 {
                     var seed = DocumentTemplateRegistry.GetByCode(request.TemplateCode);
                     if (seed != null)
@@ -281,6 +282,10 @@ namespace Diitra.Infrastructure.Common.Documents
                         template = seed;
                     }
                     else throw new KeyNotFoundException($"Plantilla '{request.TemplateCode}' no disponible.");
+                }
+                else
+                {
+                    template = templateDb;
                 }
 
 
@@ -496,7 +501,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 // Fallback institucional oficial ISTPET si no se configuró explícitamente en el tema
                 if (string.IsNullOrWhiteSpace(documentCode))
                 {
-                    documentCode = template.Code?.ToUpperInvariant() switch
+                    documentCode = template.Code.ToUpperInvariant() switch
                     {
                         "PROTOCOLO_INVESTIGACION" => "F – ISTPET – 001 – INDIV – ABR 2026",
                         "PLAN_APRENDIZAJE" => "F – ISTPET – 002 – INDIV – ABR 2026",

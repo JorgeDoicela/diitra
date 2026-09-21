@@ -78,8 +78,14 @@ export const getStickyNotes = (): Promise<EventoCalendario[]> =>
 export const createEvento = (payload: EventoPayload): Promise<EventoCalendario> =>
     api.post('/calendario/usuario/eventos', payload).then(r => r.data);
 
+export const createNormativo = (payload: EventoPayload): Promise<{ uuid: string }> =>
+    api.post('/calendario/normativos', payload).then(r => r.data);
+
 export const updateEvento = (uuid: string, payload: EventoPayload): Promise<EventoCalendario> =>
     api.put(`/calendario/usuario/eventos/${uuid}`, payload).then(r => r.data);
+
+export const updateNormativo = (uuid: string, payload: EventoPayload): Promise<void> =>
+    api.put(`/calendario/normativos/${uuid}`, payload).then(r => r.data);
 
 export const deleteEvento = (uuid: string): Promise<void> =>
     api.delete(`/calendario/usuario/eventos/${uuid}`).then(() => undefined);

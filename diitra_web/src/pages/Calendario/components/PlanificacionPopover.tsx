@@ -19,7 +19,7 @@ const toISODate = (val?: string) => {
 interface PlanificacionPopoverProps {
     planificando: PlanificandoState | null;
     onClose: () => void;
-    handleConfirmPlanificacion: (fechaElegida: string) => void;
+    handleConfirmPlanificacion: (fechaElegida: string | null, tituloEditado?: string) => void;
 }
 
 export const PlanificacionPopover: React.FC<PlanificacionPopoverProps> = ({
@@ -27,6 +27,14 @@ export const PlanificacionPopover: React.FC<PlanificacionPopoverProps> = ({
     onClose,
     handleConfirmPlanificacion,
 }) => {
+    const [titulo, setTitulo] = React.useState('');
+
+    React.useEffect(() => {
+        if (planificando?.note?.titulo) {
+            setTitulo(planificando.note.titulo);
+        }
+    }, [planificando?.note?.titulo]);
+
     useEffect(() => {
         if (!planificando) return;
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -40,8 +48,12 @@ export const PlanificacionPopover: React.FC<PlanificacionPopoverProps> = ({
 
     if (!planificando) return null;
 
-    const popoverWidth = 280;
-    const popoverHeight = 320;
+    const handleSelectFecha = (fecha: string | null) => {
+        handleConfirmPlanificacion(fecha, titulo);
+    };
+
+    const popoverWidth = 290;
+    const popoverHeight = 380;
     const left = Math.max(16, Math.min(planificando.anchorPos.x - popoverWidth / 2, window.innerWidth - popoverWidth - 16));
     const top = Math.max(16, Math.min(planificando.anchorPos.y, window.innerHeight - popoverHeight - 16));
 
@@ -65,19 +77,43 @@ export const PlanificacionPopover: React.FC<PlanificacionPopoverProps> = ({
                         <X size={14} />
                     </button>
                 </div>
-                <p className="kanban-popover-note-title">{planificando.note.titulo}</p>
+                <div className="kanban-popover-title-wrapper">
+                    <label className="kanban-popover-label">Título de la tarea:</label>
+                    <input
+                        type="text"
+                        value={titulo}
+                        onChange={(e) => setTitulo(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSelectFecha(null);
+                            }
+                        }}
+                        className="kanban-popover-title-input"
+                        placeholder="Título de la tarea..."
+                        autoFocus
+                    />
+                </div>
                 <div className="kanban-popover-opciones">
+                    <button
+                        type="button"
+                        className="kanban-popover-opcion kanban-popover-opcion-sin-fecha"
+                        onClick={() => handleSelectFecha(null)}
+                        title="Enviar a Kanban sin fecha programada"
+                    >
+                        Sin fecha
+                    </button>
                     {[
                         { label: 'Hoy', fecha: format(new Date(), 'yyyy-MM-dd') },
+                        { label: 'Ayer', fecha: format(addDays(new Date(), -1), 'yyyy-MM-dd') },
                         { label: 'Mañana', fecha: format(addDays(new Date(), 1), 'yyyy-MM-dd') },
                         { label: 'En 3 días', fecha: format(addDays(new Date(), 3), 'yyyy-MM-dd') },
-                        { label: 'Esta semana', fecha: format(addDays(new Date(), 7), 'yyyy-MM-dd') },
                     ].map(op => (
                         <button
                             key={op.label}
                             type="button"
                             className="kanban-popover-opcion"
-                            onClick={() => handleConfirmPlanificacion(op.fecha)}
+                            onClick={() => handleSelectFecha(op.fecha)}
                         >
                             {op.label}
                         </button>
@@ -87,10 +123,9 @@ export const PlanificacionPopover: React.FC<PlanificacionPopoverProps> = ({
                     <label className="kanban-popover-label">O elige una fecha:</label>
                     <GeistDatePicker
                         placeholder="Seleccionar fecha..."
-                        minDate={format(new Date(), 'yyyy-MM-dd')}
                         onChange={(newVal) => {
                             const iso = toISODate(newVal);
-                            if (iso) handleConfirmPlanificacion(iso);
+                            if (iso) handleSelectFecha(iso);
                         }}
                     />
                 </div>
