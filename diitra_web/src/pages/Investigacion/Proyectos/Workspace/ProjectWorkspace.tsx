@@ -341,51 +341,51 @@ export const ProjectWorkspace: React.FC = () => {
     }
 
     return (
-        <div className="h-screen w-full flex flex-col bg-bg-deep overflow-hidden selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
-            <WorkspaceHeader
-                currentProject={currentProject}
-                isSidebarCollapsed={isSidebarCollapsed}
-                isPublishingDSpace={isPublishingDSpace}
-                urlPrefix={urlPrefix}
-                onExportCaces={async () => {
-                    try {
-                        const response = await api.get(`/projects/${currentProject.uuid}/export-caces`, { responseType: 'blob' });
-                        const url = window.URL.createObjectURL(new Blob([response.data]));
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.setAttribute('download', `CACES_METADATA_${currentProject.id}.csv`);
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
-                        addToast("Exportación CACES", "Metadatos CACES exportados con éxito.", "success");
-                    } catch (err) {
-                        console.error("[DIITRA] Error al exportar metadatos CACES", err);
-                        addToast("Error de Exportación", "No se pudo realizar la exportación de metadatos CACES", "error");
-                    }
-                }}
-                onPublishDSpace={async () => {
-                    try {
-                        setIsPublishingDSpace(true);
-                        const res = await api.post(`/projects/${currentProject.uuid}/publish-dspace`);
-                        addToast("Publicación en DSpace", `¡Proyecto publicado con éxito en DSpace! URI: ${res.data.uri}`, "success");
-                    } catch (err: any) {
-                        console.error("[DIITRA] Error al publicar en DSpace", err);
-                        const errMsg = err.response?.data?.error || "No se pudo realizar la publicación en DSpace";
-                        addToast("Error de Publicación", errMsg, "error");
-                    } finally {
-                        setIsPublishingDSpace(false);
-                    }
-                }}
-            />
+        <div className="w-full bg-bg-deep selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
+            <main className="max-w-[1600px] mx-auto p-4 md:p-10 animate-fade-up space-y-4">
+                <WorkspaceHeader
+                    currentProject={currentProject}
+                    isSidebarCollapsed={isSidebarCollapsed}
+                    isPublishingDSpace={isPublishingDSpace}
+                    urlPrefix={urlPrefix}
+                    templateCode={templateCode}
+                    onExportCaces={async () => {
+                        try {
+                            const response = await api.get(`/projects/${currentProject.uuid}/export-caces`, { responseType: 'blob' });
+                            const url = window.URL.createObjectURL(new Blob([response.data]));
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.setAttribute('download', `CACES_METADATA_${currentProject.id}.csv`);
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                            addToast("Exportación CACES", "Metadatos CACES exportados con éxito.", "success");
+                        } catch (err) {
+                            console.error("[DIITRA] Error al exportar metadatos CACES", err);
+                            addToast("Error de Exportación", "No se pudo realizar la exportación de metadatos CACES", "error");
+                        }
+                    }}
+                    onPublishDSpace={async () => {
+                        try {
+                            setIsPublishingDSpace(true);
+                            const res = await api.post(`/projects/${currentProject.uuid}/publish-dspace`);
+                            addToast("Publicación en DSpace", `¡Proyecto publicado con éxito en DSpace! URI: ${res.data.uri}`, "success");
+                        } catch (err: any) {
+                            console.error("[DIITRA] Error al publicar en DSpace", err);
+                            const errMsg = err.response?.data?.error || "No se pudo realizar la publicación en DSpace";
+                            addToast("Error de Publicación", errMsg, "error");
+                        } finally {
+                            setIsPublishingDSpace(false);
+                        }
+                    }}
+                />
 
-            <div className="flex-1 overflow-y-auto">
-                <main className="max-w-[1600px] mx-auto p-4 md:p-10 animate-fade-up">
-                    <WorkspaceTitle
-                        currentProject={currentProject}
-                        user={user}
-                        templateCode={templateCode}
-                        setActiveDocument={setActiveDocument}
-                    />
+                <WorkspaceTitle
+                    currentProject={currentProject}
+                    user={user}
+                    templateCode={templateCode}
+                    setActiveDocument={setActiveDocument}
+                />
 
                     <div className="flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-4 lg:items-start">
                         <div className="flex flex-col gap-3">
@@ -435,8 +435,7 @@ export const ProjectWorkspace: React.FC = () => {
                     </div>
                 </main>
             </div>
-        </div>
-    );
+        );
 };
 
 export default ProjectWorkspace;

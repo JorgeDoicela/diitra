@@ -218,7 +218,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                                                 : (item.path === '/investigacion' ? '/investigacion/workspace' : '/investigacion/mis-proyectos/workspace');
                                             const projectPath = `${basePath}/${tCode}/${p.uuid}`;
 
-                                            const isSubActive = location.pathname.includes(`/workspace/`) && location.pathname.includes(p.uuid);
+                                            const isSubActive = Boolean(p.uuid) && location.pathname.toLowerCase().includes(p.uuid.toLowerCase());
 
                                             return (
                                                 <Link

@@ -34,6 +34,15 @@ const getPageTitle = (pathname: string): string => {
     if (pathname === '/investigacion') return 'Proyectos de investigación';
     if (pathname === '/investigacion/mis-proyectos') return 'Mis Proyectos';
     if (pathname.startsWith('/investigacion/monitoreo/')) return 'Monitoreo de Proyecto';
+    if (pathname.includes('/mis-proyectos/workspace/')) return 'Mis Proyectos';
+    if (pathname.includes('/investigacion/workspace/')) return 'Proyectos de investigación';
+    if (pathname.includes('/innovacion/workspace/')) return 'Innovación';
+    if (pathname.includes('/mis-proyectos/presupuesto/')) return 'Mis Proyectos';
+    if (pathname.includes('/mis-proyectos/cronograma/')) return 'Mis Proyectos';
+    if (pathname.includes('/mis-proyectos/equipo/')) return 'Mis Proyectos';
+    if (pathname.includes('/presupuesto/')) return 'Proyectos de investigación';
+    if (pathname.includes('/cronograma/')) return 'Proyectos de investigación';
+    if (pathname.includes('/equipo/')) return 'Proyectos de investigación';
     if (pathname === '/convocatorias') return 'Convocatorias';
     if (pathname === '/revisiones') return 'Revisiones por Pares';
     if (pathname.startsWith('/revisiones/')) return 'Evaluación de Proyecto';
@@ -49,7 +58,9 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     const { isAuthenticated, isLoading, user } = useAuth();
     const { isConnected, addToast, fetchNotifications } = useNotifications();
     const location = useLocation();
-    const isWorkspace = location.pathname.includes('/workspace/');
+    const searchParams = new URLSearchParams(location.search);
+    const isEditingDocument = searchParams.has('edit');
+    const isWorkspace = location.pathname.includes('/workspace/') && isEditingDocument;
     const isFullHeightPage = isWorkspace || location.pathname === '/plantillas' || location.pathname === '/admin/plantillas';
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);

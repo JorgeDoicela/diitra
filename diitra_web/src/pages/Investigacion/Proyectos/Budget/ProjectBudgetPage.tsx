@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { ProjectBudgetModule } from '../../../../modules/budget';
 
@@ -73,51 +73,37 @@ export const ProjectBudgetPage: React.FC = () => {
         <div className="flex-1 bg-bg-deep min-h-screen text-text-main p-4 md:p-8 space-y-6">
             {/* Cabecera y Navegación de Retorno */}
             <div className="space-y-3 border-b border-border-thin pb-4">
-                <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => navigate(workspaceUrl)}
-                        className="p-2 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all cursor-pointer"
-                        title="Volver al Workspace del Proyecto"
-                    >
-                        <ArrowLeft size={16} />
-                    </button>
-
-                    <div className="flex items-center gap-2 text-xs text-text-dim">
-                        <Link to={isMisProyectos ? '/investigacion/mis-proyectos' : '/investigacion'} className="hover:text-text-main no-underline text-text-dim">
-                            {isMisProyectos ? 'Mis Proyectos' : 'Investigación'}
-                        </Link>
-                        <span>›</span>
-                        <Link to={workspaceUrl} className="hover:text-text-main no-underline text-text-dim font-mono">
-                            Proyecto {code}
-                        </Link>
-                        <span>›</span>
-                        <span className="text-text-main font-semibold">Presupuesto y Ejecución Financiera</span>
-                    </div>
-                </div>
-
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className="badge-vercel badge-vercel-neutral font-mono text-[10px] font-bold">
-                                {code}
-                            </span>
-                            <span className="badge-vercel text-[10px] font-medium">
-                                {estado}
-                            </span>
-                        </div>
-                        <h1 className="text-xl md:text-2xl font-bold tracking-tight text-text-main mt-1">
-                            {title}
-                        </h1>
-                    </div>
-
+                <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-text-dim animate-fade-in">
                     <Link
                         to={workspaceUrl}
-                        className="btn-vercel-secondary text-xs py-2 px-3 self-start md:self-auto flex items-center gap-1.5 no-underline"
+                        className="p-1 -ml-1 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors inline-flex items-center justify-center no-underline cursor-pointer"
+                        title="Volver al Workspace del Proyecto"
                     >
-                        <ArrowLeft size={13} />
-                        <span>Volver al Workspace</span>
+                        <ArrowLeft size={14} />
                     </Link>
+                    <Link to={isMisProyectos ? '/investigacion/mis-proyectos' : '/investigacion'} className="hover:text-text-main cursor-pointer transition-colors font-medium no-underline text-inherit">
+                        {isMisProyectos ? 'Mis Proyectos' : 'Investigación'}
+                    </Link>
+                    <ChevronRight size={12} className="opacity-50 shrink-0" />
+                    <Link to={workspaceUrl} className="hover:text-text-main cursor-pointer transition-colors font-mono font-medium no-underline text-inherit">
+                        Proyecto {code}
+                    </Link>
+                    <ChevronRight size={12} className="opacity-50 shrink-0" />
+                    <span className="text-text-main font-semibold">Presupuesto</span>
+                </nav>
+
+                <div className="pt-1">
+                    <div className="flex items-center gap-2">
+                        <span className="badge-vercel badge-vercel-neutral font-mono text-[10px] font-bold">
+                            {code}
+                        </span>
+                        <span className="badge-vercel text-[10px] font-medium">
+                            {estado}
+                        </span>
+                    </div>
+                    <h1 className="text-xl md:text-2xl font-bold tracking-tight text-text-main mt-1">
+                        {title}
+                    </h1>
                 </div>
             </div>
 
