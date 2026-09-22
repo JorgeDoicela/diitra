@@ -186,7 +186,7 @@ namespace diitra_infrastructure.Research
                 return new ExpenseOperationResult<PresupuestoItemDto> { Success = false, StatusCode = 403, Message = "No tienes permisos para modificar el presupuesto de este proyecto." };
             }
 
-            InvPresupuestoItem item;
+            InvPresupuestoItem? item;
             decimal nuevoValorTotal = Math.Round(request.Cantidad * request.ValorUnitario, 2);
 
             if (request.IdItem.HasValue && request.IdItem.Value > 0)
@@ -512,7 +512,7 @@ namespace diitra_infrastructure.Research
                 return new ExpenseOperationResult<FinanciamientoItemDto> { Success = false, StatusCode = 403, Message = "No tienes permisos para modificar el financiamiento." };
             }
 
-            InvFinanciamiento financiamiento;
+            InvFinanciamiento? financiamiento;
             if (request.IdFinanciamiento.HasValue && request.IdFinanciamiento.Value > 0)
             {
                 financiamiento = await _context.InvFinanciamientos

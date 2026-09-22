@@ -50,11 +50,6 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                                 Grupo: {currentProject.grupoInvestigacion}
                             </span>
                         )}
-                        {(currentProject as any).linea && (
-                            <span className="text-[11px] text-text-dim bg-surface border border-border-thin rounded px-2 py-0.5 truncate max-w-[280px]" title={(currentProject as any).linea}>
-                                {(currentProject as any).linea}
-                            </span>
-                        )}
                     </div>
                 </div>
             </header>

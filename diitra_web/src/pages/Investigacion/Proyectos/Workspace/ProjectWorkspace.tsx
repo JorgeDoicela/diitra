@@ -19,7 +19,6 @@ import DocumentEditor from '../Wizard/DocumentEditor';
 
 // Hooks de Orquestación
 import { useProjectCore } from './hooks/useProjectCore';
-import { useProjectTeam } from './hooks/useProjectTeam';
 import { usePreproposalState } from './hooks/usePreproposalState';
 import { useProjectPreferences } from '../hooks/useProjectPreferences';
 
@@ -28,11 +27,9 @@ import WorkspaceHeader from './components/WorkspaceHeader';
 import WorkspaceTitle from './components/WorkspaceTitle';
 import CacesWorkflow from './components/CacesWorkflow';
 import InnovationWorkflow from './components/InnovationWorkflow';
-import TeamManagement from './components/TeamManagement';
 import WorkspaceSidebar from './components/WorkspaceSidebar';
-import DirectorTransferModal from './components/DirectorTransferModal';
-import { GroupDetailDrawer } from '../../../Admin/components/GroupDetailDrawer';
 import { PreproposalAdminView } from './components/PreproposalAdminView';
+import { PreproposalAuthorView } from './components/PreproposalAuthorView';
 
 export const ProjectWorkspace: React.FC = () => {
     const { addToast } = useNotifications();
@@ -48,7 +45,6 @@ export const ProjectWorkspace: React.FC = () => {
         setActiveDocument,
         isSidebarCollapsed,
         currentProject,
-        setCurrentProject,
         projectDocuments,
         isLoading,
         resolvedProjectUuid,
@@ -67,13 +63,7 @@ export const ProjectWorkspace: React.FC = () => {
         handleIniciarEjecucion
     } = core;
 
-    const team = useProjectTeam(
-        currentProject,
-        setCurrentProject,
-        resolvedProjectUuid,
-        isLoading,
-        isPreproposalState
-    );
+
 
     const preproposal = usePreproposalState(
         currentProject,
@@ -96,9 +86,9 @@ export const ProjectWorkspace: React.FC = () => {
     const editorUuid = activeDocument ? subDocumentUuids[activeDocument] : undefined;
     const preloadedData = React.useMemo(() => ({
         Uuid: editorUuid,
-        investigadores: currentProject?.investigadores || team?.investigadores || [],
-        Investigadores: currentProject?.investigadores || team?.investigadores || []
-    }), [editorUuid, currentProject?.investigadores, team?.investigadores]);
+        investigadores: currentProject?.investigadores || [],
+        Investigadores: currentProject?.investigadores || []
+    }), [editorUuid, currentProject?.investigadores]);
 
     // ── Sincronización Silenciosa y Throttling Enterprise (10/10) ──
     const FOCUS_THROTTLE_MS = 15000; // Cooldown mínimo de 15s entre revalidaciones por foco/visibilidad
@@ -108,14 +98,12 @@ export const ProjectWorkspace: React.FC = () => {
     // Contenedor mutable para evitar recrear listeners en cada render
     const syncCallbacksRef = useRef({
         fetchProject,
-        populateTeam: team.populateTeamFromProject,
         fetchTrazabilidad: preproposal.fetchTrazabilidad
     });
 
     useEffect(() => {
         syncCallbacksRef.current = {
             fetchProject,
-            populateTeam: team.populateTeamFromProject,
             fetchTrazabilidad: preproposal.fetchTrazabilidad
         };
     });
@@ -126,11 +114,9 @@ export const ProjectWorkspace: React.FC = () => {
         lastSyncTimestampRef.current = Date.now();
 
         try {
-            const { fetchProject: doFetchProject, populateTeam: doPopulateTeam, fetchTrazabilidad: doFetchTrazabilidad } = syncCallbacksRef.current;
+            const { fetchProject: doFetchProject, fetchTrazabilidad: doFetchTrazabilidad } = syncCallbacksRef.current;
             await Promise.allSettled([
-                doFetchProject((data) => {
-                    if (data) doPopulateTeam(data);
-                }),
+                doFetchProject(),
                 doFetchTrazabilidad(isSilent)
             ]);
         } finally {
@@ -435,49 +421,6 @@ export const ProjectWorkspace: React.FC = () => {
                                     navigate={navigate}
                                 />
                             )}
-
-                            <TeamManagement
-                                currentProject={currentProject}
-                                investigadores={team.investigadores}
-                                tieneGrupo={team.tieneGrupo}
-                                grupoInvestigacion={team.grupoInvestigacion}
-                                approvedGroups={team.approvedGroups}
-                                isSyncingGroupMembers={team.isSyncingGroupMembers}
-                                isSavingTeam={team.isSavingTeam}
-                                teamMessage={team.teamMessage}
-                                teamChangeRequests={team.teamChangeRequests}
-                                isLoadingTeamChangeRequests={team.isLoadingTeamChangeRequests}
-                                isSubmittingTeamChangeRequest={team.isSubmittingTeamChangeRequest}
-                                teamChangeForm={team.teamChangeForm}
-                                setTeamChangeForm={team.setTeamChangeForm}
-                                availableProfessors={team.availableProfessors}
-                                setAvailableProfessors={team.setAvailableProfessors}
-                                availableStudents={team.availableStudents}
-                                setAvailableStudents={team.setAvailableStudents}
-                                requestSearchQuery={team.requestSearchQuery}
-                                setRequestSearchQuery={team.setRequestSearchQuery}
-                                requestSearchResults={team.requestSearchResults}
-                                isRequestSearching={team.isRequestSearching}
-                                showRequestSearchResults={team.showRequestSearchResults}
-                                setShowRequestSearchResults={team.setShowRequestSearchResults}
-                                canReviewTeamChanges={team.canReviewTeamChanges}
-                                isHistoryExpanded={team.isHistoryExpanded}
-                                setIsHistoryExpanded={team.setIsHistoryExpanded}
-                                isChangeRequestsExpanded={team.isChangeRequestsExpanded}
-                                setIsChangeRequestsExpanded={team.setIsChangeRequestsExpanded}
-                                modalidad={team.modalidadEquipo}
-                                onSelectModalidad={team.handleSelectModalidad}
-                                onToggleTieneGrupo={team.handleToggleTieneGrupo}
-                                onSetGrupoInvestigacion={team.setGrupoInvestigacion}
-                                onSaveTeam={team.handleSaveTeam}
-                                onCreateTeamChangeRequest={team.handleCreateTeamChangeRequest}
-                                onReviewTeamChangeRequest={team.handleReviewTeamChangeRequest}
-                                onOpenTransferModal={team.handleOpenTransferModal}
-                                onUpdateMember={team.handleUpdateMember}
-                                onRemoveMember={team.handleRemoveMember}
-                                onAddMember={team.handleAddMember}
-                                onOpenGroupDetail={team.handleOpenGroupDetail}
-                            />
                         </div>
 
                         <div className="lg:sticky lg:top-0 flex flex-col gap-3">
@@ -492,41 +435,6 @@ export const ProjectWorkspace: React.FC = () => {
                     </div>
                 </main>
             </div>
-
-            <DirectorTransferModal
-                isOpen={team.showTransferModal}
-                onClose={() => team.setShowTransferModal(false)}
-                onSubmit={team.handleConfirmTransfer}
-                transferDirector={team.transferDirector}
-                transferSearchQuery={team.transferSearchQuery}
-                setTransferSearchQuery={team.setTransferSearchQuery}
-                showTransferSearchResults={team.showTransferSearchResults}
-                setShowTransferSearchResults={team.setShowTransferSearchResults}
-                transferSearchResults={team.transferSearchResults}
-                isTransferSearching={team.isTransferSearching}
-                newDirectorCedula={team.newDirectorCedula}
-                setNewDirectorCedula={team.setNewDirectorCedula}
-                transferMotivo={team.transferMotivo}
-                setTransferMotivo={team.setTransferMotivo}
-                transferDescripcion={team.transferDescripcion}
-                setTransferDescripcion={team.setTransferDescripcion}
-                isTransferring={team.isTransferring}
-                investigadores={team.investigadores}
-            />
-
-            <GroupDetailDrawer
-                isOpen={team.isGroupDetailOpen}
-                onClose={team.handleCloseGroupDetail}
-                detailGroup={team.detailGroup}
-                setDetailGroup={team.setDetailGroup}
-                isAdmin={isAdmin}
-                user={user}
-                dominios={team.dominios}
-                carreras={team.carreras}
-                lines={team.lines}
-                formatCareerName={team.formatCareerName}
-                handleOpenReview={() => { }}
-            />
         </div>
     );
 };

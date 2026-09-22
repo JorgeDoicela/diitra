@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft, Coins, Building2, Shield, Calendar } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { ProjectBudgetModule } from '../../../../modules/budget';
 

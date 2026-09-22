@@ -31,6 +31,7 @@ const RevisionInformeFinalPage = lazy(() => import('./pages/Investigacion/Proyec
 const MonitoringPage         = lazy(() => import('./pages/Investigacion/Monitoreo/MonitoringPage'));
 const ProjectBudgetPage      = lazy(() => import('./pages/Investigacion/Proyectos/Budget/ProjectBudgetPage').then(m => ({ default: m.ProjectBudgetPage })));
 const ProjectSchedulePage    = lazy(() => import('./pages/Investigacion/Proyectos/Schedule/ProjectSchedulePage').then(m => ({ default: m.ProjectSchedulePage })));
+const ProjectTeamPage        = lazy(() => import('./pages/Investigacion/Proyectos/Team/ProjectTeamPage').then(m => ({ default: m.ProjectTeamPage })));
 const GroupsPage             = lazy(() => import('./pages/Admin/GroupsPage'));
 const AuditPage              = lazy(() => import('./pages/Admin/AuditPage'));
 const PublicConvocatoriasPage = lazy(() => import('./pages/Investigacion/Convocatorias/PublicConvocatoriasPage'));
@@ -325,6 +326,7 @@ function App() {
                             <Route path="/investigacion/workspace/:templateCode/:projectUuid" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
                             <Route path="/investigacion/presupuesto/:projectUuid" element={<AdminRoute><ProjectBudgetPage /></AdminRoute>} />
                             <Route path="/investigacion/cronograma/:projectUuid" element={<AdminRoute><ProjectSchedulePage /></AdminRoute>} />
+                            <Route path="/investigacion/equipo/:projectUuid" element={<AdminRoute><ProjectTeamPage /></AdminRoute>} />
                             <Route path="/investigacion/monitoreo/:projectUuid" element={<AdminRoute><MonitoringPage /></AdminRoute>} />
                             <Route path="/investigacion/informes-avance/:projectId" element={<AdminRoute><InformesAvancePage /></AdminRoute>} />
                             <Route path="/investigacion/revision-tecnica/:projectUuid" element={<RevisionTecnicaPage />} />
@@ -338,6 +340,7 @@ function App() {
                             <Route path="/investigacion/mis-proyectos/workspace/:templateCode/:projectUuid" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
                             <Route path="/investigacion/mis-proyectos/presupuesto/:projectUuid" element={<ResearcherRoute><ProjectBudgetPage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/cronograma/:projectUuid" element={<ResearcherRoute><ProjectSchedulePage /></ResearcherRoute>} />
+                            <Route path="/investigacion/mis-proyectos/equipo/:projectUuid" element={<ResearcherRoute><ProjectTeamPage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/monitoreo/:projectUuid" element={<ResearcherRoute><MonitoringPage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/informes-avance/:projectId" element={<ResearcherRoute><InformesAvancePage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/revision-informe-final/:projectUuid" element={<RevisionInformeFinalPage />} />

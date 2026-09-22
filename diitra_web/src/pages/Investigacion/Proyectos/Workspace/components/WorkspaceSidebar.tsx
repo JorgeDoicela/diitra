@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Shield, CheckCircle2, AlertCircle, FileText, GraduationCap, FileSignature, BarChart, Award, Clock, Coins, ArrowRight, Calendar } from 'lucide-react';
+import { Shield, AlertCircle, FileText, ChevronRight, Layers } from 'lucide-react';
 import api from '../../../../../api/axios_config';
-import { useAuth } from '../../../../../api/AuthContext';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';
 import { buildWorkspacePath, templateCodeToEditParam } from '../../../../../core/documents/templateUrl';
 
@@ -29,10 +28,8 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     currentProject,
     projectDocuments,
     resolvedProjectUuid,
-    setActiveDocument,
     isAdmin = false
 }) => {
-    const { isDocente, isEstudiante, roleDisplayName } = useAuth();
     const location = useLocation();
     const isMisProyectos = location.pathname.includes('/mis-proyectos');
     const budgetPath = resolvedProjectUuid
@@ -44,6 +41,11 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
         ? (isMisProyectos
             ? `/investigacion/mis-proyectos/cronograma/${resolvedProjectUuid}`
             : `/investigacion/cronograma/${resolvedProjectUuid}`)
+        : '#';
+    const teamPath = resolvedProjectUuid
+        ? (isMisProyectos
+            ? `/investigacion/mis-proyectos/equipo/${resolvedProjectUuid}`
+            : `/investigacion/equipo/${resolvedProjectUuid}`)
         : '#';
 
     const [asyncProtocoloSigned, setAsyncProtocoloSigned] = useState(false);
@@ -101,8 +103,6 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
 
     const isProtocoloSigned = derivedSignatures ? derivedSignatures.isProtocoloSigned : asyncProtocoloSigned;
     const isPlanSigned = derivedSignatures ? derivedSignatures.isPlanSigned : asyncPlanSigned;
-    const isOficioSigned = derivedSignatures ? derivedSignatures.isOficioSigned : asyncOficioSigned;
-    const isFinalReportSigned = derivedSignatures ? derivedSignatures.isFinalReportSigned : asyncFinalReportSigned;
 
     useEffect(() => {
         if (projectDocuments && projectDocuments.length > 0) return;
@@ -215,66 +215,76 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                 </div>
             )}
 
+            {/* Contenedor Unificado de Herramientas */}
+            {resolvedProjectUuid && (
+                <div className="bento-card static flex flex-col overflow-hidden">
+                    {/* Cabecera unificadora del bloque */}
+                    <div className="flex items-center gap-2 px-4 py-3 border-b border-border-thin bg-surface-subtle/30">
+                        <Layers size={12} className="text-text-dim" />
+                        <span className="section-label text-text-dim">
+                            Herramientas
+                        </span>
+                    </div>
+
+                    {/* Lista de herramientas */}
+                    <div className="divide-y divide-border-thin">
+                        {/* Herramienta 1: Presupuesto */}
+                        <Link
+                            to={budgetPath}
+                            className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-surface-hover/50 transition-colors group no-underline text-text-main cursor-pointer"
+                        >
+                            <div className="min-w-0">
+                                <h4 className="text-xs font-semibold text-text-main group-hover:text-emerald-500 transition-colors leading-snug">
+                                    Presupuesto del Proyecto
+                                </h4>
+                                <p className="text-[11px] text-text-dim leading-relaxed">
+                                    Partidas presupuestarias, financiamiento y egresos
+                                </p>
+                            </div>
+                            <ChevronRight size={14} className="text-text-muted group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </Link>
+
+                        {/* Herramienta 2: Cronograma */}
+                        <Link
+                            to={schedulePath}
+                            className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-surface-hover/50 transition-colors group no-underline text-text-main cursor-pointer"
+                        >
+                            <div className="min-w-0">
+                                <h4 className="text-xs font-semibold text-text-main group-hover:text-blue-500 transition-colors leading-snug">
+                                    Cronograma de Actividades
+                                </h4>
+                                <p className="text-[11px] text-text-dim leading-relaxed">
+                                    Semanas (§7), hitos CACES y avance periódico
+                                </p>
+                            </div>
+                            <ChevronRight size={14} className="text-text-muted group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </Link>
+
+                        {/* Herramienta 3: Equipo de Investigación */}
+                        <Link
+                            to={teamPath}
+                            className="px-4 py-3 flex items-center justify-between gap-3 hover:bg-surface-hover/50 transition-colors group no-underline text-text-main cursor-pointer"
+                        >
+                            <div className="min-w-0">
+                                <h4 className="text-xs font-semibold text-text-main group-hover:text-purple-400 transition-colors leading-snug">
+                                    Equipo de Investigación
+                                </h4>
+                                <p className="text-[11px] text-text-dim leading-relaxed">
+                                    Directores, integrantes, horas y relevo
+                                </p>
+                            </div>
+                            <ChevronRight size={14} className="text-text-muted group-hover:text-purple-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </Link>
+                    </div>
+                </div>
+            )}
+
             {/* Panel de Actividad Reciente */}
             {resolvedProjectUuid && (
                 <div className="bento-card static flex flex-col overflow-hidden">
                     <WorkspaceActivityPanel
                         projectUuid={resolvedProjectUuid}
                     />
-                </div>
-            )}
-
-            {/* Acceso a Página Dedicada de Presupuesto */}
-            {resolvedProjectUuid && (
-                <div className="bento-card static p-4 space-y-3">
-                    <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
-                            <Coins size={16} />
-                        </div>
-                        <div>
-                            <h4 className="text-xs font-bold text-text-main">
-                                Presupuesto del Proyecto
-                            </h4>
-                            <p className="text-[10px] text-text-dim">
-                                Recursos, financiamiento y egresos
-                            </p>
-                        </div>
-                    </div>
-
-                    <Link
-                        to={budgetPath}
-                        className="w-full btn-vercel-primary py-2 px-3 text-xs rounded-lg flex items-center justify-center gap-1.5 no-underline font-medium transition-all"
-                    >
-                        <span>Abrir Gestión de Presupuesto</span>
-                        <ArrowRight size={13} />
-                    </Link>
-                </div>
-            )}
-
-            {/* Acceso a Página Dedicada de Cronograma */}
-            {resolvedProjectUuid && (
-                <div className="bento-card static p-4 space-y-3">
-                    <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
-                            <Calendar size={16} />
-                        </div>
-                        <div>
-                            <h4 className="text-xs font-bold text-text-main">
-                                Cronograma de Actividades
-                            </h4>
-                            <p className="text-[10px] text-text-dim">
-                                Semanas (§7), hitos CACES y avance
-                            </p>
-                        </div>
-                    </div>
-
-                    <Link
-                        to={schedulePath}
-                        className="w-full btn-vercel-secondary py-2 px-3 text-xs rounded-lg flex items-center justify-center gap-1.5 no-underline font-medium hover:border-text-main transition-all"
-                    >
-                        <span>Abrir Gestión de Cronograma</span>
-                        <ArrowRight size={13} />
-                    </Link>
                 </div>
             )}
         </div>
