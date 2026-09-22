@@ -577,28 +577,6 @@ namespace diitra_api.Controllers
             return Ok(actividad);
         }
 
-        [HttpPost("{uuid}/gastos")]
-        public async Task<IActionResult> RegistrarGasto(string uuid, [FromBody] RegistrarGastoRequest request)
-        {
-            var result = await _projectExpensesService.RegistrarGastoAsync(uuid, request, User);
-            if (!result.Success)
-            {
-                return StatusCode(result.StatusCode, new { success = false, message = result.Message });
-            }
-            return Ok(result.Data);
-        }
-
-        [HttpDelete("{uuid}/gastos/{gastoUuid}")]
-        public async Task<IActionResult> EliminarGasto(string uuid, string gastoUuid)
-        {
-            var result = await _projectExpensesService.EliminarGastoAsync(uuid, gastoUuid, User);
-            if (!result.Success)
-            {
-                return StatusCode(result.StatusCode, new { success = false, message = result.Message });
-            }
-            return Ok(new { success = true });
-        }
-
         private async Task<bool> CanCurrentUserModifyProjectAsync(string uuid)
         {
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -621,6 +599,99 @@ namespace diitra_api.Controllers
 
             return await _projectOrchestrator.UserCanModifyProjectAsync(uuid, userIdRef);
         }
+
+        #region Presupuesto y Ejecución Financiera
+
+        [HttpGet("{uuid}/presupuesto")]
+        public async Task<IActionResult> GetPresupuesto(string uuid)
+        {
+            var result = await _projectExpensesService.GetPresupuestoResumenAsync(uuid, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(result.Data);
+        }
+
+        [HttpPost("{uuid}/presupuesto/items")]
+        public async Task<IActionResult> GuardarPresupuestoItem(string uuid, [FromBody] GuardarPresupuestoItemRequest request)
+        {
+            var result = await _projectExpensesService.GuardarPresupuestoItemAsync(uuid, request, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(result.Data);
+        }
+
+        [HttpDelete("{uuid}/presupuesto/items/{itemId:int}")]
+        public async Task<IActionResult> EliminarPresupuestoItem(string uuid, int itemId)
+        {
+            var result = await _projectExpensesService.EliminarPresupuestoItemAsync(uuid, itemId, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(new { success = true });
+        }
+
+        [HttpPost("{uuid}/gastos")]
+        [HttpPost("{uuid}/gastos/registro")]
+        public async Task<IActionResult> RegistrarGasto(string uuid, [FromBody] RegistrarGastoRequest request)
+        {
+            var result = await _projectExpensesService.RegistrarGastoAsync(uuid, request, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return StatusCode(result.StatusCode, result.Data);
+        }
+
+        [HttpDelete("{uuid}/gastos/{gastoUuid}")]
+        public async Task<IActionResult> EliminarGasto(string uuid, string gastoUuid)
+        {
+            var result = await _projectExpensesService.EliminarGastoAsync(uuid, gastoUuid, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(new { success = true });
+        }
+
+        [HttpPost("{uuid}/presupuesto/financiamientos")]
+        public async Task<IActionResult> GuardarFinanciamiento(string uuid, [FromBody] GuardarFinanciamientoRequest request)
+        {
+            var result = await _projectExpensesService.GuardarFinanciamientoAsync(uuid, request, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(result.Data);
+        }
+
+        [HttpDelete("{uuid}/presupuesto/financiamientos/{financiamientoId:int}")]
+        public async Task<IActionResult> EliminarFinanciamiento(string uuid, int financiamientoId)
+        {
+            var result = await _projectExpensesService.EliminarFinanciamientoAsync(uuid, financiamientoId, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(new { success = true });
+        }
+
+        [HttpGet("{uuid}/presupuesto/liquidacion")]
+        public async Task<IActionResult> ObtenerLiquidacionFinanciera(string uuid)
+        {
+            var result = await _projectExpensesService.ObtenerLiquidacionFinancieraAsync(uuid, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(result.Data);
+        }
+
+        #endregion
 
         private async Task<bool> CanCurrentUserManageProjectAsync(string uuid)
         {

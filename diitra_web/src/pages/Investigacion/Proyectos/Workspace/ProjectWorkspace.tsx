@@ -34,6 +34,7 @@ import DirectorTransferModal from './components/DirectorTransferModal';
 import { GroupDetailDrawer } from '../../../Admin/components/GroupDetailDrawer';
 import { PreproposalAdminView } from './components/PreproposalAdminView';
 import { PreproposalAuthorView } from './components/PreproposalAuthorView';
+import { ProjectBudgetModule } from '../../../../modules/budget';
 
 export const ProjectWorkspace: React.FC = () => {
     const { addToast } = useNotifications();
@@ -434,6 +435,16 @@ export const ProjectWorkspace: React.FC = () => {
                                     resolveDocumentInstance={resolveDocumentInstance}
                                     handleIniciarEjecucion={handleIniciarEjecucion}
                                     navigate={navigate}
+                                />
+                            )}
+
+                            {resolvedProjectUuid && (
+                                <ProjectBudgetModule
+                                    projectUuid={resolvedProjectUuid}
+                                    modalidad={currentProject?.modalidad}
+                                    modalidadEquipo={team.modalidadEquipo}
+                                    grupoInvestigacion={team.grupoInvestigacion}
+                                    directorNombre={currentProject?.director_nombre || currentProject?.directorNombre || user?.nombre || ''}
                                 />
                             )}
 

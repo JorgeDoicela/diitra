@@ -379,6 +379,8 @@ public class InvGastoConfiguration : IEntityTypeConfiguration<InvGasto>
         entity.Property(e => e.Monto).HasColumnName("monto").HasPrecision(12, 2).IsRequired();
         entity.Property(e => e.FechaGasto).HasColumnName("fechaGasto");
         entity.Property(e => e.NumeroFactura).HasColumnName("numeroFactura").HasMaxLength(100);
+        entity.Property(e => e.RucProveedor).HasColumnName("rucProveedor").HasMaxLength(13);
+        entity.Property(e => e.ResponsableNombre).HasColumnName("responsableNombre").HasMaxLength(150);
         entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
         entity.Property(e => e.IdEvidencia).HasColumnName("idEvidencia");
 

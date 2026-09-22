@@ -8,8 +8,13 @@ import {
     AlertTriangle,
     FileText,
     Shield,
-    Clock
+    Clock,
+    Coins,
+    RefreshCw,
+    Sparkles
 } from 'lucide-react';
+import api from '../../../api/axios_config';
+import { generatePresupuestoEjecutadoList } from '../../../modules/budget/utils/budgetReportFormatter';
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
 import { GeistDatePicker } from '../../Common/GeistDatePicker';
 import { fetchCatalogCached } from '../../../api/catalogsCache';
@@ -105,6 +110,26 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
     const actividadesEjecutadas = formData.ActividadesEjecutadas || [];
     const actividadesNoPrevistas = formData.ActividadesNoPrevistas || [];
     const obstaculos = formData.Obstaculos || [];
+    const presupuestoEjecutado = formData.PresupuestoEjecutado || [];
+
+    const [isSyncingBudget, setIsSyncingBudget] = React.useState(false);
+
+    const handleSyncBudgetExecution = async () => {
+        const projectUuid = formData.EntityUuid || formData.entityUuid || formData.IdProyecto || formData.idProyecto;
+        if (!projectUuid) return;
+        setIsSyncingBudget(true);
+        try {
+            const res = await api.get(`/projects/${projectUuid}/budget/summary`);
+            if (res.data) {
+                const list = generatePresupuestoEjecutadoList(res.data);
+                onUpdate('PresupuestoEjecutado', list, { source: 'local' });
+            }
+        } catch (err) {
+            console.error('[ProgressReportSection] Error al sincronizar presupuesto:', err);
+        } finally {
+            setIsSyncingBudget(false);
+        }
+    };
 
     // Handlers para agregar filas
     const handleAddActividadEjecutada = () => {
@@ -875,6 +900,84 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                     />
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* 4.5. SECCIÓN: PRESUPUESTO DE GASTO EJECUTADO (CACES) */}
+                    <div className="bg-bg-deep border border-border-thin p-6 rounded-3xl space-y-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-thin pb-3">
+                            <div className="flex items-center gap-2">
+                                <Coins className="w-4 h-4 text-emerald-500" />
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-text-main">
+                                    Presupuesto de Gasto Ejecutado a la Fecha (CACES)
+                                </h4>
+                                <span className="badge-vercel badge-vercel-neutral !text-[9px]">
+                                    {presupuestoEjecutado.length} partidas
+                                </span>
+                            </div>
+
+                            <button
+                                type="button"
+                                disabled={isReadOnly || isSyncingBudget}
+                                onClick={handleSyncBudgetExecution}
+                                className="btn-vercel-primary !h-7 !px-3 !text-[11px] flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                                title="Importar partidas y gastos reales registrados en el Módulo de Egresos"
+                            >
+                                {isSyncingBudget ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                <span>{isSyncingBudget ? 'Sincronizando...' : 'Sincronizar Egresos a la Fecha'}</span>
+                            </button>
+                        </div>
+
+                        <div className="border border-border-thin rounded-2xl overflow-hidden bg-surface">
+                            {presupuestoEjecutado.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse text-xs">
+                                        <thead>
+                                            <tr className="bg-surface-hover/50 border-b border-border-thin text-[9px] font-bold text-text-dim uppercase tracking-wider font-mono">
+                                                <th className="p-3">Partida / Recurso</th>
+                                                <th className="p-3 text-right">Presupuestado</th>
+                                                <th className="p-3 text-right">Ejecutado a la Fecha</th>
+                                                <th className="p-3 text-right">Saldo Remanente</th>
+                                                <th className="p-3 text-center w-20">% Avance</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border-thin/40 text-[11px] font-mono">
+                                            {presupuestoEjecutado.map((p: any, idx: number) => {
+                                                const plan = Number(p.presupuestado || p.planificado || 0);
+                                                const ejec = Number(p.ejecutado || 0);
+                                                const saldo = Number(p.saldo !== undefined ? p.saldo : (plan - ejec));
+                                                const pct = plan > 0 ? Math.min(100, Math.round((ejec / plan) * 100)) : 0;
+
+                                                return (
+                                                    <tr key={idx} className="hover:bg-surface-hover/30 transition-colors">
+                                                        <td className="p-3 font-sans font-medium text-text-main">
+                                                            {p.partida}
+                                                        </td>
+                                                        <td className="p-3 text-right text-text-dim">
+                                                            ${plan.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        </td>
+                                                        <td className="p-3 text-right font-bold text-text-main">
+                                                            ${ejec.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        </td>
+                                                        <td className={`p-3 text-right font-bold ${saldo < 0 ? 'text-error' : 'text-emerald-500'}`}>
+                                                            ${saldo.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        </td>
+                                                        <td className="p-3 text-center">
+                                                            <span className="badge-vercel badge-vercel-neutral !text-[9px]">
+                                                                {pct}%
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="p-6 text-center text-xs text-text-dim">
+                                    Presione <strong>"Sincronizar Egresos a la Fecha"</strong> para importar automáticamente la ejecución presupuestaria registrada en el proyecto.
+                                </div>
+                            )}
                         </div>
                     </div>
 

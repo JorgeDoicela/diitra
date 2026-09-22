@@ -716,15 +716,17 @@ CREATE TABLE inv_evidencias (
 
 -- Libro Diario de Gastos (Monitoreo Presupuestario)
 CREATE TABLE inv_gastos (
-    idGasto        INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid           VARCHAR(36)      NOT NULL UNIQUE,
-    idProyecto     INT           NOT NULL,
-    idItem         INT           NOT NULL, -- Referencia al ítem del presupuesto (§4)
-    monto          DECIMAL(12,2) NOT NULL,
-    fechaGasto     DATE          NOT NULL,
-    numeroFactura  VARCHAR(100),
-    descripcion    TEXT,
-    idEvidencia    INT           NULL, -- Vinculación con la foto de la factura
+    idGasto           INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid              VARCHAR(36)   NOT NULL UNIQUE,
+    idProyecto        INT           NOT NULL,
+    idItem            INT           NOT NULL, -- Referencia al ítem del presupuesto (§4)
+    monto             DECIMAL(12,2) NOT NULL,
+    fechaGasto        DATE          NOT NULL,
+    numeroFactura     VARCHAR(100),
+    rucProveedor      VARCHAR(13)   NULL COMMENT 'RUC de 13 dígitos del proveedor emisor (SRI)',
+    responsableNombre VARCHAR(150)  NULL COMMENT 'Nombre del integrante o responsable que ejecutó el gasto',
+    descripcion       TEXT,
+    idEvidencia       INT           NULL, -- Vinculación con la foto de la factura
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
     FOREIGN KEY (idItem)     REFERENCES inv_presupuesto_items(idItem) ON DELETE RESTRICT,
     FOREIGN KEY (idEvidencia) REFERENCES inv_evidencias(idEvidencia)  ON DELETE SET NULL

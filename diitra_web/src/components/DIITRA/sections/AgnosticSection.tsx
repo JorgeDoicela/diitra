@@ -7,12 +7,16 @@ import {
     HelpCircle,
     Lock,
     Activity,
-    BookOpen
+    BookOpen,
+    Sparkles,
+    Coins,
+    RefreshCw
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
 import { DocumentTemplateRegistry } from '../../../core/documents/registry/DocumentTemplateRegistry';
+import { generateFinancialReportHtml } from '../../../modules/budget/utils/budgetReportFormatter';
 
 /**
  * Limpia HTML del servidor antes de insertarlo en el DOM.
@@ -69,6 +73,24 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
     const [collapsed, setCollapsed] = useState(false);
     const [referenceData, setReferenceData] = useState<any>(null);
     const [isLoadingRef, setIsLoadingRef] = useState(false);
+    const [loadingFinancialBalance, setLoadingFinancialBalance] = useState(false);
+
+    const handleLoadFinancialBalance = async (fieldName: string) => {
+        const entityUuid = formData.EntityUuid || formData.entityUuid;
+        if (!entityUuid) return;
+        setLoadingFinancialBalance(true);
+        try {
+            const res = await api.get(`/projects/${entityUuid}/budget/summary`);
+            if (res.data) {
+                const reportHtml = generateFinancialReportHtml(res.data, formData.Titulo || formData.titulo || '');
+                onUpdate(fieldName, reportHtml, { source: 'local' });
+            }
+        } catch (err) {
+            console.error('[AgnosticSection] Error al cargar balance financiero:', err);
+        } finally {
+            setLoadingFinancialBalance(false);
+        }
+    };
 
     // 1. Obtener la configuración del Registry de forma agnóstica
     //    Prioridad: prop 'config' (carga dinámica del backend) > Registry local
@@ -274,6 +296,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
             }
 
             if (type === 'rich-text') {
+                const isFinancialSection = name === 'InformeFinanciero' || name === 'sec_informe_financiero' || activeTab === 'sec_informe_financiero';
                 const headerStyle = (field as any).headerStyle || 'none';
                 const hasHeader = headerStyle !== 'none';
 
@@ -291,6 +314,29 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                                 {label} (Colaborativo)
                             </label>
                         )}
+
+                        {/* Asistente CACES para autocompletar Sección 12 (Informe Financiero) */}
+                        {isFinancialSection && (
+                            <div className="p-3 mx-1 mb-2 bg-brand/5 border border-brand/20 rounded-xl flex flex-wrap items-center justify-between gap-2.5 text-xs text-text-main animate-fade-in">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles size={15} className="text-brand shrink-0" />
+                                    <span>
+                                        <strong>Asistente Oficial CACES:</strong> Carga automáticamente el balance consolidado, partidas §4 y comprobantes del proyecto.
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    disabled={loadingFinancialBalance || !(formData.EntityUuid || formData.entityUuid)}
+                                    onClick={() => handleLoadFinancialBalance(name)}
+                                    className="btn-vercel-primary !h-7 !px-3 !text-[11px] shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                                    title="Consultar egresos y generar la tabla oficial en el editor"
+                                >
+                                    {loadingFinancialBalance ? <RefreshCw size={12} className="animate-spin" /> : <Coins size={12} />}
+                                    <span>{loadingFinancialBalance ? 'Cargando Balance...' : 'Cargar Balance de Gastos en Tiempo Real'}</span>
+                                </button>
+                            </div>
+                        )}
+
                         <div className={hasHeader ? "p-3 bg-surface" : "border border-border-thin rounded-2xl overflow-hidden bg-bg-deep focus-within:ring-2 focus-within:ring-text-main/15 transition-all"}>
                             <CoWorkEditor
                                 field={name}

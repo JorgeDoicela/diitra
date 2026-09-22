@@ -15,6 +15,8 @@ public partial class InvGasto
     public decimal Monto { get; set; }
     public DateOnly FechaGasto { get; set; }
     public string? NumeroFactura { get; set; }
+    public string? RucProveedor { get; set; }
+    public string? ResponsableNombre { get; set; }
     public string? Descripcion { get; set; }
     public int? IdEvidencia { get; set; } // Vinculación con la foto de la factura
 

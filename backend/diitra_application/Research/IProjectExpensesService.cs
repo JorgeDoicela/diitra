@@ -6,18 +6,21 @@ namespace Diitra.Application.Research
 {
     public interface IProjectExpensesService
     {
-        Task<ExpenseOperationResult<GastoDto>> RegistrarGastoAsync(string projectUuid, RegistrarGastoRequest request, ClaimsPrincipal user);
+        Task<ExpenseOperationResult<PresupuestoResumenDto>> GetPresupuestoResumenAsync(string projectUuid, ClaimsPrincipal user);
+        
+        Task<ExpenseOperationResult<PresupuestoItemDto>> GuardarPresupuestoItemAsync(string projectUuid, GuardarPresupuestoItemRequest request, ClaimsPrincipal user);
+        
+        Task<ExpenseOperationResult<bool>> EliminarPresupuestoItemAsync(string projectUuid, int itemId, ClaimsPrincipal user);
+        
+        Task<ExpenseOperationResult<GastoDetalleDto>> RegistrarGastoAsync(string projectUuid, RegistrarGastoRequest request, ClaimsPrincipal user);
+        
         Task<ExpenseOperationResult<bool>> EliminarGastoAsync(string projectUuid, string gastoUuid, ClaimsPrincipal user);
-    }
-
-    public class RegistrarGastoRequest
-    {
-        public string Descripcion { get; set; } = string.Empty;
-        public string Partida { get; set; } = string.Empty;
-        public decimal Monto { get; set; }
-        public string ReferenciaFactura { get; set; } = string.Empty;
-        public string Categoria { get; set; } = string.Empty;
-        public string? Fecha { get; set; }
+        
+        Task<ExpenseOperationResult<FinanciamientoItemDto>> GuardarFinanciamientoAsync(string projectUuid, GuardarFinanciamientoRequest request, ClaimsPrincipal user);
+        
+        Task<ExpenseOperationResult<bool>> EliminarFinanciamientoAsync(string projectUuid, int financiamientoId, ClaimsPrincipal user);
+        
+        Task<ExpenseOperationResult<LiquidacionFinancieraDto>> ObtenerLiquidacionFinancieraAsync(string projectUuid, ClaimsPrincipal user);
     }
 
     public class ExpenseOperationResult<T>
