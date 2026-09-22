@@ -29,6 +29,8 @@ const ProjectWorkspace       = lazy(() => import('./pages/Investigacion/Proyecto
 const RevisionTecnicaPage    = lazy(() => import('./pages/Investigacion/Proyectos/RevisionTecnicaPage').then(m => ({ default: m.RevisionTecnicaPage })));
 const RevisionInformeFinalPage = lazy(() => import('./pages/Investigacion/Proyectos/RevisionInformeFinalPage').then(m => ({ default: m.RevisionInformeFinalPage })));
 const MonitoringPage         = lazy(() => import('./pages/Investigacion/Monitoreo/MonitoringPage'));
+const ProjectBudgetPage      = lazy(() => import('./pages/Investigacion/Proyectos/Budget/ProjectBudgetPage').then(m => ({ default: m.ProjectBudgetPage })));
+const ProjectSchedulePage    = lazy(() => import('./pages/Investigacion/Proyectos/Schedule/ProjectSchedulePage').then(m => ({ default: m.ProjectSchedulePage })));
 const GroupsPage             = lazy(() => import('./pages/Admin/GroupsPage'));
 const AuditPage              = lazy(() => import('./pages/Admin/AuditPage'));
 const PublicConvocatoriasPage = lazy(() => import('./pages/Investigacion/Convocatorias/PublicConvocatoriasPage'));
@@ -321,6 +323,8 @@ function App() {
                             {/* Supervision Context (Admin Only) */}
                             <Route path="/investigacion" element={<AdminRoute><ResearchProjectsPage /></AdminRoute>} />
                             <Route path="/investigacion/workspace/:templateCode/:projectUuid" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
+                            <Route path="/investigacion/presupuesto/:projectUuid" element={<AdminRoute><ProjectBudgetPage /></AdminRoute>} />
+                            <Route path="/investigacion/cronograma/:projectUuid" element={<AdminRoute><ProjectSchedulePage /></AdminRoute>} />
                             <Route path="/investigacion/monitoreo/:projectUuid" element={<AdminRoute><MonitoringPage /></AdminRoute>} />
                             <Route path="/investigacion/informes-avance/:projectId" element={<AdminRoute><InformesAvancePage /></AdminRoute>} />
                             <Route path="/investigacion/revision-tecnica/:projectUuid" element={<RevisionTecnicaPage />} />
@@ -332,6 +336,8 @@ function App() {
                             {/* Researcher Context (Docentes, Estudiantes, Externos) */}
                             <Route path="/investigacion/mis-proyectos" element={<ResearcherRoute><MyProjectsPage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/workspace/:templateCode/:projectUuid" element={<ProtectedRoute><ProjectWorkspace /></ProtectedRoute>} />
+                            <Route path="/investigacion/mis-proyectos/presupuesto/:projectUuid" element={<ResearcherRoute><ProjectBudgetPage /></ResearcherRoute>} />
+                            <Route path="/investigacion/mis-proyectos/cronograma/:projectUuid" element={<ResearcherRoute><ProjectSchedulePage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/monitoreo/:projectUuid" element={<ResearcherRoute><MonitoringPage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/informes-avance/:projectId" element={<ResearcherRoute><InformesAvancePage /></ResearcherRoute>} />
                             <Route path="/investigacion/mis-proyectos/revision-informe-final/:projectUuid" element={<RevisionInformeFinalPage />} />

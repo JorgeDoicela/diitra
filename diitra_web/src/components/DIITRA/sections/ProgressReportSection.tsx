@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { generatePresupuestoEjecutadoList } from '../../../modules/budget/utils/budgetReportFormatter';
+import { generateActividadesEjecutadasList } from '../../../modules/schedule/utils/scheduleReportFormatter';
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
 import { GeistDatePicker } from '../../Common/GeistDatePicker';
 import { fetchCatalogCached } from '../../../api/catalogsCache';
@@ -128,6 +129,27 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
             console.error('[ProgressReportSection] Error al sincronizar presupuesto:', err);
         } finally {
             setIsSyncingBudget(false);
+        }
+    };
+
+    const [isSyncingSchedule, setIsSyncingSchedule] = React.useState(false);
+
+    const handleSyncScheduleExecution = async () => {
+        const projectUuid = formData.EntityUuid || formData.entityUuid || formData.IdProyecto || formData.idProyecto;
+        if (!projectUuid) return;
+        setIsSyncingSchedule(true);
+        try {
+            const res = await api.get(`/projects/${projectUuid}/cronograma`);
+            if (res.data) {
+                const list = generateActividadesEjecutadasList(res.data);
+                if (list.length > 0) {
+                    onUpdate('ActividadesEjecutadas', list, { source: 'local' });
+                }
+            }
+        } catch (err) {
+            console.error('[ProgressReportSection] Error al sincronizar cronograma:', err);
+        } finally {
+            setIsSyncingSchedule(false);
         }
     };
 
@@ -428,14 +450,26 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                             </div>
                         </div>
                         {!isReadOnly && (
-                            <button
-                                type="button"
-                                onClick={handleAddActividadEjecutada}
-                                className="btn-vercel-secondary text-xs flex items-center gap-2"
-                            >
-                                <Plus size={14} />
-                                <span>Agregar Actividad</span>
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    disabled={isSyncingSchedule}
+                                    onClick={handleSyncScheduleExecution}
+                                    className="btn-vercel-primary !h-7 !px-3 !text-[11px] flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                                    title="Importar actividades y avance real registrados en el Módulo de Cronograma"
+                                >
+                                    {isSyncingSchedule ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                    <span>{isSyncingSchedule ? 'Sincronizando...' : 'Sincronizar Cronograma'}</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleAddActividadEjecutada}
+                                    className="btn-vercel-secondary text-xs flex items-center gap-2"
+                                >
+                                    <Plus size={14} />
+                                    <span>Agregar Actividad</span>
+                                </button>
+                            </div>
                         )}
                     </div>
 

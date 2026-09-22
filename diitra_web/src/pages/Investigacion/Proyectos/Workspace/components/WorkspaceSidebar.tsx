@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Shield, CheckCircle2, AlertCircle, FileText, GraduationCap, FileSignature, BarChart, Award, Clock } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Shield, CheckCircle2, AlertCircle, FileText, GraduationCap, FileSignature, BarChart, Award, Clock, Coins, ArrowRight, Calendar } from 'lucide-react';
 import api from '../../../../../api/axios_config';
 import { useAuth } from '../../../../../api/AuthContext';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';
@@ -33,6 +33,19 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     isAdmin = false
 }) => {
     const { isDocente, isEstudiante, roleDisplayName } = useAuth();
+    const location = useLocation();
+    const isMisProyectos = location.pathname.includes('/mis-proyectos');
+    const budgetPath = resolvedProjectUuid
+        ? (isMisProyectos
+            ? `/investigacion/mis-proyectos/presupuesto/${resolvedProjectUuid}`
+            : `/investigacion/presupuesto/${resolvedProjectUuid}`)
+        : '#';
+    const schedulePath = resolvedProjectUuid
+        ? (isMisProyectos
+            ? `/investigacion/mis-proyectos/cronograma/${resolvedProjectUuid}`
+            : `/investigacion/cronograma/${resolvedProjectUuid}`)
+        : '#';
+
     const [asyncProtocoloSigned, setAsyncProtocoloSigned] = useState(false);
     const [asyncPlanSigned, setAsyncPlanSigned] = useState(false);
     const [asyncOficioSigned, setAsyncOficioSigned] = useState(false);
@@ -208,6 +221,60 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                     <WorkspaceActivityPanel
                         projectUuid={resolvedProjectUuid}
                     />
+                </div>
+            )}
+
+            {/* Acceso a Página Dedicada de Presupuesto */}
+            {resolvedProjectUuid && (
+                <div className="bento-card static p-4 space-y-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                            <Coins size={16} />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-bold text-text-main">
+                                Presupuesto del Proyecto
+                            </h4>
+                            <p className="text-[10px] text-text-dim">
+                                Recursos, financiamiento y egresos
+                            </p>
+                        </div>
+                    </div>
+
+                    <Link
+                        to={budgetPath}
+                        className="w-full btn-vercel-primary py-2 px-3 text-xs rounded-lg flex items-center justify-center gap-1.5 no-underline font-medium transition-all"
+                    >
+                        <span>Abrir Gestión de Presupuesto</span>
+                        <ArrowRight size={13} />
+                    </Link>
+                </div>
+            )}
+
+            {/* Acceso a Página Dedicada de Cronograma */}
+            {resolvedProjectUuid && (
+                <div className="bento-card static p-4 space-y-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                            <Calendar size={16} />
+                        </div>
+                        <div>
+                            <h4 className="text-xs font-bold text-text-main">
+                                Cronograma de Actividades
+                            </h4>
+                            <p className="text-[10px] text-text-dim">
+                                Semanas (§7), hitos CACES y avance
+                            </p>
+                        </div>
+                    </div>
+
+                    <Link
+                        to={schedulePath}
+                        className="w-full btn-vercel-secondary py-2 px-3 text-xs rounded-lg flex items-center justify-center gap-1.5 no-underline font-medium hover:border-text-main transition-all"
+                    >
+                        <span>Abrir Gestión de Cronograma</span>
+                        <ArrowRight size={13} />
+                    </Link>
                 </div>
             )}
         </div>

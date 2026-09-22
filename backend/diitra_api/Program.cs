@@ -264,6 +264,7 @@ builder.Services.AddScoped<Diitra.Application.Research.IProjectQueryService, Pro
 builder.Services.AddScoped<Diitra.Application.Research.IProjectOrchestrator, ProjectOrchestrator>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectSigningService, diitra_infrastructure.Research.ProjectSigningService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectExpensesService, diitra_infrastructure.Research.ProjectExpensesService>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectScheduleService, diitra_infrastructure.Research.ProjectScheduleService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectPublishingService, diitra_infrastructure.Research.ProjectPublishingService>();
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationService, diitra_infrastructure.Common.Notifications.NotificationService>();
 builder.Services.AddScoped<diitra_infrastructure.Common.Notifications.EmailMasterLayoutRenderer>();

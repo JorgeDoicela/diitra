@@ -25,17 +25,20 @@ namespace diitra_api.Controllers
         private readonly IProjectOrchestrator _projectOrchestrator;
         private readonly IProjectSigningService _projectSigningService;
         private readonly IProjectExpensesService _projectExpensesService;
+        private readonly IProjectScheduleService _projectScheduleService;
         private readonly IProjectPublishingService _projectPublishingService;
 
         public ProjectsController(
             IProjectOrchestrator projectOrchestrator,
             IProjectSigningService projectSigningService,
             IProjectExpensesService projectExpensesService,
+            IProjectScheduleService projectScheduleService,
             IProjectPublishingService projectPublishingService)
         {
             _projectOrchestrator = projectOrchestrator;
             _projectSigningService = projectSigningService;
             _projectExpensesService = projectExpensesService;
+            _projectScheduleService = projectScheduleService;
             _projectPublishingService = projectPublishingService;
         }
 
@@ -689,6 +692,57 @@ namespace diitra_api.Controllers
                 return StatusCode(result.StatusCode, new { message = result.Message });
             }
             return Ok(result.Data);
+        }
+
+        #endregion
+
+        #region Cronograma y Seguimiento de Actividades
+
+        [HttpGet("{uuid}/cronograma")]
+        public async Task<IActionResult> GetCronograma(string uuid)
+        {
+            var result = await _projectScheduleService.GetCronogramaResumenAsync(uuid, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(result.Data);
+        }
+
+        [HttpPost("{uuid}/cronograma/actividades")]
+        public async Task<IActionResult> GuardarActividad(string uuid, [FromBody] GuardarActividadRequest request)
+        {
+            var result = await _projectScheduleService.GuardarActividadAsync(uuid, request, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(result.Data);
+        }
+
+        [HttpPut("{uuid}/cronograma/actividades/{actividadId:int}/progreso")]
+        public async Task<IActionResult> ActualizarProgresoActividad(
+            string uuid, 
+            int actividadId, 
+            [FromBody] ActualizarProgresoActividadRequest request)
+        {
+            var result = await _projectScheduleService.ActualizarProgresoActividadAsync(uuid, actividadId, request, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(result.Data);
+        }
+
+        [HttpDelete("{uuid}/cronograma/actividades/{actividadId:int}")]
+        public async Task<IActionResult> EliminarActividad(string uuid, int actividadId)
+        {
+            var result = await _projectScheduleService.EliminarActividadAsync(uuid, actividadId, User);
+            if (!result.Success)
+            {
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+            return Ok(new { success = true });
         }
 
         #endregion
