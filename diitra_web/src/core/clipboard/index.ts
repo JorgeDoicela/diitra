@@ -24,3 +24,17 @@ export {
     resolveContentString,
     stripHtml,
 } from './utils/promptClipboardEngine';
+
+// Registro centralizado de metadatos y serializadores por sección
+export {
+    getSectionClipboardMeta,
+    serializeGeneralSection,
+    serializeTeamSection,
+    serializeTechnicalSection,
+    serializeBudgetSection,
+    serializeExpectedProducts,
+    serializeImpacts,
+    serializeTimeline,
+    serializeBibliography,
+} from './registry/sectionClipboardRegistry';
+export type { SectionClipboardMeta } from './registry/sectionClipboardRegistry';

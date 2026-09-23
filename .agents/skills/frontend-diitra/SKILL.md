@@ -219,34 +219,30 @@ if (camposPlanos.length > 0) {
 }
 ```
 
-### 7.6. Estado de implementación — Secciones con clipboard
+### 7.6. Arquitectura Unificada en el Shell (DIITRABuilderShell + sectionClipboardRegistry)
 
-**Implementado y completo:**
+Para garantizar escalabilidad, reusabilidad y evitar "zonas muertas" de clic derecho, el portapapeles se gobierna a nivel del **Lienzo Maestro** en `DIITRABuilderShell`:
 
-| Sección / Vista | Rol soportado | Serializer | Documento / Pantalla |
+1. **Cobertura del 100% del Lienzo:** El `<BlockClipboardWrapper>` envuelve el área activa completa en el Shell (`activeSectionLabel`, barras de estado, controles de bloqueo, inputs y márgenes de scroll). Clic derecho sobre el título, en el fondo o dentro de cualquier campo activa el asistente uniformemente.
+2. **Resolución Reactiva de Metadatos (`sectionClipboardRegistry.ts`):** Al cambiar de pestaña (`layout.activeTab`), el Shell resuelve automáticamente el título, las instrucciones normativas ISTPET y el serializador de datos correspondiente (`serializeGeneralSection`, `serializeTeamSection`, `serializeBudgetSection`, etc.).
+3. **Fallback Universal:** Cualquier sección o documento nuevo (Informe Final, Plan APE, Artículo Científico, etc.) hereda el portapapeles automáticamente sin requerir código adicional en los componentes hijos.
+4. **Renderizado Flotante con createPortal:** `PromptContextMenu` se monta en `document.body` con `zIndex: 999999`, garantizando que jamás sea recortado por `overflow-y-auto` o transformaciones CSS.
+
+**Estado de implementación y cobertura:**
+
+| Sección / Vista | Nivel de Wrapper | Serializer / Motor | Cobertura |
 |:---|:---|:---|:---|
-| GeneralSection (Identificación del Proyecto) | `'author'` | Explícito (`serializeGeneralSection`) | Protocolo / Editor Investigador |
-| TechnicalSection (Antecedentes, Justificación, Objetivos, etc.) | `'author'` | No (automático) | Protocolo / Plan APE |
-| BibliographySection | `'author'` | No (automático) | Protocolo / Plan APE |
-| ImpactSection | `'author'` | Explícito (`impactSerializer`) | Protocolo |
-| ExpectedProductsSection | `'author'` | Explícito | Protocolo |
-| LearningPlanSection — Prerrequisitos | `'author'` | Explícito | Plan APE |
-| LearningPlanSection — Actividades APE | `'author'` | Explícito | Plan APE |
-| ProgressReportSection — Actividades Ejecutadas | `'author'` | Explícito | Informe de Avance |
-| **InteractiveSections (Vista Revisión Técnica Admin)** | **`'reviewer'`** | Serializers dedicados (presupuesto, entregables, impactos) | **Revisión Técnica Administrador** |
-| **PreproposalAdminView (Revisión Prepropuesta Admin)** | **`'reviewer'`** | No (automático / valores formateados) | **Revisión Prepropuesta Administrador** |
-
-**Pendiente de implementar (usar este checklist al hacerlo):**
-
-| Sección / Bloque | Documento | Tipo esperado | Prioridad |
-|:---|:---|:---|:---|
-| InvestigatorsSection (Equipo de investigación) | Protocolo | Array `Investigadores` | Alta |
-| BudgetSection / PresupuestoSection (Editor Investigador) | Protocolo | Array de rubros presupuestarios | Alta |
-| ChronogramSection / CronogramaSection (Editor Investigador) | Protocolo | Array de actividades con fechas | Alta |
-| GanttSection | Plan APE / Informe | Array de tareas Gantt | Media |
-| EvaluationSection | Plan APE | Campos de evaluación de actividades | Media |
-| ConsolidatedReport / Conclusiones / Recomendaciones | Informe de Avance | HTML + arrays mixtos | Media |
-| Informe Final, Artículo Científico, Memoria Técnica | Nuevos documentos | TBD según estructura | A definir |
+| Identificación del Proyecto | Shell (`DIITRABuilderShell`) | Explícito (`serializeGeneralSection`) | 100% (Título, Controles, Formulario) |
+| Equipo Humano | Shell (`DIITRABuilderShell`) | Explícito (`serializeTeamSection`) | 100% (Título, Controles, Lista) |
+| Especificación Técnica (Antecedentes, etc.) | Shell (`DIITRABuilderShell`) | Explícito (`serializeTechnicalSection`) | 100% (Título, Controles, Editores) |
+| Recursos y Presupuesto | Shell (`DIITRABuilderShell`) | Explícito (`serializeBudgetSection`) | 100% (Título, Controles, Tablas) |
+| Productos Esperados | Shell (`DIITRABuilderShell`) | Explícito (`serializeExpectedProducts`) | 100% (Título, Controles, Lista) |
+| Impactos del Proyecto | Shell (`DIITRABuilderShell`) | Explícito (`serializeImpacts`) | 100% (Título, Controles, Campos) |
+| Cronograma de Trabajo (Gantt) | Shell (`DIITRABuilderShell`) | Explícito (`serializeTimeline`) | 100% (Título, Controles, Actividades) |
+| Bibliografía | Shell (`DIITRABuilderShell`) | Explícito (`serializeBibliography`) | 100% (Título, Controles, Texto) |
+| Secciones Dinámicas y Nuevos Documentos | Shell (`DIITRABuilderShell`) | Fallback Universal heurístico | 100% Automático |
+| **InteractiveSections (Revisión Técnica)** | Tarjeta individual | Serializers de revisión | Por campo/tarjeta |
+| **PreproposalAdminView (Revisión Prepropuesta)** | Tarjeta individual | Serializers de revisión | Por campo/tarjeta |
 
 ### 7.6.1. Soporte de Roles: Autor (`'author'`) vs Revisor / Auditor (`'reviewer'`)
 

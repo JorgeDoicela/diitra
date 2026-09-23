@@ -52,11 +52,13 @@ export const BlockClipboardWrapper: React.FC<BlockClipboardWrapperProps> = ({
     // 1. Manejador de Clic Derecho (Desktop)
     const handleContextMenu = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
+        e.stopPropagation();
         setContextMenuPos({ x: e.clientX, y: e.clientY });
     }, []);
 
     // 2. Manejador de Long-Press (Móvil / Tablet)
     const handleTouchStart = useCallback((e: React.TouchEvent) => {
+        e.stopPropagation();
         const touch = e.touches[0];
         touchTimerRef.current = setTimeout(() => {
             setContextMenuPos({ x: touch.clientX, y: touch.clientY });

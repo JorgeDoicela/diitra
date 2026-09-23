@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { CopyMode } from '../types/promptClipboard.types';
 
 interface PromptContextMenuProps {
@@ -31,8 +32,8 @@ export const PromptContextMenu: React.FC<PromptContextMenuProps> = ({
         if (!menuRef.current) return;
         const { width, height } = menuRef.current.getBoundingClientRect();
         setAdjustedPos({
-            left: Math.min(x, window.innerWidth - width - 8),
-            top:  Math.min(y, window.innerHeight - height - 8),
+            left: Math.max(8, Math.min(x, window.innerWidth - width - 8)),
+            top:  Math.max(8, Math.min(y, window.innerHeight - height - 8)),
         });
     }, [x, y]);
 
@@ -60,14 +61,15 @@ export const PromptContextMenu: React.FC<PromptContextMenuProps> = ({
         position: 'fixed',
         left: adjustedPos.left,
         top: adjustedPos.top,
-        zIndex: 9999
+        zIndex: 999999
     };
 
-    return (
+    const content = (
         <div
             ref={menuRef}
             style={adjustedStyle}
-            className="w-64 bg-surface border border-border-thin rounded-xl shadow-xl p-1.5 animate-fade-in text-xs select-none backdrop-blur-md"
+            onContextMenu={(e) => e.preventDefault()}
+            className="w-64 bg-surface border border-border-thin rounded-xl shadow-2xl p-1.5 animate-fade-in text-xs select-none backdrop-blur-md"
         >
             <div className="px-2.5 py-1.5 text-[9.5px] font-mono font-bold text-text-dim uppercase tracking-wider border-b border-border-thin/50 mb-1">
                 {isReviewer ? 'Auditoría y Revisión IA' : 'Asistente de Portapapeles'}
@@ -140,4 +142,7 @@ export const PromptContextMenu: React.FC<PromptContextMenuProps> = ({
             </div>
         </div>
     );
+
+    if (typeof document === 'undefined') return null;
+    return createPortal(content, document.body);
 };

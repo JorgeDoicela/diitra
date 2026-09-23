@@ -4,53 +4,6 @@ import type { CoWorkHandle } from '../../../core/cowork/types';
 import type { IdentificationField } from '../../../pages/Admin/Templates/types';
 import { GeistSelect } from '../../Common/GeistSelect';
 import { fetchCatalogCached } from '../../../api/catalogsCache';
-import { BlockClipboardWrapper } from '../../../core/clipboard';
-
-const serializeGeneralSection = (data: unknown): string => {
-    const fd = (data || {}) as Record<string, unknown>;
-    const lines: string[] = [];
-
-    const titulo = fd.Titulo || fd.NombreProyecto || fd.nombre_proyecto;
-    if (titulo) lines.push(`• TEMA / TÍTULO DE INVESTIGACIÓN: ${String(titulo)}`);
-
-    const codigo = fd.CodigoProyecto || fd.codigo_proyecto;
-    if (codigo) lines.push(`• CÓDIGO DEL PROYECTO: ${String(codigo)}`);
-
-    const carrera = fd.Carrera || fd.carrera;
-    if (carrera) lines.push(`• CARRERA / UNIDAD ACADÉMICA: ${String(carrera)}`);
-
-    const dominio = fd.Dominio || fd.dominio;
-    if (dominio) lines.push(`• DOMINIO ACADÉMICO: ${String(dominio)}`);
-
-    const linea = fd.LineaInvestigacion || fd.linea_investigacion;
-    if (linea) lines.push(`• LÍNEA DE INVESTIGACIÓN: ${String(linea)}`);
-
-    const sublinea = fd.SublineaInvestigacion || fd.sublinea_investigacion;
-    if (sublinea) lines.push(`• SUBLÍNEA DE INVESTIGACIÓN: ${String(sublinea)}`);
-
-    const tipo = fd.TipoInvestigacion || fd.tipo_investigacion;
-    if (tipo) lines.push(`• TIPO DE INVESTIGACIÓN: ${String(tipo)}`);
-
-    const programa = fd.ProgramaProyecto || fd.Programa || fd.programa;
-    if (programa) lines.push(`• PROGRAMA DE INVESTIGACIÓN: ${String(programa)}`);
-
-    const grupo = fd.GrupoInvestigacionNombre || fd.GrupoInvestigacion || fd.grupo_investigacion;
-    if (grupo && String(grupo) !== 'NO') lines.push(`• GRUPO DE INVESTIGACIÓN: ${String(grupo)}`);
-
-    const director = fd.DirectorProyecto || fd.director_proyecto;
-    if (director) lines.push(`• DIRECTOR DE PROYECTO: ${String(director)}`);
-
-    const fechaPres = fd.FechaPresentacion;
-    if (fechaPres) lines.push(`• FECHA DE PRESENTACIÓN: ${String(fechaPres)}`);
-
-    const fechaInicio = fd.FechaInicio;
-    if (fechaInicio) lines.push(`• FECHA DE INICIO: ${String(fechaInicio)}`);
-
-    const fechaFin = fd.FechaFin;
-    if (fechaFin) lines.push(`• FECHA DE FINALIZACIÓN: ${String(fechaFin)}`);
-
-    return lines.length > 0 ? lines.join('\n') : '(Sin datos de identificación registrados)';
-};
 
 const DEFAULT_TIPOS_INVESTIGACION = [
     { idTipo: 1, nombre: 'BÁSICA PURA' },
@@ -1063,16 +1016,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     };
 
     return (
-        <BlockClipboardWrapper
-            title={config?.title || "1. IDENTIFICACIÓN DEL PROYECTO"}
-            fieldKey="identificacion"
-            instructions="Verificar que el tema de investigación sea claro, conciso, delimitado temporal y espacialmente, y articulado con la línea, sublínea y dominio académico institucional. Asegurar la asignación correcta de carrera y tipo de investigación según la normativa ISTPET."
-            requirementText="Nombre del proyecto en mayúsculas, asignación precisa de carrera, dominio, línea y tipo de investigación ISTPET."
-            contentSerializer={serializeGeneralSection}
-            currentContent={formData}
-            role="author"
-        >
-            <div className="space-y-5 sm:space-y-8 animate-fade-in pb-6 sm:pb-10">
+        <div className="space-y-5 sm:space-y-8 animate-fade-in pb-6 sm:pb-10">
                 {/* Renderizar según la secuencia activa */}
                 {activeOrder.map(key => renderBlockByKey(key))}
                 {defaultCoreOrder.map(key => renderBlockByKey(key))}
@@ -1185,6 +1129,5 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     </div>
                 )}
             </div>
-        </BlockClipboardWrapper>
     );
 };

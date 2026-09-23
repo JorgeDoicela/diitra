@@ -8,8 +8,8 @@ import { BuilderHeader } from './shell/components/BuilderHeader';
 import { BuilderNavigationSidebar } from './shell/components/BuilderNavigationSidebar';
 import { BuilderFloatingTab } from './shell/components/BuilderFloatingTab';
 import { OutputSection } from './shell/components/OutputSection';
-import type { BuilderSection } from './shell/hooks/useBuilderLayout';
 import { useAuth } from '../../api/AuthContext';
+import { BlockClipboardWrapper, getSectionClipboardMeta } from '../../core/clipboard';
 
 export type { BuilderSection };
 
@@ -93,6 +93,11 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
             setShowUpdateModal(true);
         }
     }, [hasTemplateUpdate]);
+
+    const activeSectionClipboardMeta = useMemo(() => {
+        const sec = sections.find(s => s.id === layout.activeTab);
+        return getSectionClipboardMeta(layout.activeTab, layout.activeSectionLabel, formData, (sec as any)?.config);
+    }, [sections, layout.activeTab, layout.activeSectionLabel, formData]);
 
     const allSectionIds = useMemo(() => sections.map(s => s.id), [sections]);
     const sectionItemPairs = useMemo(() => sections.map(s => ({ id: s.id, label: s.label })), [sections]);
@@ -181,105 +186,116 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = (props) => {
                                 {/* ── Área Principal: Editor & Visor PDF ── */}
                                 <div className="flex-1 bg-bg-deep overflow-hidden flex">
                                     {layout.activeTab !== 'output' ? (
-                                        <div className="flex-1 pt-4 pb-8 px-3 sm:pt-6 sm:pb-12 sm:px-6 md:pt-8 md:pb-16 md:px-12 overflow-y-auto custom-scrollbar">
-                                            <div className="w-full mx-auto max-w-[98%] sm:max-w-[94%]">
-                                                <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                                    <div>
-                                                        <h3 className="text-lg sm:text-2xl font-black text-text-main tracking-tighter uppercase">{layout.activeSectionLabel}</h3>
-                                                        <div className="w-12 sm:w-20 h-1 md:h-1.5 bg-text-main mt-2 md:mt-3 rounded-full" />
+                                        <BlockClipboardWrapper
+                                            title={activeSectionClipboardMeta.title}
+                                            fieldKey={activeSectionClipboardMeta.fieldKey}
+                                            instructions={activeSectionClipboardMeta.instructions}
+                                            requirementText={activeSectionClipboardMeta.requirementText}
+                                            currentContent={activeSectionClipboardMeta.currentContent}
+                                            contentSerializer={activeSectionClipboardMeta.contentSerializer}
+                                            role={readOnly ? 'reviewer' : 'author'}
+                                            className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0"
+                                        >
+                                            <div className="flex-1 pt-4 pb-8 px-3 sm:pt-6 sm:pb-12 sm:px-6 md:pt-8 md:pb-16 md:px-12">
+                                                <div className="w-full mx-auto max-w-[98%] sm:max-w-[94%]">
+                                                    <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                        <div>
+                                                            <h3 className="text-lg sm:text-2xl font-black text-text-main tracking-tighter uppercase">{layout.activeSectionLabel}</h3>
+                                                            <div className="w-12 sm:w-20 h-1 md:h-1.5 bg-text-main mt-2 md:mt-3 rounded-full" />
+                                                        </div>
+
+                                                        {/* Compact Section Lock Control — Gobernanza institucional y de equipo */}
+                                                        {!readOnly && layout.activeTab !== 'output' && shouldShowLockControl && (
+                                                            <div className="flex items-center gap-2 bg-surface border border-border-thin px-3 py-1.5 rounded-full animate-fade-in text-[9px] font-bold uppercase tracking-wider self-start sm:self-center select-none">
+                                                                {layout.isSectionBlocked ? (
+                                                                    <>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <Lock size={12} className="text-amber-500 animate-pulse" />
+                                                                            <span className="text-amber-500">Sección Bloqueada</span>
+                                                                        </div>
+                                                                        {layout.isDirectorOrAdmin && (
+                                                                            <button
+                                                                                onClick={() => autoSave.handleToggleSectionLock(layout.activeTab)}
+                                                                                className="ml-1 px-2.5 py-0.5 bg-text-main hover:opacity-90 text-bg-deep transition-all rounded-full font-black text-[8px]"
+                                                                            >
+                                                                                Desbloquear
+                                                                            </button>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <Unlock size={12} className="text-text-dim" />
+                                                                            <span className="text-text-dim">Edición Abierta</span>
+                                                                        </div>
+                                                                        {layout.isDirectorOrAdmin && (
+                                                                            <button
+                                                                                onClick={() => autoSave.handleToggleSectionLock(layout.activeTab)}
+                                                                                className="ml-1 px-2.5 py-0.5 border border-border-thin hover:border-text-main hover:text-text-main text-text-dim transition-all rounded-full font-black text-[8px]"
+                                                                            >
+                                                                                Bloquear
+                                                                            </button>
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
 
-                                                    {/* Compact Section Lock Control — Gobernanza institucional y de equipo */}
-                                                    {!readOnly && layout.activeTab !== 'output' && shouldShowLockControl && (
-                                                        <div className="flex items-center gap-2 bg-surface border border-border-thin px-3 py-1.5 rounded-full animate-fade-in text-[9px] font-bold uppercase tracking-wider self-start sm:self-center select-none">
-                                                            {layout.isSectionBlocked ? (
-                                                                <>
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <Lock size={12} className="text-amber-500 animate-pulse" />
-                                                                        <span className="text-amber-500">Sección Bloqueada</span>
-                                                                    </div>
-                                                                    {layout.isDirectorOrAdmin && (
-                                                                        <button
-                                                                            onClick={() => autoSave.handleToggleSectionLock(layout.activeTab)}
-                                                                            className="ml-1 px-2.5 py-0.5 bg-text-main hover:opacity-90 text-bg-deep transition-all rounded-full font-black text-[8px]"
-                                                                        >
-                                                                            Desbloquear
-                                                                        </button>
-                                                                    )}
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <Unlock size={12} className="text-text-dim" />
-                                                                        <span className="text-text-dim">Edición Abierta</span>
-                                                                    </div>
-                                                                    {layout.isDirectorOrAdmin && (
-                                                                        <button
-                                                                            onClick={() => autoSave.handleToggleSectionLock(layout.activeTab)}
-                                                                            className="ml-1 px-2.5 py-0.5 border border-border-thin hover:border-text-main hover:text-text-main text-text-dim transition-all rounded-full font-black text-[8px]"
-                                                                        >
-                                                                            Bloquear
-                                                                        </button>
-                                                                    )}
-                                                                </>
-                                                            )}
+                                                    {hasTemplateUpdate && !readOnly && onUpgradeTemplate && !showUpdateModal && (
+                                                        <div className="callout-vercel callout-vercel-info mb-8 animate-fade-in flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                                            <div className="flex gap-3">
+                                                                <Award size={16} className="text-info mt-0.5 shrink-0" />
+                                                                <div>
+                                                                    <p className="callout-vercel-title">Nueva versión de plantilla disponible</p>
+                                                                    <p className="callout-vercel-body">
+                                                                        El administrador ha actualizado el formato oficial de esta plantilla a la versión {templateVersion}. Tu borrador actual utiliza la versión {instanceVersion}. Puedes actualizar para aplicar las últimas secciones y formatos. Tus datos actuales se conservarán.
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                onClick={onUpgradeTemplate}
+                                                                disabled={isUpgrading}
+                                                                className="px-4 py-2 bg-info hover:bg-info/90 text-white rounded-xl font-bold text-xs uppercase tracking-wider shrink-0 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                                            >
+                                                                {isUpgrading ? (
+                                                                    <>
+                                                                        <Loader2 size={14} className="animate-spin shrink-0" />
+                                                                        <span>Actualizando...</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <RefreshCw size={14} className="shrink-0" />
+                                                                        <span>Actualizar Formato</span>
+                                                                    </>
+                                                                )}
+                                                            </button>
                                                         </div>
                                                     )}
-                                                </div>
 
-                                                {hasTemplateUpdate && !readOnly && onUpgradeTemplate && !showUpdateModal && (
-                                                    <div className="callout-vercel callout-vercel-info mb-8 animate-fade-in flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                                        <div className="flex gap-3">
-                                                            <Award size={16} className="text-info mt-0.5 shrink-0" />
+                                                    {readOnly && (
+                                                        <div className="callout-vercel callout-vercel-warning mb-8 animate-fade-in">
+                                                            <Shield size={16} className="text-warning mt-0.5 shrink-0" />
                                                             <div>
-                                                                <p className="callout-vercel-title">Nueva versión de plantilla disponible</p>
+                                                                <p className="callout-vercel-title">Vista de solo lectura activa</p>
                                                                 <p className="callout-vercel-body">
-                                                                    El administrador ha actualizado el formato oficial de esta plantilla a la versión {templateVersion}. Tu borrador actual utiliza la versión {instanceVersion}. Puedes actualizar para aplicar las últimas secciones y formatos. Tus datos actuales se conservarán.
+                                                                    {readOnlyReason === 'state' ? (
+                                                                        `Este documento ha sido emitido y firmado formalmente (se encuentra en estado "${projectStatus || 'Oficial'}"), por lo que su contenido ha sido sellado para garantizar la integridad institucional. No se admiten modificaciones.`
+                                                                    ) : readOnlyReason === 'review' ? (
+                                                                        "Estás visualizando este documento en modo de solo lectura para fines de revisión y auditoría académica."
+                                                                    ) : (
+                                                                        "Has accedido a este documento en modalidad de solo lectura debido a que no figuras como un miembro activo con permisos de escritura en este proyecto. No podrás realizar modificaciones."
+                                                                    )}
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <button
-                                                            onClick={onUpgradeTemplate}
-                                                            disabled={isUpgrading}
-                                                            className="px-4 py-2 bg-info hover:bg-info/90 text-white rounded-xl font-bold text-xs uppercase tracking-wider shrink-0 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                                                        >
-                                                            {isUpgrading ? (
-                                                                <>
-                                                                    <Loader2 size={14} className="animate-spin shrink-0" />
-                                                                    <span>Actualizando...</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <RefreshCw size={14} className="shrink-0" />
-                                                                    <span>Actualizar Formato</span>
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                    )}
 
-                                                {readOnly && (
-                                                    <div className="callout-vercel callout-vercel-warning mb-8 animate-fade-in">
-                                                        <Shield size={16} className="text-warning mt-0.5 shrink-0" />
-                                                        <div>
-                                                            <p className="callout-vercel-title">Vista de solo lectura activa</p>
-                                                            <p className="callout-vercel-body">
-                                                                {readOnlyReason === 'state' ? (
-                                                                    `Este documento ha sido emitido y firmado formalmente (se encuentra en estado "${projectStatus || 'Oficial'}"), por lo que su contenido ha sido sellado para garantizar la integridad institucional. No se admiten modificaciones.`
-                                                                ) : readOnlyReason === 'review' ? (
-                                                                    "Estás visualizando este documento en modo de solo lectura para fines de revisión y auditoría académica."
-                                                                ) : (
-                                                                    "Has accedido a este documento en modalidad de solo lectura debido a que no figuras como un miembro activo con permisos de escritura en este proyecto. No podrás realizar modificaciones."
-                                                                )}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Render de los componentes hijos del documento con el cowork handle */}
-                                                {children(layout.activeTab, cowork)}
+                                                    {/* Render de los componentes hijos del documento con el cowork handle */}
+                                                    {children(layout.activeTab, cowork)}
+                                                </div>
                                             </div>
-                                        </div>
+                                        </BlockClipboardWrapper>
                                     ) : (
                                         /* ── Panel de Finalización y Firma ── */
                                         <OutputSection
