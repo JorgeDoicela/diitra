@@ -13,7 +13,8 @@ import {
     ClipboardList, 
     Loader2,
     Award,
-    MessageSquarePlus
+    MessageSquarePlus,
+    Target
 } from 'lucide-react';
 import type { MenuItem, SidebarProject } from '../types';
 import { useAuth } from '../../../../api/AuthContext';
@@ -435,6 +436,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                             {[
                                 { name: 'Métricas de I+D', path: '/analiticas?tab=general', icon: TrendingUp },
                                 { name: 'Cumplimiento CACES', path: '/analiticas?tab=caces', icon: ShieldCheck },
+                                { name: 'Planificador CACES & TRL', path: '/analiticas?tab=planificador', icon: Target },
                                 { name: 'Proyectos y Producción', path: '/analiticas?tab=productos', icon: ClipboardList }
                             ].map((subItem) => {
                                 const isSubActive = location.pathname === '/analiticas' && (

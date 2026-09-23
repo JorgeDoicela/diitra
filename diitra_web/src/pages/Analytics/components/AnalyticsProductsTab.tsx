@@ -78,30 +78,34 @@ export const AnalyticsProductsTab: React.FC<AnalyticsProductsTabProps> = ({
                                 {/* Header Proyecto */}
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-thin/50 pb-4">
                                     <div className="space-y-1.5">
-                                        <div className="flex flex-wrap items-center gap-1.5">
-                                            <span className="text-[10px] font-semibold font-mono text-brand uppercase tracking-wider">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="text-[10px] font-bold font-mono text-brand uppercase tracking-wider">
                                                 {selectedProj.codigoInstitucional || `PROY-${selectedProj.uuid.substring(0, 5).toUpperCase()}`}
                                             </span>
-                                            <span className={`px-2 py-0.5 rounded-full text-[8.5px] font-bold ${
+                                            <span className="text-text-dim text-xs">•</span>
+                                            <span className={`text-[11px] font-mono font-bold uppercase tracking-wider ${
                                                 selectedProj.estado === 'Aprobado' || selectedProj.estado === 'En Ejecución'
-                                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                                    ? 'text-success'
+                                                    : 'text-warning'
                                             }`}>
                                                 {selectedProj.estado}
                                             </span>
                                             {selectedProj.entidadAliada && (
-                                                <span className="text-[8px] font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-1.5 py-0.5 rounded uppercase">
-                                                    Co-Ejecutor
-                                                </span>
+                                                <>
+                                                    <span className="text-text-dim text-xs">•</span>
+                                                    <span className="text-[10.5px] font-mono font-semibold text-purple-400">
+                                                        Co-Ejecutor: {selectedProj.entidadAliada}
+                                                    </span>
+                                                </>
                                             )}
                                         </div>
                                         <h3 className="text-base font-semibold text-text-main leading-snug">
                                             {selectedProj.titulo}
                                         </h3>
                                     </div>
-                                    <div className="text-left sm:text-right shrink-0 bg-bg-deep/50 border border-border-thin px-4 py-2.5 rounded-xl">
-                                        <span className="text-[8px] font-medium uppercase text-text-dim block tracking-wider">Presupuesto Asignado</span>
-                                        <span className="text-xl font-semibold font-mono text-text-main">{formatCurrency(selectedProj.presupuestoTotal || 0)}</span>
+                                    <div className="text-left sm:text-right shrink-0">
+                                        <span className="text-[8px] font-medium uppercase text-text-dim block tracking-wider font-mono">Presupuesto Asignado</span>
+                                        <span className="text-xl font-bold font-mono text-text-main">{formatCurrency(selectedProj.presupuestoTotal || 0)}</span>
                                     </div>
                                 </div>
 

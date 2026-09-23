@@ -21,6 +21,7 @@ import { AnalyticsTabs } from './components/AnalyticsTabs';
 import { AnalyticsOverviewTab } from './components/AnalyticsOverviewTab';
 import { AnalyticsCacesTab } from './components/AnalyticsCacesTab';
 import { AnalyticsProductsTab } from './components/AnalyticsProductsTab';
+import { CacesPlannerView } from './planner/CacesPlannerView';
 
 const AnalyticsPage: React.FC = () => {
     const {
@@ -139,6 +140,14 @@ const AnalyticsPage: React.FC = () => {
                             cacesIndicators={cacesIndicators}
                             activeCacesCode={activeCacesCode}
                             setActiveCacesCode={setActiveCacesCode}
+                        />
+                    )}
+
+                    {activeTab === 'planificador' && (
+                        <CacesPlannerView
+                            filteredProjects={filteredProjects}
+                            stats={stats}
+                            periodLabel={period}
                         />
                     )}
 

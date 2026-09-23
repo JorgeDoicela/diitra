@@ -90,7 +90,9 @@ export const AnalyticsCacesTab: React.FC<AnalyticsCacesTabProps> = ({
                                     <span className="text-[10px] font-medium font-mono text-text-dim">
                                         {ind.code}
                                     </span>
-                                    <span className={`text-[8.5px] font-medium px-1.5 py-0.5 rounded border ${badgeColor}`}>
+                                    <span className={`text-[10px] font-mono font-bold ${
+                                        ind.status === 'CUMPLIDO' ? 'text-success' : ind.status === 'EN PROCESO' ? 'text-warning' : 'text-error'
+                                    }`}>
                                         {ind.progress}%
                                     </span>
                                 </div>
@@ -117,10 +119,11 @@ export const AnalyticsCacesTab: React.FC<AnalyticsCacesTabProps> = ({
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-thin/50 pb-4">
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-medium font-mono text-brand uppercase tracking-wider">
+                                    <span className="text-[10px] font-mono font-bold text-brand uppercase tracking-wider">
                                         Estándar {selectedInd.code}
                                     </span>
-                                    <span className={`badge-vercel ${statusBadge}`}>
+                                    <span className="text-text-dim text-xs">•</span>
+                                    <span className={`text-[11px] font-mono font-bold tracking-wider uppercase ${progressColor}`}>
                                         {selectedInd.status}
                                     </span>
                                 </div>
@@ -128,9 +131,9 @@ export const AnalyticsCacesTab: React.FC<AnalyticsCacesTabProps> = ({
                                     {selectedInd.name}
                                 </h3>
                             </div>
-                            <div className="text-left sm:text-right shrink-0 bg-bg-deep/50 border border-border-thin px-4 py-2 rounded-xl">
-                                <span className="text-[8px] font-medium uppercase text-text-dim block tracking-wider">Cumplimiento Global</span>
-                                <span className={`text-2xl font-medium font-mono ${progressColor}`}>{selectedInd.progress}%</span>
+                            <div className="text-left sm:text-right shrink-0">
+                                <span className="text-[8px] font-medium uppercase text-text-dim block tracking-wider font-mono">Cumplimiento Global</span>
+                                <span className={`text-2xl font-bold font-mono ${progressColor}`}>{selectedInd.progress}%</span>
                             </div>
                         </div>
 

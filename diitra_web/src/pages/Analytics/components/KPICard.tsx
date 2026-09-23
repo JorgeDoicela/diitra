@@ -19,25 +19,18 @@ export const KPICard: React.FC<KPICardProps> = ({
     accentColor = 'brand',
     footerItems
 }) => {
-    const badgeClass = {
-        brand: 'badge-vercel-info',
-        success: 'badge-vercel-success',
-        warning: 'badge-vercel-warning',
-        violet: 'badge-vercel-violet'
-    }[accentColor] || 'badge-vercel-neutral';
-
-    const iconBgClass = {
-        brand: 'bg-brand-subtle text-brand border border-brand/10',
-        success: 'bg-success-subtle text-success border border-success/10',
-        warning: 'bg-warning-subtle text-warning border border-warning/10',
-        violet: 'bg-purple-500/10 text-purple-500 border border-purple-500/15'
-    }[accentColor] || 'bg-surface-hover text-text-dim border border-border-thin';
+    const textAccentClass = {
+        brand: 'text-brand',
+        success: 'text-success',
+        warning: 'text-warning',
+        violet: 'text-purple-400'
+    }[accentColor] || 'text-text-dim';
 
     return (
         <div className="bento-card static p-5 space-y-4 relative overflow-hidden group select-none hover:-translate-y-1 hover:shadow-md hover:shadow-brand/5 hover:border-brand/35 transition-all duration-300">
             <div className="flex items-center justify-between">
                 <span className="text-[9px] font-semibold uppercase tracking-widest text-text-dim font-mono">{title}</span>
-                <span className={`p-2 rounded-lg transition-all duration-300 group-hover:scale-105 ${iconBgClass}`}>
+                <span className={`transition-all duration-300 group-hover:scale-105 ${textAccentClass}`}>
                     {icon}
                 </span>
             </div>
@@ -47,7 +40,7 @@ export const KPICard: React.FC<KPICardProps> = ({
                 {subText && (
                     <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-text-dim uppercase">
                         {badgeText && (
-                            <span className={`badge-vercel ${badgeClass} scale-90 -ml-1`}>
+                            <span className={`font-mono font-semibold ${textAccentClass}`}>
                                 {badgeText}
                             </span>
                         )}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { reportService } from '../../../api/reportService';
 
-export type AnalyticsTab = 'general' | 'caces' | 'productos';
+export type AnalyticsTab = 'general' | 'caces' | 'planificador' | 'productos';
 
 export const useAnalyticsState = () => {
     const [period, setPeriod] = useState('TODOS');
@@ -10,7 +10,7 @@ export const useAnalyticsState = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const tabParam = searchParams.get('tab');
-    const activeTab: AnalyticsTab = (tabParam === 'general' || tabParam === 'caces' || tabParam === 'productos')
+    const activeTab: AnalyticsTab = (tabParam === 'general' || tabParam === 'caces' || tabParam === 'planificador' || tabParam === 'productos')
         ? tabParam
         : 'general';
 

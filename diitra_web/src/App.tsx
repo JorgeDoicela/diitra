@@ -292,6 +292,8 @@ function App() {
                             <Route path="/derechos-arco" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/lopdp" element={<AdminRoute><LopdpAdminPage /></AdminRoute>} />
                             <Route path="/analiticas" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
+                            <Route path="/planificador-caces" element={<AdminRoute><Navigate to="/analiticas?tab=planificador" replace /></AdminRoute>} />
+                            <Route path="/investigacion/planificador" element={<AdminRoute><Navigate to="/analiticas?tab=planificador" replace /></AdminRoute>} />
                             <Route path="/notificaciones" element={<NotificationsPage />} />
                             <Route path="/usuarios" element={<PermissionRoute module="USUARIOS" op="VER"><UsersPage /></PermissionRoute>} />
                             <Route path="/auditoria" element={<SuperAdminRoute><AuditPage /></SuperAdminRoute>} />

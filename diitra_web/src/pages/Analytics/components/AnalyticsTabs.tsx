@@ -33,6 +33,13 @@ export const AnalyticsTabs: React.FC<AnalyticsTabsProps> = ({
             >
                 Proyectos y Producción
             </button>
+            <button
+                onClick={() => setActiveTab('planificador')}
+                className={`tab-vercel-item ${activeTab === 'planificador' ? 'active' : ''} text-[10px] font-black uppercase tracking-widest`}
+                id="tab-planificador"
+            >
+                Planificador CACES & TRL
+            </button>
         </div>
     );
 };
