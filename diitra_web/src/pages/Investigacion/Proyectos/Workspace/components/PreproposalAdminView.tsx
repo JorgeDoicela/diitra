@@ -4,8 +4,8 @@ import WorkspaceHeader from './WorkspaceHeader';
 import { ProjectTraceabilitySection } from './ProjectTraceabilitySection';
 import { ObservationConnectors } from './ObservationConnectors';
 import { parseObservation } from '../hooks/usePreproposalState';
-import { BlockClipboardWrapper } from '../../../../core/clipboard';
-import { DocumentDataContext } from '../../../../core/documents/context/DocumentDataContext';
+import { BlockClipboardWrapper } from '../../../../../core/clipboard';
+import { DocumentDataContext } from '../../../../../core/documents/context/DocumentDataContext';
 
 interface PreproposalProjectData {
     id?: number | string;
@@ -141,7 +141,14 @@ export const PreproposalAdminView: React.FC<PreproposalAdminViewProps> = ({
     return (
         <div className="h-screen w-full flex flex-col bg-bg-deep overflow-y-auto pb-20 selection:bg-text-main selection:text-bg-deep">
             <WorkspaceHeader
-                currentProject={currentProject}
+                currentProject={{
+                    id: String(currentProject.id || ''),
+                    uuid: String(currentProject.uuid || currentProject.id || ''),
+                    title: String(currentProject.title || ''),
+                    status: String(currentProject.status || ''),
+                    presupuesto: Number(currentProject.presupuesto || 0),
+                    linea: String(currentProject.linea || '')
+                }}
                 isSidebarCollapsed={isSidebarCollapsed}
                 isPublishingDSpace={false}
                 urlPrefix={urlPrefix}
@@ -217,14 +224,11 @@ export const PreproposalAdminView: React.FC<PreproposalAdminViewProps> = ({
                         <div className="space-y-6">
                             {/* Carrera / Unidad Postulante */}
                             <BlockClipboardWrapper
-                                blockId="carrera"
-                                blockTitle="Carrera / Unidad Postulante"
-                                blockContent={currentProject.carrera || 'No definida'}
-                                meta={{
-                                    observado: Boolean(parsedObs.carrera),
-                                    observacion_anterior: previousObsParsed?.carrera || undefined
-                                }}
                                 role="reviewer"
+                                fieldKey="carrera"
+                                title="Carrera / Unidad Postulante"
+                                instructions="Evaluar pertinencia de la carrera o unidad académica proponente según las líneas institucionales."
+                                currentContent={currentProject.carrera || 'No definida'}
                             >
                                 <div
                                     onClick={isEvaluating ? (e) => {
@@ -277,14 +281,11 @@ export const PreproposalAdminView: React.FC<PreproposalAdminViewProps> = ({
 
                             {/* Tema / Título de la Investigación */}
                             <BlockClipboardWrapper
-                                blockId="titulo"
-                                blockTitle="Tema / Título de la Investigación"
-                                blockContent={currentProject.title || ''}
-                                meta={{
-                                    observado: Boolean(parsedObs.titulo),
-                                    observacion_anterior: previousObsParsed?.titulo || undefined
-                                }}
                                 role="reviewer"
+                                fieldKey="titulo"
+                                title="Tema / Título de la Investigación"
+                                instructions="Evaluar si el tema es claro, delimitado, pertinente y cumple con la estructura requerida."
+                                currentContent={currentProject.title || ''}
                             >
                                 <div
                                     onClick={isEvaluating ? (e) => {
@@ -337,14 +338,11 @@ export const PreproposalAdminView: React.FC<PreproposalAdminViewProps> = ({
 
                             {/* Descripción / Justificación detallada */}
                             <BlockClipboardWrapper
-                                blockId="descripcion"
-                                blockTitle="Descripción / Justificación detallada"
-                                blockContent={currentProject.descripcion || 'Sin descripción ingresada.'}
-                                meta={{
-                                    observado: Boolean(parsedObs.descripcion),
-                                    observacion_anterior: previousObsParsed?.descripcion || undefined
-                                }}
                                 role="reviewer"
+                                fieldKey="descripcion"
+                                title="Descripción / Justificación detallada"
+                                instructions="Auditar el planteamiento del problema, justificación de la necesidad y alcance de la prepropuesta."
+                                currentContent={currentProject.descripcion || 'Sin descripción ingresada.'}
                             >
                                 <div
                                     onClick={isEvaluating ? (e) => {
@@ -397,14 +395,11 @@ export const PreproposalAdminView: React.FC<PreproposalAdminViewProps> = ({
 
                             {/* Presupuesto Estimado (USD) */}
                             <BlockClipboardWrapper
-                                blockId="presupuesto"
-                                blockTitle="Presupuesto Estimado (USD)"
-                                blockContent={`$${Number(currentProject.presupuesto).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`}
-                                meta={{
-                                    observado: Boolean(parsedObs.presupuesto),
-                                    observacion_anterior: previousObsParsed?.presupuesto || undefined
-                                }}
                                 role="reviewer"
+                                fieldKey="presupuesto"
+                                title="Presupuesto Estimado (USD)"
+                                instructions="Verificar la razonabilidad del monto estimado para la ejecución de la prepropuesta."
+                                currentContent={`$${Number(currentProject.presupuesto || 0).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`}
                             >
                                 <div
                                     onClick={isEvaluating ? (e) => {

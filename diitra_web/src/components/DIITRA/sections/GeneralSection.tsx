@@ -4,6 +4,53 @@ import type { CoWorkHandle } from '../../../core/cowork/types';
 import type { IdentificationField } from '../../../pages/Admin/Templates/types';
 import { GeistSelect } from '../../Common/GeistSelect';
 import { fetchCatalogCached } from '../../../api/catalogsCache';
+import { BlockClipboardWrapper } from '../../../core/clipboard';
+
+const serializeGeneralSection = (data: unknown): string => {
+    const fd = (data || {}) as Record<string, unknown>;
+    const lines: string[] = [];
+
+    const titulo = fd.Titulo || fd.NombreProyecto || fd.nombre_proyecto;
+    if (titulo) lines.push(`• TEMA / TÍTULO DE INVESTIGACIÓN: ${String(titulo)}`);
+
+    const codigo = fd.CodigoProyecto || fd.codigo_proyecto;
+    if (codigo) lines.push(`• CÓDIGO DEL PROYECTO: ${String(codigo)}`);
+
+    const carrera = fd.Carrera || fd.carrera;
+    if (carrera) lines.push(`• CARRERA / UNIDAD ACADÉMICA: ${String(carrera)}`);
+
+    const dominio = fd.Dominio || fd.dominio;
+    if (dominio) lines.push(`• DOMINIO ACADÉMICO: ${String(dominio)}`);
+
+    const linea = fd.LineaInvestigacion || fd.linea_investigacion;
+    if (linea) lines.push(`• LÍNEA DE INVESTIGACIÓN: ${String(linea)}`);
+
+    const sublinea = fd.SublineaInvestigacion || fd.sublinea_investigacion;
+    if (sublinea) lines.push(`• SUBLÍNEA DE INVESTIGACIÓN: ${String(sublinea)}`);
+
+    const tipo = fd.TipoInvestigacion || fd.tipo_investigacion;
+    if (tipo) lines.push(`• TIPO DE INVESTIGACIÓN: ${String(tipo)}`);
+
+    const programa = fd.ProgramaProyecto || fd.Programa || fd.programa;
+    if (programa) lines.push(`• PROGRAMA DE INVESTIGACIÓN: ${String(programa)}`);
+
+    const grupo = fd.GrupoInvestigacionNombre || fd.GrupoInvestigacion || fd.grupo_investigacion;
+    if (grupo && String(grupo) !== 'NO') lines.push(`• GRUPO DE INVESTIGACIÓN: ${String(grupo)}`);
+
+    const director = fd.DirectorProyecto || fd.director_proyecto;
+    if (director) lines.push(`• DIRECTOR DE PROYECTO: ${String(director)}`);
+
+    const fechaPres = fd.FechaPresentacion;
+    if (fechaPres) lines.push(`• FECHA DE PRESENTACIÓN: ${String(fechaPres)}`);
+
+    const fechaInicio = fd.FechaInicio;
+    if (fechaInicio) lines.push(`• FECHA DE INICIO: ${String(fechaInicio)}`);
+
+    const fechaFin = fd.FechaFin;
+    if (fechaFin) lines.push(`• FECHA DE FINALIZACIÓN: ${String(fechaFin)}`);
+
+    return lines.length > 0 ? lines.join('\n') : '(Sin datos de identificación registrados)';
+};
 
 const DEFAULT_TIPOS_INVESTIGACION = [
     { idTipo: 1, nombre: 'BÁSICA PURA' },
@@ -1016,89 +1063,117 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     };
 
     return (
-        <div className="space-y-5 sm:space-y-8 animate-fade-in pb-6 sm:pb-10">
-            {/* Renderizar según la secuencia activa */}
-            {activeOrder.map(key => renderBlockByKey(key))}
-            {defaultCoreOrder.map(key => renderBlockByKey(key))}
+        <BlockClipboardWrapper
+            title={config?.title || "1. IDENTIFICACIÓN DEL PROYECTO"}
+            fieldKey="identificacion"
+            instructions="Verificar que el tema de investigación sea claro, conciso, delimitado temporal y espacialmente, y articulado con la línea, sublínea y dominio académico institucional. Asegurar la asignación correcta de carrera y tipo de investigación según la normativa ISTPET."
+            requirementText="Nombre del proyecto en mayúsculas, asignación precisa de carrera, dominio, línea y tipo de investigación ISTPET."
+            contentSerializer={serializeGeneralSection}
+            currentContent={formData}
+            role="author"
+        >
+            <div className="space-y-5 sm:space-y-8 animate-fade-in pb-6 sm:pb-10">
+                {/* Renderizar según la secuencia activa */}
+                {activeOrder.map(key => renderBlockByKey(key))}
+                {defaultCoreOrder.map(key => renderBlockByKey(key))}
 
-            {/* Campos Personalizados Adicionales y Banners Temáticos (Composición Unificada) */}
-            {customFieldsList.length > 0 && (
-                <div className="space-y-5 sm:space-y-8 pt-4 border-t border-border-thin/20">
-                    {customFieldsList.map((field) => {
-                        if (field.isGroupHeader) {
-                            const isGold = field.variant === 'banner_gold';
-                            const isNavy = field.variant === 'banner_navy';
-                            const isEmerald = field.variant === 'banner_emerald';
-                            const bannerBg = isGold ? 'bg-amber-500/10 border-amber-500/30 text-amber-600' : isNavy ? 'bg-blue-500/10 border-blue-500/30 text-blue-600' : isEmerald ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-surface-hover border-border-thin text-text-main';
+                {/* Campos Personalizados Adicionales y Banners Temáticos (Composición Unificada) */}
+                {customFieldsList.length > 0 && (
+                    <div className="space-y-5 sm:space-y-8 pt-4 border-t border-border-thin/20">
+                        {customFieldsList.map((field) => {
+                            if (field.isGroupHeader) {
+                                const isGold = field.variant === 'banner_gold';
+                                const isNavy = field.variant === 'banner_navy';
+                                const isEmerald = field.variant === 'banner_emerald';
+                                const bannerBg = isGold ? 'bg-amber-500/10 border-amber-500/30 text-amber-600' : isNavy ? 'bg-blue-500/10 border-blue-500/30 text-blue-600' : isEmerald ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-surface-hover border-border-thin text-text-main';
 
-                            return (
-                                <div key={field.fieldKey} className={`p-3.5 rounded-xl border ${bannerBg} flex items-center justify-between my-3 shadow-2xs`}>
-                                    <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider">
-                                        {field.label}
-                                    </h4>
-                                    {field.requirementText && (
-                                        <span className="text-[10px] text-text-dim/80 italic font-medium">
-                                            {field.requirementText}
-                                        </span>
-                                    )}
-                                </div>
-                            );
-                        }
-
-                        const options = field.fieldType === 'select_catalog'
-                            ? (customCatalogs[field.catalogUrl!] || [])
-                            : (field.options || []);
-
-                        const labelKey = field.catalogLabelKey || 'nombre';
-                        const valueKey = field.catalogValueKey || 'nombre';
-
-                        const colSpanClass = field.colSpan === 2
-                            ? 'grid-cols-1'
-                            : 'grid-cols-1 md:grid-cols-2';
-
-                        const fieldHelper = field.requirementText ? (
-                            <p className="text-[10px] text-text-dim italic mt-1">{field.requirementText}</p>
-                        ) : null;
-
-                        if (field.fieldType === 'select_inline' || field.fieldType === 'select_catalog') {
-                            return (
-                                <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
-                                    <div>
-                                        <CoWorkField
-                                            name={field.fieldKey}
-                                            cowork={cowork}
-                                            type="select"
-                                            label={field.label}
-                                            onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
-                                        >
-                                            <option value="">-- Seleccione {field.label} --</option>
-                                            {options.map((opt: any, optIdx: number) => {
-                                                const val = typeof opt === 'string' ? opt : (opt[valueKey] ?? opt[labelKey] ?? '');
-                                                const lbl = typeof opt === 'string' ? opt : (opt[labelKey] ?? opt[valueKey] ?? '');
-                                                return (
-                                                    <option key={val || optIdx} value={val}>
-                                                        {lbl}
-                                                    </option>
-                                                );
-                                            })}
-                                        </CoWorkField>
-                                        {fieldHelper}
+                                return (
+                                    <div key={field.fieldKey} className={`p-3.5 rounded-xl border ${bannerBg} flex items-center justify-between my-3 shadow-2xs`}>
+                                        <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider">
+                                            {field.label}
+                                        </h4>
+                                        {field.requirementText && (
+                                            <span className="text-[10px] text-text-dim/80 italic font-medium">
+                                                {field.requirementText}
+                                            </span>
+                                        )}
                                     </div>
-                                </div>
-                            );
-                        }
+                                );
+                            }
 
-                        if (field.fieldType === 'textarea') {
+                            const options = field.fieldType === 'select_catalog'
+                                ? (customCatalogs[field.catalogUrl!] || [])
+                                : (field.options || []);
+
+                            const labelKey = field.catalogLabelKey || 'nombre';
+                            const valueKey = field.catalogValueKey || 'nombre';
+
+                            const colSpanClass = field.colSpan === 2
+                                ? 'grid-cols-1'
+                                : 'grid-cols-1 md:grid-cols-2';
+
+                            const fieldHelper = field.requirementText ? (
+                                <p className="text-[10px] text-text-dim italic mt-1">{field.requirementText}</p>
+                            ) : null;
+
+                            if (field.fieldType === 'select_inline' || field.fieldType === 'select_catalog') {
+                                return (
+                                    <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
+                                        <div>
+                                            <CoWorkField
+                                                name={field.fieldKey}
+                                                cowork={cowork}
+                                                type="select"
+                                                label={field.label}
+                                                onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
+                                            >
+                                                <option value="">-- Seleccione {field.label} --</option>
+                                                {options.map((opt: any, optIdx: number) => {
+                                                    const val = typeof opt === 'string' ? opt : (opt[valueKey] ?? opt[labelKey] ?? '');
+                                                    const lbl = typeof opt === 'string' ? opt : (opt[labelKey] ?? opt[valueKey] ?? '');
+                                                    return (
+                                                        <option key={val || optIdx} value={val}>
+                                                            {lbl}
+                                                        </option>
+                                                    );
+                                                })}
+                                            </CoWorkField>
+                                            {fieldHelper}
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            if (field.fieldType === 'textarea') {
+                                return (
+                                    <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
+                                        <div>
+                                            <CoWorkField
+                                                name={field.fieldKey}
+                                                cowork={cowork}
+                                                type="textarea"
+                                                label={field.label}
+                                                placeholder={field.placeholder}
+                                                onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
+                                            />
+                                            {fieldHelper}
+                                        </div>
+                                    </div>
+                                );
+                            }
+
                             return (
                                 <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
                                     <div>
                                         <CoWorkField
                                             name={field.fieldKey}
                                             cowork={cowork}
-                                            type="textarea"
                                             label={field.label}
                                             placeholder={field.placeholder}
+                                            uppercase={field.uppercase}
+                                            mask={field.fieldType === 'date' ? 'date' : undefined}
                                             onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
                                             className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
                                         />
@@ -1106,28 +1181,10 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                     </div>
                                 </div>
                             );
-                        }
-
-                        return (
-                            <div key={field.fieldKey} className={`grid ${colSpanClass} gap-4 sm:gap-6`}>
-                                <div>
-                                    <CoWorkField
-                                        name={field.fieldKey}
-                                        cowork={cowork}
-                                        label={field.label}
-                                        placeholder={field.placeholder}
-                                        uppercase={field.uppercase}
-                                        mask={field.fieldType === 'date' ? 'date' : undefined}
-                                        onValueChange={(v, meta) => onUpdate(field.fieldKey, v, meta)}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all"
-                                    />
-                                    {fieldHelper}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-        </div>
+                        })}
+                    </div>
+                )}
+            </div>
+        </BlockClipboardWrapper>
     );
 };

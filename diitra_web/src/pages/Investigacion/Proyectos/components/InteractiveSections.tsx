@@ -5,19 +5,20 @@ import { BlockClipboardWrapper } from '../../../../core/clipboard';
 import { DocumentDataContext } from '../../../../core/documents/context/DocumentDataContext';
 import type { CoWorkHandle } from '../../../../core/cowork/types';
 
-const stripHtml = (html: string | null | undefined): string => {
-    if (!html) return '';
+const stripHtml = (html: unknown): string => {
+    if (!html || typeof html !== 'string') return '';
     return html.replace(/<[^>]*>/g, '').trim();
 };
 
-const renderHtml = (html: string | null | undefined, placeholder: string = 'No registrado') => {
-    if (!html || stripHtml(html).length === 0) {
+const renderHtml = (html: unknown, placeholder: string = 'No registrado') => {
+    const raw = typeof html === 'string' ? html : (html ? String(html) : '');
+    if (!raw || stripHtml(raw).length === 0) {
         return <p className="text-xs text-text-dim/60 italic mt-2 select-text">{placeholder}</p>;
     }
     return (
         <div 
             className="text-xs font-mono font-medium leading-relaxed text-text-main mt-2 select-text"
-            dangerouslySetInnerHTML={{ __html: html }}
+            dangerouslySetInnerHTML={{ __html: raw }}
         />
     );
 };
@@ -79,12 +80,24 @@ interface InvestigadorItem {
     [key: string]: unknown;
 }
 
+interface TemplateBlockItem {
+    id?: string;
+    type?: string;
+    title?: string;
+    config?: {
+        fieldKey?: string;
+        html?: string;
+        [key: string]: unknown;
+    };
+    [key: string]: unknown;
+}
+
 interface InteractiveSectionsProps {
     activeSection: string;
     project: ProjectDetail;
     investigadores: InvestigadorItem[];
     docSnapshot: Record<string, unknown>;
-    templateBlocks?: Record<string, unknown>[];
+    templateBlocks?: TemplateBlockItem[];
     isLeftSidebarOpen: boolean;
     setIsLeftSidebarOpen: (open: boolean) => void;
     isHoursOk: boolean;
@@ -274,7 +287,7 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                     <div className="grid grid-cols-2 gap-4 select-text">
                                         <div>
                                             <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Carrera / Unidad</span>
-                                            <p className="text-xs font-semibold text-text-main mt-0.5">{project.carrera || docSnapshot.Carrera || 'Institucional'}</p>
+                                            <p className="text-xs font-semibold text-text-main mt-0.5">{String(project.carrera || docSnapshot.Carrera || 'Institucional')}</p>
                                         </div>
                                         <div>
                                             <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Convocatoria</span>
@@ -506,32 +519,37 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                     </div>
 
                     {/* CONTROL PRESUPUESTAL */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 select-none">
-                        <div className="p-4 rounded-xl border border-border-thin bg-surface flex flex-col justify-between">
-                            <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Presupuesto Propuesto</span>
-                            <span className="text-lg font-mono font-bold text-text-main mt-2 select-text">${(project.presupuesto || docSnapshot.CostoTotal || 0).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </div>
-                        <div className="p-4 rounded-xl border border-border-thin bg-surface flex flex-col justify-between">
-                            <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Límite Convocatoria</span>
-                            <span className="text-lg font-mono font-bold text-brand mt-2 select-text">
-                                {project.convocatoriaMontoMaximo 
-                                    ? `$${project.convocatoriaMontoMaximo.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
-                                    : 'Sin Límite'}
-                            </span>
-                        </div>
-                        <div className="p-4 rounded-xl border border-border-thin bg-surface flex flex-col justify-between">
-                            <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Diferencia / Margen</span>
-                            <span className={`text-lg font-mono font-bold mt-2 select-text ${
-                                project.convocatoriaMontoMaximo && (project.presupuesto || docSnapshot.CostoTotal || 0) > project.convocatoriaMontoMaximo 
-                                    ? 'text-error animate-pulse' 
-                                    : 'text-emerald-500'
-                            }`}>
-                                {project.convocatoriaMontoMaximo 
-                                    ? `$${(project.convocatoriaMontoMaximo - (project.presupuesto || docSnapshot.CostoTotal || 0)).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
-                                    : 'N/D'}
-                            </span>
-                        </div>
-                    </div>
+                    {(() => {
+                        const totalPresupuesto = Number(project.presupuesto || docSnapshot.CostoTotal || 0);
+                        return (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 select-none">
+                                <div className="p-4 rounded-xl border border-border-thin bg-surface flex flex-col justify-between">
+                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Presupuesto Propuesto</span>
+                                    <span className="text-lg font-mono font-bold text-text-main mt-2 select-text">${totalPresupuesto.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                                <div className="p-4 rounded-xl border border-border-thin bg-surface flex flex-col justify-between">
+                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Límite Convocatoria</span>
+                                    <span className="text-lg font-mono font-bold text-brand mt-2 select-text">
+                                        {project.convocatoriaMontoMaximo 
+                                            ? `$${project.convocatoriaMontoMaximo.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                            : 'Sin Límite'}
+                                    </span>
+                                </div>
+                                <div className="p-4 rounded-xl border border-border-thin bg-surface flex flex-col justify-between">
+                                    <span className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Diferencia / Margen</span>
+                                    <span className={`text-lg font-mono font-bold mt-2 select-text ${
+                                        project.convocatoriaMontoMaximo && totalPresupuesto > project.convocatoriaMontoMaximo 
+                                            ? 'text-error animate-pulse' 
+                                            : 'text-emerald-500'
+                                    }`}>
+                                        {project.convocatoriaMontoMaximo 
+                                            ? `$${(project.convocatoriaMontoMaximo - totalPresupuesto).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+                                            : 'N/D'}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* ITEMS PRESUPUESTARIOS */}
                     {(() => {
@@ -599,7 +617,7 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
                                         </div>
                                     ) : (
                                         <div className="p-6 text-center text-text-dim text-xs font-mono select-text">
-                                            Total consolidado: ${(project.presupuesto || docSnapshot.CostoTotal || 0).toLocaleString('es-EC', { minimumFractionDigits: 2 })} USD. Puede verificar el desglose completo en el Visor PDF.
+                                            Total consolidado: ${Number(project.presupuesto || docSnapshot.CostoTotal || 0).toLocaleString('es-EC', { minimumFractionDigits: 2 })} USD. Puede verificar el desglose completo en el Visor PDF.
                                         </div>
                                     )}
                                 </div>
@@ -783,17 +801,18 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
 
             {/* BLOQUES DINÁMICOS PERSONALIZADOS CREADOS DESDE EL ADMIN */}
             {templateBlocks && templateBlocks.length > 0 && templateBlocks.map((block, bIdx) => {
-                const isStandardBlock = [
+                const isStandardBlock = block.type ? [
                     'cover', 'project_general_section', 'researchers_table',
                     'project_technical_section', 'project_budget_section',
                     'impacts', 'gantt', 'signatures', 'title'
-                ].includes(block.type);
+                ].includes(block.type) : false;
 
                 if (isStandardBlock) return null;
 
-                const fieldKey = block.config?.fieldKey || block.id || `custom_block_${bIdx}`;
-                const blockTitle = block.title || `Bloque Adicional ${bIdx + 1}`;
-                const blockContent = docSnapshot[fieldKey] || docSnapshot[block.id] || block.config?.html;
+                const fieldKey = String(block.config?.fieldKey || block.id || `custom_block_${bIdx}`);
+                const blockTitle = String(block.title || `Bloque Adicional ${bIdx + 1}`);
+                const blockIdKey = block.id ? String(block.id) : '';
+                const blockContent = docSnapshot[fieldKey] || (blockIdKey ? docSnapshot[blockIdKey] : undefined) || block.config?.html;
 
                 if (activeSection !== 'all' && activeSection !== fieldKey) {
                     return null;
@@ -801,7 +820,7 @@ export const InteractiveSections: React.FC<InteractiveSectionsProps> = ({
 
                 return (
                     <BlockClipboardWrapper
-                        key={block.id || bIdx}
+                        key={String(block.id || bIdx)}
                         role="reviewer"
                         title={blockTitle}
                         fieldKey={fieldKey}

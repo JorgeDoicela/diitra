@@ -225,6 +225,7 @@ if (camposPlanos.length > 0) {
 
 | Sección / Vista | Rol soportado | Serializer | Documento / Pantalla |
 |:---|:---|:---|:---|
+| GeneralSection (Identificación del Proyecto) | `'author'` | Explícito (`serializeGeneralSection`) | Protocolo / Editor Investigador |
 | TechnicalSection (Antecedentes, Justificación, Objetivos, etc.) | `'author'` | No (automático) | Protocolo / Plan APE |
 | BibliographySection | `'author'` | No (automático) | Protocolo / Plan APE |
 | ImpactSection | `'author'` | Explícito (`impactSerializer`) | Protocolo |
