@@ -306,7 +306,9 @@ function App() {
                               <Route path="/sugerencias" element={<Navigate to="/incidencias" replace />} />
                               <Route path="/feedback" element={<Navigate to="/incidencias" replace />} />
                              <Route path="/admin/documentos" element={<SuperAdminRoute><DocumentMaintenancePage /></SuperAdminRoute>} />
-                             <Route path="/plantillas" element={<AdminRoute><DocumentTemplatesPage /></AdminRoute>} />
+                             <Route path="/plantillas" element={<RoleRoute allowedRoles={['ANY']}><DocumentTemplatesPage /></RoleRoute>} />
+                             <Route path="/formatos" element={<RedirectPreserveSearch to="/plantillas" />} />
+                             <Route path="/formatos-oficiales" element={<RedirectPreserveSearch to="/plantillas" />} />
                              <Route path="/admin/plantillas" element={<RedirectPreserveSearch to="/plantillas" />} />
                              <Route path="/templates" element={<RedirectPreserveSearch to="/plantillas" />} />
                              <Route path="/admin" element={<Navigate to="/usuarios" replace />} />

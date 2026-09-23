@@ -8,6 +8,7 @@ import api from '../../../api/axios_config';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 import { FullscreenLoader } from '../../../components/Common/FullscreenLoader';
+import { getProjectProgress } from '../utils/projectProgress';
 
 interface ProyectoResumen {
     uuid: string;
@@ -88,51 +89,6 @@ export const EstudianteDashboard: React.FC = () => {
     const colaboracionesVigentes = useMemo(() => {
         return colaboraciones.filter(p => p.estado !== 'Rechazado' && p.estado !== 'Anulado' && p.estado !== 'Borrador');
     }, [colaboraciones]);
-
-    // Cálculo del estado de avance de cada proyecto
-    const getProjectProgress = (p: ProyectoResumen) => {
-        if (p.estado === 'Finalizado') {
-            return {
-                percentage: 100,
-                label: '100% Concluido',
-                badgeClass: 'badge-vercel-success',
-                badgeLabel: 'Finalizado'
-            };
-        }
-        if (p.estado === 'En Ejecución') {
-            const total = p.total_informes ?? 0;
-            const aprobados = p.informes_aprobados ?? 0;
-            if (total > 0) {
-                const pct = Math.min(100, Math.round((aprobados / total) * 100));
-                return {
-                    percentage: pct,
-                    label: `${pct}% avance · ${aprobados}/${total} informes`,
-                    badgeClass: 'badge-vercel-info',
-                    badgeLabel: 'En Ejecución'
-                };
-            }
-            return {
-                percentage: 15,
-                label: 'En marcha · Fase inicial',
-                badgeClass: 'badge-vercel-info',
-                badgeLabel: 'En Ejecución'
-            };
-        }
-        if (p.estado === 'Aprobado') {
-            return {
-                percentage: 5,
-                label: 'Aprobado · Listo para inicio',
-                badgeClass: 'badge-vercel-warning',
-                badgeLabel: 'Aprobado'
-            };
-        }
-        return {
-            percentage: 0,
-            label: p.estado,
-            badgeClass: 'badge-vercel-neutral',
-            badgeLabel: p.estado
-        };
-    };
 
     return (
         <>

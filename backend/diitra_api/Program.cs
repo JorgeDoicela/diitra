@@ -261,6 +261,7 @@ builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectDe
 builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectDashboardSubservice, diitra_infrastructure.Research.Subservices.ProjectDashboardSubservice>();
 builder.Services.AddScoped<diitra_infrastructure.Research.Subservices.IProjectActivitySubservice, diitra_infrastructure.Research.Subservices.ProjectActivitySubservice>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectQueryService, ProjectQueryService>();
+builder.Services.AddScoped<Diitra.Application.Research.IProjectActivityNotifier, diitra_infrastructure.Research.ProjectActivityNotifier>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectOrchestrator, ProjectOrchestrator>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectSigningService, diitra_infrastructure.Research.ProjectSigningService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectExpensesService, diitra_infrastructure.Research.ProjectExpensesService>();

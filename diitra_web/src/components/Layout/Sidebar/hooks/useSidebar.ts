@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, ClipboardList, PenTool, BarChart3, ShieldCheck, Users, Activity, Mail, Bell, Calendar, Award, Gavel, FileCode2, Sparkles, MessageSquarePlus, Inbox } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, ShieldCheck, Users, Activity, Mail, Bell, Calendar, Award, Gavel, FileCode2, FileText, Sparkles, MessageSquarePlus, Inbox } from 'lucide-react';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
 import api from '../../../../api/axios_config';
@@ -337,7 +337,7 @@ export const useSidebar = ({ isCollapsed, onCollapse, onExpand }: UseSidebarProp
         { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN'], group: 2, hasChevron: true },
         // ── Administración del sistema ──────────────────────────────────────
         { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },
-        { name: 'Plantillas', icon: FileCode2, path: '/plantillas', roles: ['DIITRA_ADMIN'], group: 3 },
+        { name: (isDocente || isEstudiante) ? 'Formatos' : 'Plantillas', icon: (isDocente || isEstudiante) ? FileText : FileCode2, path: '/plantillas', roles: ['ANY'], group: (isDocente || isEstudiante) ? 1 : 3 },
         { name: 'Correos', icon: Mail, path: '/emails', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_SUPER_ADMIN'], group: 3 },
         { name: 'Incidencias', icon: MessageSquarePlus, path: '/admin/incidencias', roles: ['DIITRA_SUPER_ADMIN'], group: 3 },

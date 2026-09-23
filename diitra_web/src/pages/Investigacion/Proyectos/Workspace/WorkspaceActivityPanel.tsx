@@ -1,31 +1,18 @@
 // ═══════════════════════════════════════════════════════════════════
-// DIITRA — WorkspaceActivityPanel
+// DIITRA — WorkspaceActivityPanel (Vercel Geist — Pure Presentation)
 //
-// Panel lateral de actividad del Workspace. Desacoplado del
-// ProjectWorkspace principal: consume /api/projects/{uuid}/activity
-// con polling liviano cada 30s. Puede extenderse a SignalR en el futuro
-// sin cambios en los demás componentes.
+// Panel lateral de actividad del Workspace. Conectado en tiempo real
+// mediante useProjectActivity (SignalR WebSockets + SWR).
 // ═══════════════════════════════════════════════════════════════════
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Activity, Edit3, CheckCircle, Eye, GitBranch, MessageSquare, RefreshCw, Clock } from 'lucide-react';
-import api from '../../../../api/axios_config';
-
-interface ActividadItem {
-    tipo: string;
-    nombreUsuario: string;
-    rolUsuario: string;
-    descripcion: string;
-    fecha: string;
-    icono: string;
-}
+import React from 'react';
+import { Activity, Edit3, CheckCircle, Eye, GitBranch, MessageSquare, Clock } from 'lucide-react';
+import { useProjectActivity, timeAgo } from './hooks/useProjectActivity';
 
 interface WorkspaceActivityPanelProps {
     projectUuid: string;
     className?: string;
 }
-
-const POLL_INTERVAL_MS = 30_000;
 
 function getIconComponent(icono: string) {
     if (icono === 'check') return <CheckCircle size={12} className="text-emerald-400 shrink-0" />;
@@ -53,89 +40,20 @@ function getTypoLabel(tipo: string): string {
     }
 }
 
-function timeAgo(dateStr: string): string {
-    const now = new Date();
-    const date = new Date(dateStr);
-    const diffMs = now.getTime() - date.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-
-    if (diffMin < 1)  return 'ahora mismo';
-    if (diffMin < 60) return `hace ${diffMin} min`;
-    const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24)  return `hace ${diffHr}h`;
-    return `hace ${Math.floor(diffHr / 24)}d`;
-}
-
 const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ projectUuid, className = '' }) => {
-    const [actividad, setActividad] = useState<ActividadItem[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-    const fetchActivity = useCallback(async (silent = false) => {
-        if (!projectUuid) return;
-        if (!silent) setIsLoading(true);
-        else setIsRefreshing(true);
-
-        try {
-            const res = await api.get(`/projects/${projectUuid}/activity`, {
-                params: { maxItems: 20 }
-            });
-            const mapped = (res.data || []).map((item: any) => ({
-                tipo: item.tipo,
-                nombreUsuario: item.nombreUsuario ?? item.nombre_usuario ?? 'Usuario',
-                rolUsuario: item.rolUsuario ?? item.rol_usuario ?? '',
-                descripcion: item.descripcion ?? '',
-                fecha: item.fecha ?? '',
-                icono: item.icono ?? ''
-            }));
-            setActividad(mapped);
-            setError(null);
-        } catch (err: any) {
-            // No mostrar error en polling silencioso para no molestar al usuario
-            if (!silent) {
-                setError('No se pudo cargar la actividad.');
-            }
-        } finally {
-            setIsLoading(false);
-            setIsRefreshing(false);
-        }
-    }, [projectUuid]);
-
-    useEffect(() => {
-        fetchActivity(false);
-        pollRef.current = setInterval(() => fetchActivity(true), POLL_INTERVAL_MS);
-        return () => {
-            if (pollRef.current) clearInterval(pollRef.current);
-        };
-    }, [fetchActivity]);
-
-    const handleManualRefresh = () => {
-        fetchActivity(false);
-    };
+    const { actividad, isLoading, isSyncing, isLive, error } = useProjectActivity(projectUuid);
 
     return (
         <div className={`flex flex-col gap-0 ${className}`}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border-thin">
-                <div className="flex items-center gap-2">
-                    <Activity size={12} className="text-text-dim" />
-                    <span className="section-label text-text-dim">
-                        Actividad Reciente
-                    </span>
-                </div>
-                <button
-                    onClick={handleManualRefresh}
-                    disabled={isLoading || isRefreshing}
-                    title="Actualizar actividad"
-                    className="p-1 h-6 w-6 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors disabled:opacity-40 flex items-center justify-center cursor-pointer"
-                >
-                    <RefreshCw size={11} className={isRefreshing ? 'animate-spin' : ''} />
-                </button>
+            {/* Header Vercel Geist */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border-thin select-none">
+                <Activity size={12} className="text-text-dim" />
+                <span className="section-label text-text-dim">
+                    Actividad Reciente
+                </span>
             </div>
 
-            {/* Content */}
+            {/* Content con Scroll Ergonómico */}
             <div className="flex flex-col overflow-y-auto custom-scrollbar" style={{ maxHeight: '420px' }}>
                 {isLoading ? (
                     <div className="flex flex-col items-center gap-3 py-8 px-4">
@@ -145,12 +63,6 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                 ) : error ? (
                     <div className="px-4 py-6 text-center">
                         <p className="text-xs text-text-dim">{error}</p>
-                        <button
-                            onClick={handleManualRefresh}
-                            className="mt-2 text-xs text-brand hover:underline cursor-pointer"
-                        >
-                            Reintentar
-                        </button>
                     </div>
                 ) : actividad.length === 0 ? (
                     <div className="px-4 py-8 text-center">
@@ -161,7 +73,7 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                     <div className="divide-y divide-border-thin/50">
                         {actividad.map((item, idx) => (
                             <div
-                                key={idx}
+                                key={`${item.fecha}-${idx}`}
                                 className="flex items-start gap-3 px-4 py-3 hover:bg-surface/50 transition-colors group"
                             >
                                 {/* Ícono en contenedor Vercel Geist */}

@@ -11,12 +11,13 @@ using Microsoft.EntityFrameworkCore;
 namespace diitra_api.Controllers
 {
     /// <summary>
-    /// Endpoints de administración del Motor de Documentos DIITRA.
-    /// Permiten actualizar plantillas en base de datos sin recompilación.
-    /// IMPORTANTE: Proteger con autorización de rol "Admin" en producción.
+    /// Endpoints del Motor de Documentos y Plantillas DIITRA.
+    /// Permiten consultar y previsualizar formatos a todos los usuarios autenticados,
+    /// y restringir la maquetación/modificación exclusivamente a roles administrativos.
     /// </summary>
     [ApiController]
     [Route("api/admin/templates")]
+    [Route("api/templates")]
     public class DocumentTemplatesController : ControllerBase
     {
         private readonly IDocumentEngine _documentEngine;
@@ -39,8 +40,17 @@ namespace diitra_api.Controllers
             _logger = logger;
         }
 
+        private bool IsAdminUser()
+        {
+            return User.IsInRole("DIITRA_ADMIN") || 
+                   User.IsInRole("DIITRA_SUPER_ADMIN") || 
+                   User.FindFirst("es_admin")?.Value == "true" || 
+                   User.FindFirst("es_super_admin")?.Value == "true";
+        }
+
         /// <summary>
-        /// Lista todas las plantillas activas registradas en el motor.
+        /// Lista todas las plantillas registradas en el motor.
+        /// Los usuarios estándar (Docentes/Estudiantes) reciben únicamente las plantillas activas/publicadas.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken ct)
@@ -66,9 +76,21 @@ namespace diitra_api.Controllers
             }
 
             var orderedTemplates = templates.ToList();
+
+            // Si no es admin, filtrar solo las plantillas activas y publicadas, excluyendo reportes internos y analíticas
+            if (!IsAdminUser())
+            {
+                orderedTemplates = orderedTemplates
+                    .Where(t => t.IsActive && 
+                                !string.Equals(t.Category.ToString(), "Reportes", StringComparison.OrdinalIgnoreCase) && 
+                                !t.Code.StartsWith("REPORTE", StringComparison.OrdinalIgnoreCase) && 
+                                !t.Code.Contains("ANALITICAS", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
             if (customOrder != null && customOrder.Any())
             {
-                orderedTemplates = templates
+                orderedTemplates = orderedTemplates
                     .OrderBy(t => {
                         var idx = customOrder.IndexOf(t.Code);
                         return idx >= 0 ? idx : int.MaxValue;
@@ -152,6 +174,11 @@ namespace diitra_api.Controllers
         [HttpPut("{code}")]
         public async Task<IActionResult> Update(string code, [FromBody] UpdateTemplateRequest request, CancellationToken ct)
         {
+            if (!IsAdminUser())
+            {
+                return StatusCode(403, new { error = "No tienes permisos administrativos para modificar plantillas oficiales." });
+            }
+
             try
             {
                 var updatedBy = User.Identity?.Name ?? "admin";
@@ -213,6 +240,11 @@ namespace diitra_api.Controllers
         [HttpPost("{code}/reset-to-default")]
         public async Task<IActionResult> ResetToDefault(string code, CancellationToken ct)
         {
+            if (!IsAdminUser())
+            {
+                return StatusCode(403, new { error = "No tienes permisos administrativos para restablecer plantillas." });
+            }
+
             try
             {
                 var updatedBy = User.Identity?.Name ?? "admin";
@@ -231,6 +263,11 @@ namespace diitra_api.Controllers
         [HttpPut("{code}/signature-config")]
         public async Task<IActionResult> UpdateSignatureConfig(string code, [FromBody] UpdateSignatureConfigRequest request, CancellationToken ct)
         {
+            if (!IsAdminUser())
+            {
+                return StatusCode(403, new { error = "No tienes permisos administrativos para configurar firmas en plantillas." });
+            }
+
             try
             {
                 var updatedBy = User.Identity?.Name ?? "admin";
@@ -260,6 +297,11 @@ namespace diitra_api.Controllers
         [HttpPut("order")]
         public async Task<IActionResult> UpdateOrder([FromBody] UpdateTemplatesOrderRequest request, CancellationToken ct)
         {
+            if (!IsAdminUser())
+            {
+                return StatusCode(403, new { error = "No tienes permisos administrativos para reordenar plantillas." });
+            }
+
             if (request == null || request.Codes == null)
                 return BadRequest(new { error = "El cuerpo de la solicitud no puede estar vacío." });
 

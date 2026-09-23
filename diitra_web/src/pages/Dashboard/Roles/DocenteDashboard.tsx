@@ -11,6 +11,11 @@ import api from '../../../api/axios_config';
 import { ProximosEventosWidget } from '../../../components/Common/ProximosEventosWidget';
 import { FullscreenLoader } from '../../../components/Common/FullscreenLoader';
 import { AnimatedNumber } from '../Components/AnimatedNumber';
+import { 
+    DocenteProjectsProgressWidget, 
+    type DocenteProjectItem 
+} from '../Components/DocenteProjectsProgressWidget';
+
 interface DashboardStats {
     mis_proyectos_activos: number;
     mis_proyectos_borrador: number;
@@ -28,13 +33,12 @@ interface DashboardStats {
     }>;
 }
 
-
-
 export const DocenteDashboard: React.FC = () => {
     const { user } = useAuth();
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
     const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Investigador';
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [projects, setProjects] = useState<DocenteProjectItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [animate, setAnimate] = useState(false);
 
@@ -43,11 +47,15 @@ export const DocenteDashboard: React.FC = () => {
     const fetchStats = async (silent = false) => {
         const startTime = Date.now();
         try {
-            const res = await api.get('/projects/stats');
-            setStats(res.data);
+            const [statsRes, projectsRes] = await Promise.all([
+                api.get('/projects/stats'),
+                api.get('/projects/my?modalidad=INVESTIGACION')
+            ]);
+            setStats(statsRes.data);
+            setProjects(projectsRes.data || []);
             lastFetchRef.current = Date.now();
         } catch (e) {
-            console.error('[DIITRA] Error al cargar stats:', e);
+            console.error('[DIITRA] Error al cargar stats y proyectos del docente:', e);
         } finally {
             if (!silent) {
                 const elapsed = Date.now() - startTime;
@@ -136,66 +144,12 @@ export const DocenteDashboard: React.FC = () => {
                     {/* Main Content: Left Column */}
                     <div className="lg:col-span-3 flex flex-col gap-6">
 
-                        {/* Gestión de Proyectos */}
-                        <div className="bento-card static p-6 flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl">
-                            <div>
-                                <div className="flex items-center gap-2 mb-3">
-                                    <Briefcase size={14} className="text-text-dim" />
-                                    <span className="text-xs font-semibold text-text-dim uppercase tracking-wider">Mis Proyectos de Investigación</span>
-                                </div>
-                                <h3 className="text-xl font-semibold tracking-tight text-text-main mb-2">
-                                    Resumen de Propuestas Académicas
-                                </h3>
-                                <p className="text-xs text-text-dim font-medium leading-relaxed mb-6">
-                                    Administra tus propuestas, realiza el seguimiento del ciclo de vida (Borrador, En Revisión, En Ejecución, Finalizado) y justifica egresos financieros bajo normativas vigentes.
-                                </p>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                    {/* Card Activos */}
-                                    <div className="flex flex-col justify-between p-5 bg-surface border border-border-thin rounded-lg">
-                                        <div className="flex items-center justify-between w-full">
-                                            <span className="text-[13px] text-text-dim font-medium">Activos</span>
-                                            <Activity size={16} className="text-text-dim/50" />
-                                        </div>
-                                        <p className="text-3xl font-semibold text-text-main tracking-tight mt-3">
-                                            <AnimatedNumber value={stats?.mis_proyectos_activos ?? 0} />
-                                        </p>
-                                    </div>
-
-                                    {/* Card Borradores */}
-                                    <div className="flex flex-col justify-between p-5 bg-surface border border-border-thin rounded-lg">
-                                        <div className="flex items-center justify-between w-full">
-                                            <span className="text-[13px] text-text-dim font-medium">Borradores</span>
-                                            <FileEdit size={16} className="text-text-dim/50" />
-                                        </div>
-                                        <p className="text-3xl font-semibold text-text-main tracking-tight mt-3">
-                                            <AnimatedNumber value={stats?.mis_proyectos_borrador ?? 0} />
-                                        </p>
-                                    </div>
-
-                                    {/* Card Total */}
-                                    <div className="flex flex-col justify-between p-5 bg-surface border border-border-thin rounded-lg">
-                                        <div className="flex items-center justify-between w-full">
-                                            <span className="text-[13px] text-text-dim font-medium">Total</span>
-                                            <Briefcase size={16} className="text-text-dim/50" />
-                                        </div>
-                                        <p className="text-3xl font-semibold text-text-main tracking-tight mt-3">
-                                            <AnimatedNumber value={(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0) + (stats?.mis_proyectos_en_revision ?? 0)} />
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end border-t border-border-thin/50 pt-4 mt-2">
-                                <Link
-                                    to="/investigacion/mis-proyectos"
-                                    className="text-xs font-semibold text-brand hover:text-brand-hover inline-flex items-center gap-1.5 transition-all group no-underline"
-                                >
-                                    <span>Ver todos los proyectos</span>
-                                    <ArrowRight size={14} className="transform translate-x-0 group-hover:translate-x-1 transition-transform" />
-                                </Link>
-                            </div>
-                        </div>
+                        {/* Contenedor Unificado: Resumen, KPIs y Avance de Proyectos */}
+                        <DocenteProjectsProgressWidget 
+                            projects={projects} 
+                            stats={stats} 
+                            loading={loading} 
+                        />
 
                         {/* Actividad reciente */}
                         <div className="bento-card static bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden animate-fade-up">

@@ -15,20 +15,25 @@ using Microsoft.Extensions.Logging;
 using System.Buffers.Binary;
 using diitra_infrastructure.data.models;
 using diitra_infrastructure.data.models.Cowork;
+using Diitra.Application.Research;
+using Diitra.Application.Research.Dtos;
 
 namespace diitra_infrastructure.Collaboration
 {
     public class CollaborationHub : Hub
     {
-
-
         private readonly ILogger<CollaborationHub> _logger;
         private readonly DiitraContext _db;
+        private readonly IProjectActivityNotifier _activityNotifier;
 
-        public CollaborationHub(ILogger<CollaborationHub> logger, DiitraContext db)
+        public CollaborationHub(
+            ILogger<CollaborationHub> logger,
+            DiitraContext db,
+            IProjectActivityNotifier activityNotifier)
         {
             _logger = logger;
             _db = db;
+            _activityNotifier = activityNotifier;
         }
 
         public async Task<HandshakeResponse> JoinDocument(string documentId, string userName, string userUuid, string userRole)
@@ -428,10 +433,31 @@ namespace diitra_infrastructure.Collaboration
                 });
 
                 await _db.SaveChangesAsync();
+
+                // 3. Emisión desacoplada al canal de actividad del proyecto
+                var cleanSection = !string.IsNullOrWhiteSpace(sectionName) ? sectionName.Replace("_", " ") : "el documento";
+                var desc = !string.IsNullOrWhiteSpace(action) ? $"{action} '{cleanSection}'" : "ha entrado a redactar";
+                var projUuid = await ResolveProjectUuidAsync(instanceUuid);
+
+                var activityDto = new ProyectoActividadDto
+                {
+                    Tipo = "acceso",
+                    NombreUsuario = string.IsNullOrWhiteSpace(userName) ? "Usuario" : userName,
+                    RolUsuario = rol,
+                    Descripcion = desc,
+                    Fecha = ahora,
+                    Icono = "edit"
+                };
+
+                await _activityNotifier.NotifyActivityAsync(projUuid, activityDto);
+                if (!string.Equals(projUuid, instanceUuid, StringComparison.OrdinalIgnoreCase))
+                {
+                    await _activityNotifier.NotifyActivityAsync(instanceUuid, activityDto);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("[DIITRA CoWork] No se pudo persistir SectionActivity: {Msg}", ex.Message);
+                _logger.LogWarning("[DIITRA CoWork] No se pudo persistir o emitir SectionActivity: {Msg}", ex.Message);
                 // Best-effort: el broadcast ya se realizó
             }
         }
@@ -475,6 +501,31 @@ namespace diitra_infrastructure.Collaboration
                 updatedByName = userName,
                 updatedAt = meta.ActualizadoEn
             });
+
+            // Emisión de actividad en tiempo real
+            try
+            {
+                var projUuid = await ResolveProjectUuidAsync(instanceUuid);
+                var activityDto = new ProyectoActividadDto
+                {
+                    Tipo = "seccion",
+                    NombreUsuario = string.IsNullOrEmpty(userName) ? "Sistema" : userName,
+                    RolUsuario = "",
+                    Descripcion = $"Sección '{sectionName}' marcada como {status}",
+                    Fecha = meta.ActualizadoEn,
+                    Icono = status == "Aprobado" ? "check" : status == "En Revisión" ? "eye" : "edit"
+                };
+
+                await _activityNotifier.NotifyActivityAsync(projUuid, activityDto);
+                if (!string.Equals(projUuid, instanceUuid, StringComparison.OrdinalIgnoreCase))
+                {
+                    await _activityNotifier.NotifyActivityAsync(instanceUuid, activityDto);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("[DIITRA CoWork] Fallo al emitir telemetría de sección: {Msg}", ex.Message);
+            }
         }
 
         /// <summary>
@@ -503,6 +554,41 @@ namespace diitra_infrastructure.Collaboration
                 creadoEn = comment.CreadoEn,
                 lecturas = System.Array.Empty<object>()
             });
+
+            try
+            {
+                var projUuid = await ResolveProjectUuidAsync(instanceUuid);
+                var activityDto = new ProyectoActividadDto
+                {
+                    Tipo = "comentario",
+                    NombreUsuario = string.IsNullOrWhiteSpace(userName) ? "Usuario" : userName,
+                    RolUsuario = "",
+                    Descripcion = content,
+                    Fecha = comment.CreadoEn,
+                    Icono = "comment"
+                };
+
+                await _activityNotifier.NotifyActivityAsync(projUuid, activityDto);
+                if (!string.Equals(projUuid, instanceUuid, StringComparison.OrdinalIgnoreCase))
+                {
+                    await _activityNotifier.NotifyActivityAsync(instanceUuid, activityDto);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("[DIITRA CoWork] Fallo al emitir telemetría de comentario: {Msg}", ex.Message);
+            }
+        }
+
+        private async Task<string> ResolveProjectUuidAsync(string instanceOrProjectUuid)
+        {
+            if (string.IsNullOrWhiteSpace(instanceOrProjectUuid)) return string.Empty;
+            var doc = await _db.DocumentInstances.AsNoTracking().FirstOrDefaultAsync(d => d.Uuid == instanceOrProjectUuid);
+            if (doc != null && !string.IsNullOrEmpty(doc.EntityUuid))
+            {
+                return doc.EntityUuid;
+            }
+            return instanceOrProjectUuid;
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)

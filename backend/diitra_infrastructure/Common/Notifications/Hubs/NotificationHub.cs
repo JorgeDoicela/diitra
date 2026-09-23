@@ -22,5 +22,21 @@ namespace diitra_infrastructure.Common.Notifications.Hubs
         {
             await Clients.Group($"User_{userId}").SendAsync("ReceiveNotification", notification);
         }
+
+        public async Task JoinProject(string projectUuid)
+        {
+            if (!string.IsNullOrWhiteSpace(projectUuid))
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, $"Project_{projectUuid.ToLower().Trim()}");
+            }
+        }
+
+        public async Task LeaveProject(string projectUuid)
+        {
+            if (!string.IsNullOrWhiteSpace(projectUuid))
+            {
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"Project_{projectUuid.ToLower().Trim()}");
+            }
+        }
     }
 }

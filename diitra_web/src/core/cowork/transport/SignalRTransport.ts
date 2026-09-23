@@ -47,18 +47,23 @@ export class SignalRTransport implements ICoWorkTransport {
 
         this.connection.on('SectionActivity', (data: any) => {
             this._sectionActivityListeners.forEach(fn => { try { fn(data); } catch(e) {} });
+            window.dispatchEvent(new CustomEvent('diitra-activity-updated', { detail: data }));
         });
         this.connection.on('SectionStatusUpdated', (data: any) => {
             this._sectionStatusListeners.forEach(fn => { try { fn(data); } catch(e) {} });
+            window.dispatchEvent(new CustomEvent('diitra-activity-updated', { detail: data }));
         });
         this.connection.on('NewCommentReceived', (data: any) => {
             this._newCommentListeners.forEach(fn => { try { fn(data); } catch(e) {} });
+            window.dispatchEvent(new CustomEvent('diitra-activity-updated', { detail: data }));
         });
         this.connection.on('CommentUpdated', (data: any) => {
             this._commentUpdatedListeners.forEach(fn => { try { fn(data); } catch(e) {} });
+            window.dispatchEvent(new CustomEvent('diitra-activity-updated', { detail: data }));
         });
         this.connection.on('CommentDeleted', (data: any) => {
             this._commentDeletedListeners.forEach(fn => { try { fn(data); } catch(e) {} });
+            window.dispatchEvent(new CustomEvent('diitra-activity-updated', { detail: data }));
         });
         this.connection.on('CommentsReadUpdated', (data: any) => {
             this._commentsReadListeners.forEach(fn => { try { fn(data); } catch(e) {} });

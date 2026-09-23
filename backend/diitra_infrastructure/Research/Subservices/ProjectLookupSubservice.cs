@@ -109,6 +109,10 @@ namespace diitra_infrastructure.Research.Subservices
                     EntidadAliada = p.IdEntidadAliadaNavigation != null ? p.IdEntidadAliadaNavigation.RazonSocial : null,
                     ObjetivoPnd = p.IdObjetivoPndNavigation != null ? p.IdObjetivoPndNavigation.Nombre : null,
                     ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null,
+                    RolEnProyecto = p.InvProyectoParticipantes
+                        .Where(pp => pp.EsDirector == true)
+                        .Select(pp => "Director")
+                        .FirstOrDefault() ?? "Investigador",
                     DirectorNombre = p.InvProyectoParticipantes
                         .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation!.Nombre)
@@ -199,6 +203,10 @@ namespace diitra_infrastructure.Research.Subservices
                     EntidadAliada = p.IdEntidadAliadaNavigation != null ? p.IdEntidadAliadaNavigation.RazonSocial : null,
                     ObjetivoPnd = p.IdObjetivoPndNavigation != null ? p.IdObjetivoPndNavigation.Nombre : null,
                     ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null,
+                    RolEnProyecto = p.InvProyectoParticipantes
+                        .Where(pp => pp.IdUsuario == userId.Value && pp.Activo != false)
+                        .Select(pp => pp.EsDirector == true ? "Director" : (pp.Rol ?? pp.TipoParticipante ?? "Investigador"))
+                        .FirstOrDefault(),
                     DirectorNombre = p.InvProyectoParticipantes
                         .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation!.Nombre)

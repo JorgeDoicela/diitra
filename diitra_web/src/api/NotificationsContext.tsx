@@ -36,6 +36,9 @@ interface NotificationsContextType {
     isLoading: boolean;
     isConnected: boolean;
     addToast: (title: string, body: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string, onUndo?: () => void | Promise<void>, actionLabel?: string, silent?: boolean) => void;
+    joinProjectChannel: (projectUuid: string) => Promise<void>;
+    leaveProjectChannel: (projectUuid: string) => Promise<void>;
+    onProjectActivity: (handler: (data: any) => void) => () => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
@@ -74,7 +77,7 @@ const VercelToastItem: React.FC<VercelToastItemProps> = ({ toast, onDismiss, nav
     const totalDuration = toast.onUndo ? 8000 : 5000;
     const remainingTimeRef = useRef<number>(totalDuration);
     const startTimeRef = useRef<number>(Date.now());
-    const timerIdRef = useRef<NodeJS.Timeout | null>(null);
+    const timerIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const startTimer = useCallback(() => {
         if (timerIdRef.current) clearTimeout(timerIdRef.current);
@@ -293,6 +296,41 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     const [isConnected, setIsConnected] = useState(false);
     const navigate = useNavigate();
     const [toasts, setToasts] = useState<Toast[]>([]);
+    const activityListenersRef = useRef<Set<(data: any) => void>>(new Set());
+    const joinedProjectsRef = useRef<Set<string>>(new Set());
+
+    const joinProjectChannel = useCallback(async (projectUuid: string) => {
+        if (!projectUuid) return;
+        const clean = projectUuid.toLowerCase().trim();
+        joinedProjectsRef.current.add(clean);
+        if (connection && connection.state === signalR.HubConnectionState.Connected) {
+            try {
+                await connection.invoke('JoinProject', clean);
+            } catch (err) {
+                console.warn('[SignalR Notifications] Error joining project channel:', err);
+            }
+        }
+    }, [connection]);
+
+    const leaveProjectChannel = useCallback(async (projectUuid: string) => {
+        if (!projectUuid) return;
+        const clean = projectUuid.toLowerCase().trim();
+        joinedProjectsRef.current.delete(clean);
+        if (connection && connection.state === signalR.HubConnectionState.Connected) {
+            try {
+                await connection.invoke('LeaveProject', clean);
+            } catch (err) {
+                console.warn('[SignalR Notifications] Error leaving project channel:', err);
+            }
+        }
+    }, [connection]);
+
+    const onProjectActivity = useCallback((handler: (data: any) => void) => {
+        activityListenersRef.current.add(handler);
+        return () => {
+            activityListenersRef.current.delete(handler);
+        };
+    }, []);
 
     const requestNotificationPermission = useCallback(async () => {
         if (!('Notification' in window)) return;
@@ -482,6 +520,18 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                 newConnection.on('EmailQueueUpdated', (payload?: any) => {
                     window.dispatchEvent(new CustomEvent('diitra-emails-changed', { detail: payload }));
                 });
+
+                newConnection.on('ProjectActivityReceived', (payload?: any) => {
+                    activityListenersRef.current.forEach(handler => {
+                        try { handler(payload); } catch (e) { console.error(e); }
+                    });
+                    window.dispatchEvent(new CustomEvent('diitra-activity-updated', { detail: payload }));
+                });
+
+                // Auto-suscribir proyectos registrados previamente si hubo reconexión
+                joinedProjectsRef.current.forEach(projUuid => {
+                    newConnection.invoke('JoinProject', projUuid).catch(() => {});
+                });
             })
             .catch(err => {
                 setIsConnected(false);
@@ -504,6 +554,14 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             window.dispatchEvent(new CustomEvent('diitra-feedback-changed'));
             window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
             window.dispatchEvent(new CustomEvent('diitra-emails-changed'));
+            window.dispatchEvent(new CustomEvent('diitra-activity-updated'));
+
+            // Re-suscribir canales de proyectos al reconectar
+            joinedProjectsRef.current.forEach(projUuid => {
+                newConnection.invoke('JoinProject', projUuid).catch(err => {
+                    console.warn('[SignalR Notifications] Error re-joining project on reconnect:', err);
+                });
+            });
         });
 
         setConnection(newConnection);
@@ -560,7 +618,10 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             clearReadNotifications,
             isLoading,
             isConnected,
-            addToast
+            addToast,
+            joinProjectChannel,
+            leaveProjectChannel,
+            onProjectActivity
         }}>
             {children}
 

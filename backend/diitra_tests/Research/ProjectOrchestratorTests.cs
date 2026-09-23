@@ -92,7 +92,7 @@ public class ProjectOrchestratorTests
             new() { Uuid = "a", Titulo = "Proyecto A", Estado = "Aprobado" },
             new() { Uuid = "b", Titulo = "Proyecto B", Estado = "Borrador" },
         };
-        _mockQuery.Setup(q => q.GetAllProjectsAsync()).ReturnsAsync(expectedList);
+        _mockQuery.Setup(q => q.GetAllProjectsAsync(null)).ReturnsAsync(expectedList);
 
         // Act
         var result = await _sut.GetAllProjectsAsync();
@@ -100,7 +100,7 @@ public class ProjectOrchestratorTests
         // Assert
         Assert.Equal(2, result.Count);
         Assert.Equal("Proyecto A", result[0].Titulo);
-        _mockQuery.Verify(q => q.GetAllProjectsAsync(), Times.Once);
+        _mockQuery.Verify(q => q.GetAllProjectsAsync(null), Times.Once);
     }
 
     [Fact]
@@ -111,7 +111,7 @@ public class ProjectOrchestratorTests
         // Arrange
         var userId = "sigafi-999";
         _mockQuery
-            .Setup(q => q.GetMyProjectsAsync(userId))
+            .Setup(q => q.GetMyProjectsAsync(userId, null))
             .ReturnsAsync(new List<ProyectoResumenDto>
             {
                 new() { Uuid = "x", Titulo = "Mi Proyecto", RolEnProyecto = "Director" }
@@ -123,7 +123,7 @@ public class ProjectOrchestratorTests
         // Assert
         Assert.Single(result);
         Assert.Equal("Director", result[0].RolEnProyecto);
-        _mockQuery.Verify(q => q.GetMyProjectsAsync(userId), Times.Once);
+        _mockQuery.Verify(q => q.GetMyProjectsAsync(userId, null), Times.Once);
     }
 
     // ─── GetProjectDetailAsync ────────────────────────────────────────────────

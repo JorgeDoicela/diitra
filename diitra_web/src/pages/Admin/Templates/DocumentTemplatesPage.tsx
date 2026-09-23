@@ -11,6 +11,7 @@
  */
 
 import React from 'react';
+import { useAuth } from '../../../api/AuthContext';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     FileCode2,
@@ -27,6 +28,7 @@ import { TemplateCatalog } from './components/TemplateCatalog';
 import { BlockCanvas } from './components/BlockCanvas';
 import { BlockProperties } from './components/BlockProperties';
 import { BlockPalette } from './components/BlockPalette';
+import { OfficialTemplatesCatalogView } from './components/OfficialTemplatesCatalogView';
 import { TemplatePreviewModal } from './components/TemplatePreviewModal';
 import { useDocumentTemplatesPage } from './hooks/useDocumentTemplatesPage';
 import { mergeWithDefaults } from './utils/theme-schema';
@@ -55,6 +57,7 @@ const UNIQUE_BLOCK_TYPES: BlockType[] = [
 ];
 
 export const DocumentTemplatesPage: React.FC = () => {
+    const { isAdmin } = useAuth();
     const {
         templates,
         selectedTemplate,
@@ -96,6 +99,26 @@ export const DocumentTemplatesPage: React.FC = () => {
         handleDragEnd,
         handleReorderTemplates,
     } = useDocumentTemplatesPage();
+
+    // Si el usuario no es administrador (Docente / Estudiante / Revisor), renderizar el Catálogo Institucional de Formatos Oficiales
+    if (!isAdmin) {
+        return (
+            <>
+                <OfficialTemplatesCatalogView
+                    templates={templates}
+                    loading={loading}
+                    onOpenPreview={handleOpenPreview}
+                    onDownloadPdf={handleQuickDownloadPdf}
+                />
+                <TemplatePreviewModal
+                    isOpen={previewModalOpen}
+                    onClose={handleClosePreview}
+                    template={previewingTemplate || selectedTemplate}
+                    themeConfig={selectedTemplate?.themeConfigJson ? mergeWithDefaults(selectedTemplate.themeConfigJson) : undefined}
+                />
+            </>
+        );
+    }
 
     return (
         <main className={`flex-1 bg-bg-deep p-4 md:px-10 md:pb-4 flex flex-col h-full overflow-hidden relative transition-[padding] duration-150 ease-out ${headerCollapsed
