@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # Script de Despliegue Automático Premium para DIITRA (IIS Local)
 # ==============================================================================
 # Compila, respalda y despliega el Frontend (React) y/o Backend (.NET) en IIS.
@@ -91,10 +91,13 @@ function Check-Dependencies {
         } else {
             Write-Host "  ⚠️ ADVERTENCIA: El App Pool '$AppPoolName' no existe en IIS." -ForegroundColor Yellow
         }
-    } elseif (Test-Path $appcmd) {
-        Write-Success "IIS detectado (vía appcmd.exe)."
+    }
+    # Verificar Módulo URL Rewrite en IIS
+    $rewriteDll = "$env:windir\System32\inetsrv\rewrite.dll"
+    if (Test-Path $rewriteDll) {
+        Write-Success "IIS URL Rewrite Module detectado."
     } else {
-        Write-Host "  ⚠️ ADVERTENCIA: Módulos de IIS no cargados y appcmd.exe no encontrado. ¿Está habilitado IIS en Windows?" -ForegroundColor Yellow
+        Write-Host "  ⚠️ ADVERTENCIA: rewrite.dll no encontrado en IIS. Las rutas de React podrían fallar (HTTP 500.19)." -ForegroundColor Yellow
     }
 
     if (-not $ok) {
@@ -312,6 +315,7 @@ do {
     Write-Host " [2] Desplegar Backend (.NET)"
     Write-Host " [3] Desplegar TODO (Frontend + Backend)"
     Write-Host " [4] Ver Respaldos Recientes"
+    Write-Host " [T] Cloudflare Tunnel (diitra.doicela.dev)" -ForegroundColor Yellow
 
     $status = if ($DeployState.EnableBackup) { "ACTIVADO" } else { "DESACTIVADO" }
     $color = if ($DeployState.EnableBackup) { "Green" } else { "Gray" }
@@ -321,9 +325,19 @@ do {
     Write-Host " [5] Salir de la Utilidad"
     Write-Host "==================================================" -ForegroundColor Cyan
 
-    $choice = Read-Host "Selecciona una opción [1-5 o B]"
+    $choice = Read-Host "Selecciona una opción [1-5, B o T]"
 
     switch ($choice) {
+        't' {
+            $tunnelScript = Join-Path $PSScriptRoot "setup_cloudflare_tunnel.ps1"
+            if (Test-Path $tunnelScript) {
+                & $tunnelScript
+            } else {
+                Write-Failure "No se encontró el script de túnel en: $tunnelScript"
+                Read-Host "Presiona Enter..."
+            }
+            break
+        }
         'b' {
             $DeployState.EnableBackup = -not $DeployState.EnableBackup
             break
