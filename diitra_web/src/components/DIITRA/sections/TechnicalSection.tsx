@@ -299,8 +299,17 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
                     // 1. Antecedentes Específicos
                     if (matchKey(['antecedentes', 'sec_antecedentes', 'Antecedentes'])) {
+                        const antecedentesInstructions = "Identificar y analizar estudios previos, datos relevantes y casos similares que evidencien la existencia del problema. Incluir información contextual citando fuentes en formato APA 7ª edición.";
+                        const antecedentesReq = reqText || "DETALLAR EN MÍNIMO DOS PÁRRAFOS DE 8 A 12 LÍNEAS.";
+
                         return (
-                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <SectionBlockGuard
+                                id={currentTab.id}
+                                title={currentTab.label}
+                                fieldKey={fieldName}
+                                instructions={antecedentesInstructions}
+                                requirementText={antecedentesReq}
+                            >
                                 <div className="space-y-6 animate-fade-in">
                                     <div className="space-y-1">
                                         <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
@@ -331,8 +340,17 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
                     // 2. Descripción del Proyecto
                     if (matchKey(['descripcion', 'sec_descripcion', 'DescripcionProyecto'])) {
+                        const descInstructions = "Definir el propósito del proyecto, detallando qué se pretende lograr, cuál es su impacto esperado y delimitar su alcance (límites, áreas involucradas y aspectos a abordar).";
+                        const descReq = reqText || "DETALLAR EN MÍNIMO UN PÁRRAFO DE 8 A 12 LÍNEAS.";
+
                         return (
-                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <SectionBlockGuard
+                                id={currentTab.id}
+                                title={currentTab.label}
+                                fieldKey={fieldName}
+                                instructions={descInstructions}
+                                requirementText={descReq}
+                            >
                                 <div className="space-y-6 animate-fade-in">
                                     <div className="space-y-1">
                                         <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
@@ -363,8 +381,17 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
                     // 3. Justificación
                     if (matchKey(['justificacion', 'sec_justificacion', 'Justificacion'])) {
+                        const justInstructions = "Explicar las razones teóricas, metodológicas o prácticas que motivan el desarrollo de la investigación. Argumentar la relevancia, aplicabilidad y beneficios que generará el proyecto para la sociedad y el sector productivo.";
+                        const justReq = reqText || "DETALLAR EN MÍNIMO DOS PÁRRAFOS DE 8 A 12 LÍNEAS.";
+
                         return (
-                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <SectionBlockGuard
+                                id={currentTab.id}
+                                title={currentTab.label}
+                                fieldKey={fieldName}
+                                instructions={justInstructions}
+                                requirementText={justReq}
+                            >
                                 <div className="space-y-6 animate-fade-in">
                                     <div className="space-y-1">
                                         <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
@@ -396,7 +423,13 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                     // 4a. Objetivo General
                     if (matchKey(['sec_objetivo_general', 'ObjetivoGeneral'])) {
                         return (
-                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <SectionBlockGuard
+                                id={currentTab.id}
+                                title={currentTab.label}
+                                fieldKey="ObjetivoGeneral"
+                                instructions="FÓRMULA OBLIGATORIA: VERBO EN INFINITIVO + OBJETO DE ESTUDIO + MEDIO O MÉTODO + FINALIDAD."
+                                requirementText="Definir el propósito principal de la investigación respondiendo a: ¿Qué se investigará? + ¿Cómo se ejecutará? + ¿Para qué servirá?"
+                            >
                                 <div className="space-y-6 animate-fade-in">
                                     <div className="space-y-1">
                                         <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
@@ -427,7 +460,13 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                     // 4b. Objetivos Específicos
                     if (matchKey(['sec_objetivos_especificos', 'ObjetivosEspecificos'])) {
                         return (
-                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <SectionBlockGuard
+                                id={currentTab.id}
+                                title={currentTab.label}
+                                fieldKey="ObjetivosEspecificos"
+                                instructions="FÓRMULA OBLIGATORIA: INFINITIVO + ACCIÓN ESPECÍFICA + MEDIO O METODOLOGÍA + PROPÓSITO."
+                                requirementText="Detallar secuencialmente las metas técnicas y metodológicas para cumplir el objetivo general."
+                            >
                                 <div className="space-y-6 animate-fade-in">
                                     <div className="space-y-1">
                                         <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
@@ -458,7 +497,13 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                     // 4c. Objetivos Combinados (Vista Legacy 3.4 Objetivos)
                     if (matchKey(['objetivos'])) {
                         return (
-                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <SectionBlockGuard
+                                id={currentTab.id}
+                                title={currentTab.label}
+                                fieldKey="ObjetivoGeneral"
+                                instructions="Formular Objetivo General y Objetivos Específicos articulados con rigor metodológico."
+                                requirementText="Fórmula institucional: Verbo en infinitivo + objeto + método + finalidad."
+                            >
                                 <div className="space-y-8 animate-fade-in">
                                     {/* Objetivo General */}
                                     <div className="space-y-4">
@@ -558,7 +603,13 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                         });
 
                         return (
-                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <SectionBlockGuard
+                                id={currentTab.id}
+                                title={currentTab.label}
+                                fieldKey="ObjetivosDesarrolloSostenible"
+                                instructions="Seleccione y justifique los Objetivos de Desarrollo Sostenible (ODS) vinculados a la propuesta."
+                                requirementText="Describir de forma argumentada la articulación del proyecto con los ODS seleccionados y beneficiarios directos."
+                            >
                                 <div className="space-y-6 animate-fade-in">
                                     <div className="space-y-1">
                                         <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
@@ -661,8 +712,17 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
                     // 6. Marco Teórico
                     if (matchKey(['marco_teorico', 'sec_marco_teorico', 'MarcoTeorico'])) {
+                        const marcoInstructions = "Describir los conceptos clave, antecedentes y fundamentos teóricos que respaldan el proyecto, incluyendo referencias a estudios previos y metodologías.";
+                        const marcoReq = reqText || 'EL TEXTO MÁXIMO DEBE ABARCAR DOS PÁGINAS (CITAR BAJO NORMAS APA 7ª EDICIÓN).';
+
                         return (
-                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <SectionBlockGuard
+                                id={currentTab.id}
+                                title={currentTab.label}
+                                fieldKey={fieldName}
+                                instructions={marcoInstructions}
+                                requirementText={marcoReq}
+                            >
                                 <div className="space-y-6 animate-fade-in">
                                     <div className="space-y-1">
                                         <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
@@ -672,7 +732,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <Info size={16} className="text-text-main shrink-0 mt-0.5" />
                                             <p className="leading-relaxed font-medium">
                                                 Describir los conceptos clave, antecedentes y fundamentos teóricos que respaldan el proyecto, incluyendo referencias a estudios previos, normativas o metodologías. <br />
-                                                <span className="text-text-main font-black">REQUISITO: {reqText || 'EL TEXTO MÁXIMO DEBE ABARCAR DOS PÁGINAS (CITAR BAJO NORMAS APA 7ª EDICIÓN).'}</span>
+                                                <span className="text-text-main font-black">REQUISITO: {marcoReq}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -693,8 +753,17 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
                     // 7. Metodología
                     if (matchKey(['metodologia', 'sec_metodologia', 'Metodologia'])) {
+                        const metInstructions = "Describir el enfoque metodológico, las etapas técnicas del proyecto, detalle exhaustivo de los procedimientos científicos, recursos y el tiempo estimado.";
+                        const metReq = reqText || 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS PARA PROCEDIMIENTOS Y MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS PARA RECURSOS Y TIEMPOS.';
+
                         return (
-                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <SectionBlockGuard
+                                id={currentTab.id}
+                                title={currentTab.label}
+                                fieldKey={fieldName}
+                                instructions={metInstructions}
+                                requirementText={metReq}
+                            >
                                 <div className="space-y-6 animate-fade-in">
                                     <div className="space-y-1">
                                         <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
@@ -704,7 +773,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <Info size={16} className="text-text-main shrink-0 mt-0.5" />
                                             <p className="leading-relaxed font-medium">
                                                 Describir el enfoque metodológico, las etapas técnicas del proyecto, detalle exhaustivo de los procedimientos científicos, recursos y el tiempo estimado para alcanzar los objetivos. <br />
-                                                <span className="text-text-main font-black">REQUISITO: {reqText || 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS PARA PROCEDIMIENTOS Y MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS PARA RECURSOS Y TIEMPOS.'}</span>
+                                                <span className="text-text-main font-black">REQUISITO: {metReq}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -725,8 +794,17 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
                     // 8. Evaluación
                     if (matchKey(['evaluacion', 'sec_evaluacion', 'Evaluacion'])) {
+                        const evalInstructions = "Describir los criterios e indicadores cualitativos/cuantitativos para medir el cumplimiento de los objetivos, así como los instrumentos de evaluación.";
+                        const evalReq = reqText || 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS. PUEDE EXTENDERSE SEGÚN SU CRITERIO.';
+
                         return (
-                            <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                            <SectionBlockGuard
+                                id={currentTab.id}
+                                title={currentTab.label}
+                                fieldKey={fieldName}
+                                instructions={evalInstructions}
+                                requirementText={evalReq}
+                            >
                                 <div className="space-y-6 animate-fade-in">
                                     <div className="space-y-1">
                                         <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
@@ -736,7 +814,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <Info size={16} className="text-text-main shrink-0 mt-0.5" />
                                             <p className="leading-relaxed font-medium">
                                                 Describir los criterios e indicadores cualitativos/cuantitativos que se utilizarán para medir el cumplimiento de los objetivos del proyecto, así como los métodos e instrumentos de evaluación previstos. <br />
-                                                <span className="text-text-main font-black">REQUISITO: {reqText || 'DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS. PUEDE EXTENDERSE SEGÚN SU CRITERIO.'}</span>
+                                                <span className="text-text-main font-black">REQUISITO: {evalReq}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -759,7 +837,13 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                     const Icon = currentTab.icon || BookOpen;
 
                     return (
-                        <SectionBlockGuard id={currentTab.id} title={currentTab.label}>
+                        <SectionBlockGuard
+                            id={currentTab.id}
+                            title={currentTab.label}
+                            fieldKey={fieldName}
+                            instructions={currentTab.placeholder || `Redactar contenido para ${currentTab.label}`}
+                            requirementText={reqText}
+                        >
                             <div className="space-y-6 animate-fade-in">
                                 <div className="space-y-1">
                                     <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">

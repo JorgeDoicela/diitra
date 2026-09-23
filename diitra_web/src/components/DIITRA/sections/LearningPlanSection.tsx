@@ -3,6 +3,7 @@ import type { CoWorkHandle } from '../../../core/cowork/types';
 import { SectionGuardContext } from '../../../core/documents/context/DocumentDataContext';
 import { exportLearningPlanToExcel } from '../../../utils/learningPlanExcelExport';
 import { GeistDatePicker } from '../../Common/GeistDatePicker';
+import { BlockClipboardWrapper } from '../../../core/clipboard/components/BlockClipboardWrapper';
 
 const toDisplayDate = (val?: string) => {
     if (!val) return '';
@@ -675,180 +676,221 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
 
             {/* 3. PRERREQUISITOS PREVIOS A LA VINCULACIÓN */}
             {showPrerrequisitos && (
-                <section className="bento-card p-6 space-y-4">
-                <div className="border-b border-border-thin pb-3">
-                    <span className="section-label !text-text-main !text-xs !font-bold">
-                        {isEvaluationMode ? '3. Evaluación de Prerrequisitos Previos a la Vinculación' : '2. Prerrequisitos Previos a la Vinculación'}
-                    </span>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Columna Cognitivos */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span className="section-label">Prerrequisitos Cognitivos</span>
-                                <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
-                                    activeEstudiante.prerrequisitosCognitivos.length >= minCog
-                                        ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
-                                        : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
-                                }`}>
-                                    {activeEstudiante.prerrequisitosCognitivos.length} / mín. {minCog}
-                                </span>
-                            </div>
-                            {!effectiveReadOnly && !isEvaluationMode && (
-                                <button
-                                    type="button"
-                                    onClick={handleAddCognitivo}
-                                    className="text-xs text-brand hover:underline cursor-pointer font-medium"
-                                >
-                                    + Añadir
-                                </button>
-                            )}
+                <BlockClipboardWrapper
+                    title={isEvaluationMode ? '3. Evaluación de Prerrequisitos Previos a la Vinculación' : '2. Prerrequisitos Previos a la Vinculación'}
+                    fieldKey="Prerrequisitos"
+                    instructions="Establecer y evaluar los prerrequisitos cognitivos y procedimentales mínimos que el estudiante debe dominar antes de iniciar las actividades prácticas (APE)."
+                    requirementText="Mínimo 3 prerrequisitos cognitivos y 3 procedimentales alineados a la línea de investigación."
+                    currentContent={activeEstudiante ? [...activeEstudiante.prerrequisitosCognitivos, ...activeEstudiante.prerrequisitosProcedimentales] : []}
+                    contentSerializer={(_data: unknown) => {
+                        const cogs = (activeEstudiante?.prerrequisitosCognitivos ?? []) as Record<string, unknown>[];
+                        const procs = (activeEstudiante?.prerrequisitosProcedimentales ?? []) as Record<string, unknown>[];
+                        const cogLines = cogs.map((r, i) => `  ${i + 1}. [Cognitivo] ${String(r.descripcion || '(sin descripción)')}`);
+                        const procLines = procs.map((r, i) => `  ${i + 1}. [Procedimental] ${String(r.descripcion || '(sin descripción)')}`);
+                        return [
+                            `Prerrequisitos Cognitivos (${cogs.length}):`,
+                            ...cogLines,
+                            `Prerrequisitos Procedimentales (${procs.length}):`,
+                            ...procLines,
+                        ].join('\n');
+                    }}
+                >
+                    <section className="bento-card p-6 space-y-4">
+                        <div className="border-b border-border-thin pb-3">
+                            <span className="section-label !text-text-main !text-xs !font-bold">
+                                {isEvaluationMode ? '3. Evaluación de Prerrequisitos Previos a la Vinculación' : '2. Prerrequisitos Previos a la Vinculación'}
+                            </span>
                         </div>
 
-                        <div className="space-y-2.5">
-                            {activeEstudiante.prerrequisitosCognitivos.map((cog, idx) => (
-                                <div key={cog.id || idx} className="p-3.5 rounded-lg bg-surface border border-border-thin space-y-2.5">
-                                    <div className="flex items-start gap-2">
-                                        <input
-                                            type="text"
-                                            value={cog.descripcion}
-                                            disabled={effectiveReadOnly || isEvaluationMode}
-                                            onChange={(e) => handleUpdateCognitivo(idx, 'descripcion', e.target.value)}
-                                            placeholder="Descripción del prerrequisito cognitivo..."
-                                            className="input-vercel text-xs w-full"
-                                        />
-                                        {!effectiveReadOnly && !isEvaluationMode && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveCognitivo(idx)}
-                                                className="text-text-dim hover:text-error text-xs px-1.5 py-1"
-                                                title="Eliminar"
-                                            >
-                                                ✕
-                                            </button>
-                                        )}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Columna Cognitivos */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="section-label">Prerrequisitos Cognitivos</span>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
+                                            activeEstudiante.prerrequisitosCognitivos.length >= minCog
+                                                ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
+                                                : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                                        }`}>
+                                            {activeEstudiante.prerrequisitosCognitivos.length} / mín. {minCog}
+                                        </span>
                                     </div>
-
-                                    {isEvaluationMode && (
-                                        <div className="flex items-center justify-between pt-1 border-t border-border-thin/40 text-[11px]">
-                                            <span className="text-text-dim font-mono text-[10px]">Nivel de Cumplimiento</span>
-                                            <div className="flex items-center gap-3">
-                                                {[4, 3, 2, 1].map((lvl) => (
-                                                    <label key={lvl} className="flex items-center gap-1 cursor-pointer">
-                                                        <input
-                                                            type="radio"
-                                                            name={`cog_lvl_${activeEstudiante.id}_${idx}`}
-                                                            checked={cog.nivel === lvl}
-                                                            disabled={effectiveReadOnly}
-                                                            onChange={() => handleUpdateCognitivo(idx, 'nivel', lvl)}
-                                                            className="cursor-pointer"
-                                                        />
-                                                        <span className="font-mono text-xs font-medium">{lvl}</span>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
+                                    {!effectiveReadOnly && !isEvaluationMode && (
+                                        <button
+                                            type="button"
+                                            onClick={handleAddCognitivo}
+                                            className="text-xs text-brand hover:underline cursor-pointer font-medium"
+                                        >
+                                            + Añadir
+                                        </button>
                                     )}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
 
-                    {/* Columna Procedimentales */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span className="section-label">Prerrequisitos Procedimentales</span>
-                                <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
-                                    activeEstudiante.prerrequisitosProcedimentales.length >= minProc
-                                        ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
-                                        : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
-                                }`}>
-                                    {activeEstudiante.prerrequisitosProcedimentales.length} / mín. {minProc}
-                                </span>
-                            </div>
-                            {!effectiveReadOnly && !isEvaluationMode && (
-                                <button
-                                    type="button"
-                                    onClick={handleAddProcedimental}
-                                    className="text-xs text-brand hover:underline cursor-pointer font-medium"
-                                >
-                                    + Añadir
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="space-y-2.5">
-                            {activeEstudiante.prerrequisitosProcedimentales.map((proc, idx) => (
-                                <div key={proc.id || idx} className="p-3.5 rounded-lg bg-surface border border-border-thin space-y-2.5">
-                                    <div className="flex items-start gap-2">
-                                        <input
-                                            type="text"
-                                            value={proc.descripcion}
-                                            disabled={effectiveReadOnly || isEvaluationMode}
-                                            onChange={(e) => handleUpdateProcedimental(idx, 'descripcion', e.target.value)}
-                                            placeholder="Descripción del prerrequisito procedimental..."
-                                            className="input-vercel text-xs w-full"
-                                        />
-                                        {!effectiveReadOnly && !isEvaluationMode && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleRemoveProcedimental(idx)}
-                                                className="text-text-dim hover:text-error text-xs px-1.5 py-1"
-                                                title="Eliminar"
-                                            >
-                                                ✕
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {isEvaluationMode && (
-                                        <div className="flex items-center justify-between pt-1 border-t border-border-thin/40 text-[11px]">
-                                            <span className="text-text-dim font-mono text-[10px]">Nivel de Cumplimiento</span>
-                                            <div className="flex items-center gap-3">
-                                                {[4, 3, 2, 1].map((lvl) => (
-                                                    <label key={lvl} className="flex items-center gap-1 cursor-pointer">
-                                                        <input
-                                                            type="radio"
-                                                            name={`proc_lvl_${activeEstudiante.id}_${idx}`}
-                                                            checked={proc.nivel === lvl}
-                                                            disabled={effectiveReadOnly}
-                                                            onChange={() => handleUpdateProcedimental(idx, 'nivel', lvl)}
-                                                            className="cursor-pointer"
-                                                        />
-                                                        <span className="font-mono text-xs font-medium">{lvl}</span>
-                                                    </label>
-                                                ))}
+                                <div className="space-y-2.5">
+                                    {activeEstudiante.prerrequisitosCognitivos.map((cog, idx) => (
+                                        <div key={cog.id || idx} className="p-3.5 rounded-lg bg-surface border border-border-thin space-y-2.5">
+                                            <div className="flex items-start gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={cog.descripcion}
+                                                    disabled={effectiveReadOnly || isEvaluationMode}
+                                                    onChange={(e) => handleUpdateCognitivo(idx, 'descripcion', e.target.value)}
+                                                    placeholder="Descripción del prerrequisito cognitivo..."
+                                                    className="input-vercel text-xs w-full"
+                                                />
+                                                {!effectiveReadOnly && !isEvaluationMode && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveCognitivo(idx)}
+                                                        className="text-text-dim hover:text-error text-xs px-1.5 py-1"
+                                                        title="Eliminar"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                )}
                                             </div>
+
+                                            {isEvaluationMode && (
+                                                <div className="flex items-center justify-between pt-1 border-t border-border-thin/40 text-[11px]">
+                                                    <span className="text-text-dim font-mono text-[10px]">Nivel de Cumplimiento</span>
+                                                    <div className="flex items-center gap-3">
+                                                        {[4, 3, 2, 1].map((lvl) => (
+                                                            <label key={lvl} className="flex items-center gap-1 cursor-pointer">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`cog_lvl_${activeEstudiante.id}_${idx}`}
+                                                                    checked={cog.nivel === lvl}
+                                                                    disabled={effectiveReadOnly}
+                                                                    onChange={() => handleUpdateCognitivo(idx, 'nivel', lvl)}
+                                                                    className="cursor-pointer"
+                                                                />
+                                                                <span className="font-mono text-xs font-medium">{lvl}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Columna Procedimentales */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="section-label">Prerrequisitos Procedimentales</span>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
+                                            activeEstudiante.prerrequisitosProcedimentales.length >= minProc
+                                                ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'
+                                                : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                                        }`}>
+                                            {activeEstudiante.prerrequisitosProcedimentales.length} / mín. {minProc}
+                                        </span>
+                                    </div>
+                                    {!effectiveReadOnly && !isEvaluationMode && (
+                                        <button
+                                            type="button"
+                                            onClick={handleAddProcedimental}
+                                            className="text-xs text-brand hover:underline cursor-pointer font-medium"
+                                        >
+                                            + Añadir
+                                        </button>
                                     )}
                                 </div>
-                            ))}
+
+                                <div className="space-y-2.5">
+                                    {activeEstudiante.prerrequisitosProcedimentales.map((proc, idx) => (
+                                        <div key={proc.id || idx} className="p-3.5 rounded-lg bg-surface border border-border-thin space-y-2.5">
+                                            <div className="flex items-start gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={proc.descripcion}
+                                                    disabled={effectiveReadOnly || isEvaluationMode}
+                                                    onChange={(e) => handleUpdateProcedimental(idx, 'descripcion', e.target.value)}
+                                                    placeholder="Descripción del prerrequisito procedimental..."
+                                                    className="input-vercel text-xs w-full"
+                                                />
+                                                {!effectiveReadOnly && !isEvaluationMode && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveProcedimental(idx)}
+                                                        className="text-text-dim hover:text-error text-xs px-1.5 py-1"
+                                                        title="Eliminar"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {isEvaluationMode && (
+                                                <div className="flex items-center justify-between pt-1 border-t border-border-thin/40 text-[11px]">
+                                                    <span className="text-text-dim font-mono text-[10px]">Nivel de Cumplimiento</span>
+                                                    <div className="flex items-center gap-3">
+                                                        {[4, 3, 2, 1].map((lvl) => (
+                                                            <label key={lvl} className="flex items-center gap-1 cursor-pointer">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`proc_lvl_${activeEstudiante.id}_${idx}`}
+                                                                    checked={proc.nivel === lvl}
+                                                                    disabled={effectiveReadOnly}
+                                                                    onChange={() => handleUpdateProcedimental(idx, 'nivel', lvl)}
+                                                                    className="cursor-pointer"
+                                                                />
+                                                                <span className="font-mono text-xs font-medium">{lvl}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </section>
+                    </section>
+                </BlockClipboardWrapper>
             )}
 
             {/* 4. PLAN DE APRENDIZAJE (ACTIVIDADES APE) */}
             {showActividades && (
-                <section className="bento-card p-6 space-y-4">
-                <div className="flex items-center justify-between border-b border-border-thin pb-3">
-                    <span className="section-label !text-text-main !text-xs !font-bold">
-                        {isEvaluationMode ? '4. Evaluación del Plan de Aprendizaje (Actividades Ejecutadas)' : '3. Plan de Aprendizaje (Actividades APE)'}
-                    </span>
-                    {!effectiveReadOnly && !isEvaluationMode && (
-                        <button
-                            type="button"
-                            onClick={handleAddActividad}
-                            className="btn-vercel-secondary text-xs py-1.5 px-3 cursor-pointer"
-                        >
-                            + Añadir Actividad
-                        </button>
-                    )}
-                </div>
+                <BlockClipboardWrapper
+                    title={isEvaluationMode ? '4. Evaluación del Plan de Aprendizaje (Actividades Ejecutadas)' : '3. Plan de Aprendizaje (Actividades APE)'}
+                    fieldKey="ActividadesApe"
+                    instructions="Definir la planificación de actividades APE, indicando asignatura, resultado de aprendizaje (RdA), horas y evidencias."
+                    requirementText="Cada actividad debe articularse directamente con un objetivo específico del proyecto y un RdA de la carrera."
+                    currentContent={activeEstudiante ? activeEstudiante.actividadesPlan : []}
+                    contentSerializer={(_data: unknown) =>
+                        ((activeEstudiante?.actividadesPlan ?? []) as Record<string, unknown>[]).map((act, i) => {
+                            const nombre = String(act.Nombre || act.nombre || `Actividad ${i + 1}`);
+                            const asignatura = String(act.Asignatura || act.asignatura || '');
+                            const horas = String(act.HorasEstimadas || act.horas_estimadas || '');
+                            const evidencia = String(act.Evidencia || act.evidencia || '');
+                            return [
+                                `${i + 1}. ${nombre}`,
+                                asignatura  ? `   • Asignatura: ${asignatura}`  : '',
+                                horas       ? `   • Horas: ${horas}`            : '',
+                                evidencia   ? `   • Evidencia: ${evidencia}`    : '',
+                            ].filter(Boolean).join('\n');
+                        }).join('\n\n')
+                    }
+                >
+                    <section className="bento-card p-6 space-y-4">
+                        <div className="flex items-center justify-between border-b border-border-thin pb-3">
+                            <span className="section-label !text-text-main !text-xs !font-bold">
+                                {isEvaluationMode ? '4. Evaluación del Plan de Aprendizaje (Actividades Ejecutadas)' : '3. Plan de Aprendizaje (Actividades APE)'}
+                            </span>
+                            {!effectiveReadOnly && !isEvaluationMode && (
+                                <button
+                                    type="button"
+                                    onClick={handleAddActividad}
+                                    className="btn-vercel-secondary text-xs py-1.5 px-3 cursor-pointer"
+                                >
+                                    + Añadir Actividad
+                                </button>
+                            )}
+                        </div>
 
                 <div className="space-y-4">
                     {activeEstudiante.actividadesPlan.map((act, idx) => (
@@ -1009,9 +1051,10 @@ export const LearningPlanSection: React.FC<LearningPlanSectionProps> = ({
                             </div>
                         </div>
                     ))}
-                </div>
-            </section>
-            )}
+                    </div>
+                </section>
+            </BlockClipboardWrapper>
+        )}
 
             {/* 5. RESULTADOS GENERALES (Visible en Modo Evaluación) */}
             {showResultadosGenerales && (

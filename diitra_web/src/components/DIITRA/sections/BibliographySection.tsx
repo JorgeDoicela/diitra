@@ -27,7 +27,13 @@ export const BibliographySection: React.FC<BibliographySectionProps> = ({
         <div className="space-y-12">
             {/* 8. Bibliografía */}
             {!isBibliographyHidden && (
-                <SectionBlockGuard id="bibliografia_texto" title="8. Bibliografía">
+                <SectionBlockGuard
+                    id="bibliografia_texto"
+                    title="8. Bibliografía"
+                    fieldKey="Bibliografia"
+                    instructions="Ingrese las fuentes bibliográficas de sustento científico del proyecto de investigación citadas en el texto."
+                    requirementText="EL PROYECTO DEBE TENER MÍNIMO 10 Y MÁXIMO 15 FUENTES BIBLIOGRÁFICAS EN FORMATO APA 7ª EDICIÓN."
+                >
                     <div className="space-y-6 animate-fade-in">
                         <div className="space-y-2">
                             <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-2">

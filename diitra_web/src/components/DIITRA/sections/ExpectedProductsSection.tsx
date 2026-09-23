@@ -130,7 +130,31 @@ export const ExpectedProductsSection: React.FC<ExpectedProductsSectionProps> = (
     };
 
     return (
-        <SectionBlockGuard id="productos_esperados" title={title} showInlineLock={true}>
+        <SectionBlockGuard
+            id="productos_esperados"
+            title={title}
+            fieldKey="ProductosEsperados"
+            instructions="Registrar los entregables tecnológicos, prototipos, software, manuales e indicadores auditables para el CACES derivados de la investigación."
+            requirementText="Definir categoría de producto, subtipo normativo, denominación técnica y beneficiarios directos."
+            showInlineLock={true}
+            contentSerializer={(_data: unknown) =>
+                ((listToRender as Record<string, unknown>[]) ?? []).map((item, i) => {
+                    const nombre    = String(item.titulo || item.nombre || item.Nombre || `Entregable ${i + 1}`);
+                    const cat       = String(item.categoria || item.Categoria || '');
+                    const subtipo   = String(item.tipo || item.subtipo || item.Tipo || '');
+                    const cantidad  = String(item.cantidad ?? item.Cantidad ?? '');
+                    const plazo     = String(item.plazo || item.Plazo || '');
+                    const indicador = String(item.indicador || item.Indicador || '');
+                    return [
+                        `${i + 1}. ${nombre}`,
+                        cat      ? `   • Categoría: ${cat}${subtipo ? ` / ${subtipo}` : ''}` : '',
+                        cantidad ? `   • Cantidad: ${cantidad}`                                : '',
+                        plazo    ? `   • Plazo: ${plazo}`                                      : '',
+                        indicador? `   • Indicador: ${indicador}`                              : '',
+                    ].filter(Boolean).join('\n');
+                }).join('\n\n')
+            }
+        >
             <div className="space-y-6 animate-fade-in text-left">
                 {/* Cabecera de Sección */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-thin/40">

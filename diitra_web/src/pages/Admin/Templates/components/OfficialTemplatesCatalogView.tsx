@@ -21,7 +21,9 @@ import {
     Download,
     Search,
     X,
-    FileCode2
+    FileCode2,
+    Copy,
+    Check
 } from 'lucide-react';
 import { PageHeader } from '../../../../components/Common/PageHeader';
 import type { DocumentTemplateDto } from '../types';
@@ -107,6 +109,31 @@ export const OfficialTemplatesCatalogView: React.FC<OfficialTemplatesCatalogView
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<TemplateCategoryFilter>('INVESTIGACION');
     const [downloadingCode, setDownloadingCode] = useState<string | null>(null);
+    const [copiedTmplCode, setCopiedTmplCode] = useState<string | null>(null);
+
+    const handleCopyTemplatePrompt = async (tmpl: DocumentTemplateDto) => {
+        const text = [
+            `# FORMATO INSTITUCIONAL OFICIAL: ${tmpl.name}`,
+            `• Código Normativo: ${tmpl.code}`,
+            `• Versión Aprobada: v${tmpl.version}`,
+            `• Marco de Acreditación: CACES / DIITRA`,
+            `\n## ALCANCE Y DESCRIPCIÓN:`,
+            getTemplateDescription(tmpl),
+            `\n## DIRECTRICES DE LLENADO Y RIGOR TÉCNICO:`,
+            `1. Cumplir estrictamente con la estructura, campos y requisitos exigidos en este formato.`,
+            `2. Redactar en lenguaje académico formal y tercera persona/impersonal.`,
+            `3. Citar bajo normas APA 7ma edición con referencias indexadas.`,
+            `4. Articular las actividades y entregables con las líneas de investigación institucionales.`
+        ].join('\n');
+
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopiedTmplCode(tmpl.code);
+            setTimeout(() => setCopiedTmplCode(null), 2500);
+        } catch (err) {
+            console.error('Error al copiar estructura oficial:', err);
+        }
+    };
 
     // Los reportes y analíticas internas no deben ser visibles para usuarios generales (docentes y estudiantes)
     const visibleTemplates = useMemo(() => {
@@ -285,7 +312,7 @@ export const OfficialTemplatesCatalogView: React.FC<OfficialTemplatesCatalogView
                                     </p>
                                 </div>
 
-                                {/* Acciones: Previsualizar y Descargar PDF */}
+                                {/* Acciones: Previsualizar, Copiar Estructura y Descargar PDF */}
                                 <div className="flex items-center gap-2 pt-2">
                                     <button
                                         type="button"
@@ -295,6 +322,19 @@ export const OfficialTemplatesCatalogView: React.FC<OfficialTemplatesCatalogView
                                     >
                                         <Eye className="w-3.5 h-3.5 text-text-dim" />
                                         <span>Previsualizar</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCopyTemplatePrompt(tmpl)}
+                                        className="flex items-center justify-center p-2 rounded-lg border border-border-thin hover:border-border-hover hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer bg-transparent"
+                                        title={`Copiar directrices y consignas oficiales de ${tmpl.name}`}
+                                    >
+                                        {copiedTmplCode === tmpl.code ? (
+                                            <Check className="w-3.5 h-3.5 text-emerald-500 animate-fade-in" />
+                                        ) : (
+                                            <Copy className="w-3.5 h-3.5" />
+                                        )}
                                     </button>
 
                                     <button
@@ -311,6 +351,14 @@ export const OfficialTemplatesCatalogView: React.FC<OfficialTemplatesCatalogView
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Toast de confirmación de copiado de plantilla estilo Vercel Geist */}
+            {copiedTmplCode && (
+                <div className="fixed bottom-6 right-6 z-[99999] px-4 py-2 bg-text-main text-bg-deep text-xs font-mono font-medium rounded-lg shadow-xl animate-fade-in border border-border-thin flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>Estructura y directrices oficiales copiadas</span>
                 </div>
             )}
         </main>

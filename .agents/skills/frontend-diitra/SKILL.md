@@ -81,3 +81,212 @@ Al transformar, estilizar, refinar o alinear cualquier bloque de fábrica (`canv
 
 * **Regla de Oro:** Todo rediseño hacia producción se realiza mejorando el CSS, la tipografía y los tokens visuales, **garantizando que el bloque conserve intactas todas sus capacidades de edición y crezca holgadamente hacia abajo sin jamás comprimirse ni reducirse**.
 
+## 7. Sistema de Portapapeles Estructurado para IA (core/clipboard)
+
+> **Activar siempre** que se agregue una sección nueva, bloque o documento al workspace colaborativo.
+> Permite copiar el contenido de cualquier sección al portapapeles en formato optimizado para IA
+> con clic derecho (desktop) o pulsación larga (móvil).
+
+### 7.1. Arquitectura del módulo
+
+```
+src/core/clipboard/
+├── index.ts                          ← Barrel export (importar siempre desde aquí)
+├── types/promptClipboard.types.ts    ← PromptClipboardContextData, CopyMode
+├── hooks/usePromptClipboard.ts       ← copyToClipboard(), copiedMessage
+├── components/
+│   ├── BlockClipboardWrapper.tsx     ← Wrapper UI (clic derecho / long-press)
+│   └── PromptContextMenu.tsx         ← Menú flotante con los 5 modos
+└── utils/promptClipboardEngine.ts    ← Motor: buildClipboardPayload, resolveContentString,
+                                         formatStructuredCollection, buildFullDocumentMarkdown
+```
+
+**Flujo:**
+```
+[clic derecho sobre sección]
+   → BlockClipboardWrapper → PromptContextMenu → usuario elige CopyMode
+   → usePromptClipboard.copyToClipboard(mode, contextData, globalFormData)
+   → buildClipboardPayload() → portapapeles
+```
+
+### 7.2. Los 5 modos de copiado (CopyMode)
+
+| Modo | Qué copia |
+|:---|:---|
+| `structured` | Contexto institucional + instrucciones + borrador actual — **modo principal** |
+| `clean_content` | Solo el texto redactado (sin etiquetas HTML) |
+| `instructions` | Solo la consigna y requisitos normativos |
+| `project_summary` | Metadatos globales del proyecto (título, carrera, línea, tipo) |
+| `full_document` | Documento completo estructurado en Markdown |
+
+### 7.3. Cómo integrar en una sección nueva
+
+**Caso A — Contenido HTML / CoWorkField (automático, no requiere serializer):**
+```tsx
+// SectionBlockGuard ya envuelve con BlockClipboardWrapper — solo añadir los props
+<SectionBlockGuard
+    id="antecedentes"
+    title="1. Antecedentes de la Problemática"
+    fieldKey="Antecedentes"
+    instructions="Describir el contexto histórico y científico del problema..."
+    requirementText="Mínimo 800 palabras. Incluir al menos 10 citas APA 7."
+    showInlineLock={true}
+>
+    {/* contenido */}
+</SectionBlockGuard>
+```
+
+**Caso B — Arrays de objetos (requiere contentSerializer):**
+```tsx
+<SectionBlockGuard
+    id="mi_seccion"
+    title="X. Mi Sección"
+    fieldKey="MiCampoEnFormData"
+    instructions="..."
+    requirementText="..."
+    contentSerializer={(_data: unknown) =>
+        // IMPORTANTE: _data NO se usa — los datos vienen de variables locales del componente
+        (misItems as Record<string, unknown>[]).map((item, i) => {
+            const nombre  = String(item.titulo || item.nombre || `Ítem ${i + 1}`);
+            const detalle = String(item.detalle || '');
+            return [
+                `${i + 1}. ${nombre}`,
+                detalle ? `   • Detalle: ${detalle}` : '',
+            ].filter(Boolean).join('\n');
+        }).join('\n\n')
+    }
+>
+    {/* contenido */}
+</SectionBlockGuard>
+```
+
+**Caso C — Campos planos con prefijo (ej: `Impacto_social`, `Impacto_cientifico`):**
+```tsx
+contentSerializer={(_data: unknown) => {
+    const formRecord = globalFormData as Record<string, unknown> | null;
+    return Object.keys(formRecord ?? {})
+        .filter(k => k.startsWith('MiPrefijo_'))
+        .map(k => {
+            const label = k.replace('MiPrefijo_', '');
+            const val = typeof formRecord?.[k] === 'string' ? (formRecord[k] as string).replace(/<[^>]+>/g, '').trim() : '';
+            return val ? `• ${label}: ${val}` : null;
+        })
+        .filter(Boolean)
+        .join('\n');
+}}
+```
+
+### 7.4. ¿Cuándo usar contentSerializer?
+
+| Tipo de contenido | ¿Serializer? | Razón |
+|:---|:---:|:---|
+| Texto HTML (CoWorkField) | ❌ No | `stripHtml()` automático |
+| Array con campos `nombre`/`descripcion` estándar | ⚠️ Quizás | Solo si hay campos clave no estándar |
+| Array con campo `titulo` en vez de `nombre` | ✅ Sí | El heurístico no lo detecta |
+| Array con campos propios (`ActividadesEjecutadas`, `PorcentajeAvance`, etc.) | ✅ Sí | Heurístico falla |
+| Campos planos con prefijo (`Impacto_*`) | ✅ Sí | No son arrays — el engine no los agrupa |
+
+**Reglas del serializer:**
+1. Firma siempre: `(_data: unknown) => string` — el parámetro no se usa, los datos vienen de variables locales
+2. Cast interno: `as Record<string, unknown>[]` + `String(item.campo || '')` para cada valor
+3. **Nunca `any`** — viola `@typescript-eslint/no-explicit-any`. Usar `unknown` + cast
+
+### 7.5. Registrar en buildFullDocumentMarkdown (modo full_document)
+
+Cada sección nueva **también debe agregarse** en `promptClipboardEngine.ts → buildFullDocumentMarkdown()`:
+
+```ts
+// Para texto HTML — usar helper fd():
+const miCampo = fd(formData, 'MiCampo', 'mi_campo_snake');
+if (miCampo) sections.push(`\n## N. NOMBRE DE SECCIÓN\n${miCampo}`);
+
+// Para array de objetos:
+const misItems = formData.MisItems || formData.mis_items;
+if (Array.isArray(misItems) && misItems.length > 0) {
+    const texto = (misItems as DataRecord[]).map((item, i) =>
+        `${i + 1}. ${String(item.nombre || item.titulo || `Ítem ${i + 1}`)}`
+    ).join('\n\n');
+    sections.push(`\n## N. NOMBRE DE SECCIÓN\n${texto}`);
+}
+
+// Para campos planos con prefijo:
+const camposPlanos = Object.keys(formData).filter(k => k.startsWith('MiPrefijo_'));
+if (camposPlanos.length > 0) {
+    const texto = camposPlanos
+        .map(k => { const v = stripHtml(formData[k]); return v ? `• ${k.replace('MiPrefijo_', '')}: ${v}` : null; })
+        .filter(Boolean).join('\n');
+    if (texto) sections.push(`\n## N. NOMBRE\n${texto}`);
+}
+```
+
+### 7.6. Estado de implementación — Secciones con clipboard
+
+**✅ Implementado y completo:**
+
+| Sección | Tipo | Serializer | Documento |
+|:---|:---|:---|:---|
+| TechnicalSection (Antecedentes, Justificación, Objetivos, etc.) | HTML | No (automático) | Protocolo / Plan APE |
+| BibliographySection | HTML | No (automático) | Protocolo / Plan APE |
+| ImpactSection | Campos planos `Impacto_*` | ✅ Explícito (`impactSerializer`) | Protocolo |
+| ExpectedProductsSection | Array `ProductosEsperados` (campo real: `titulo`) | ✅ Explícito | Protocolo |
+| LearningPlanSection — Prerrequisitos | Arrays `prerrequisitosCognitivos` + `Procedimentales` | ✅ Explícito | Plan APE |
+| LearningPlanSection — Actividades APE | Array `actividadesPlan` | ✅ Explícito | Plan APE |
+| ProgressReportSection — Actividades Ejecutadas | Array `actividadesEjecutadas` | ✅ Explícito | Informe de Avance |
+
+**⏳ Pendiente de implementar (usar este checklist al hacerlo):**
+
+| Sección / Bloque | Documento | Tipo esperado | Prioridad |
+|:---|:---|:---|:---|
+| InvestigatorsSection (Equipo de investigación) | Protocolo | Array `Investigadores` | Alta |
+| BudgetSection / PresupuestoSection | Protocolo | Array de rubros presupuestarios | Alta |
+| ChronogramSection / CronogramaSection | Protocolo | Array de actividades con fechas | Alta |
+| GanttSection | Plan APE / Informe | Array de tareas Gantt | Media |
+| EvaluationSection | Plan APE | Campos de evaluación de actividades | Media |
+| ConsolidatedReport / Conclusiones / Recomendaciones | Informe de Avance | HTML + arrays mixtos | Media |
+| Informe Final, Artículo Científico, Memoria Técnica | Nuevos documentos | TBD según estructura | A definir |
+
+### 7.7. Checklist de integración (nueva sección, bloque o documento)
+
+```
+1. ANALIZAR el shape real de los datos:
+   □ ¿HTML/texto? → solo agregar fieldKey + instructions al SectionBlockGuard
+   □ ¿Array de objetos? → anotar los nombres reales de cada campo (no asumir 'nombre')
+   □ ¿Campos planos con prefijo? → patrón Object.keys().filter(k => k.startsWith(...))
+
+2. EN EL COMPONENTE (.../sections/MiSeccion.tsx):
+   □ Verificar que usa SectionBlockGuard o BlockClipboardWrapper
+   □ Agregar: id, title, fieldKey, instructions, requirementText
+   □ Si array/campos complejos: agregar contentSerializer={(_data: unknown) => ...}
+   □ Usar datos locales del componente dentro del serializer, no el parámetro _data
+   □ Tipos: Record<string, unknown>[] + String() — nunca any[]
+
+3. EN promptClipboardEngine.ts → buildFullDocumentMarkdown():
+   □ Agregar bloque de la nueva sección con número de sección correcto
+   □ Texto HTML: usar helper fd(); arrays: cast DataRecord[] + map
+
+4. VERIFICAR CALIDAD:
+   □ npx tsc --noEmit → 0 errores
+   □ npx eslint [archivo modificado] → 0 errores nuevos
+   □ Probar clic derecho sobre la sección en el navegador (dev server)
+   □ Verificar los 3 modos clave: structured, clean_content, full_document
+
+5. ACTUALIZAR ESTA SKILL:
+   □ Mover la sección de "⏳ Pendiente" a "✅ Implementado" en la tabla 7.6
+```
+
+### 7.8. Reglas ESLint activas del proyecto (relevantes para el clipboard)
+
+```js
+// eslint.config.js — configurado en el proyecto
+'@typescript-eslint/no-unused-vars': ['error', {
+    argsIgnorePattern: '^_',   // parámetros con prefijo _ NO generan error
+    varsIgnorePattern: '^_',
+    caughtErrorsIgnorePattern: '^_',
+}]
+```
+
+- `any` explícito **siempre viola** ESLint → usar `unknown` / `Record<string, unknown>` / `Record<string, unknown>[]`
+- Parámetros no usados → prefijo `_` (ej: `_data`)
+- Hooks → `useMemo`/`useState`/`useCallback` **siempre ANTES** de cualquier `return` condicional (Rules of Hooks)
+
+

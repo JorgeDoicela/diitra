@@ -19,6 +19,7 @@ import { generateActividadesEjecutadasList } from '../../../modules/schedule/uti
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
 import { GeistDatePicker } from '../../Common/GeistDatePicker';
 import { fetchCatalogCached } from '../../../api/catalogsCache';
+import { BlockClipboardWrapper } from '../../../core/clipboard/components/BlockClipboardWrapper';
 
 const DEFAULT_TIPOS_INVESTIGACION = [
     { idTipo: 1, nombre: 'BÁSICA PURA' },
@@ -436,7 +437,34 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
 
             {/* 1. SECCIÓN: MATRIZ DE ACTIVIDADES EJECUTADAS */}
             {showEjecutadas && (
-                <div className="bg-bg-deep border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
+                <BlockClipboardWrapper
+                    title={customTitle || '2. Matriz de Actividades Ejecutadas'}
+                    fieldKey="ActividadesEjecutadas"
+                    instructions="Detallar el reporte de actividades ejecutadas, resultados obtenidos y evidencias del período reportado."
+                    requirementText="Registrar fechas reales de ejecución y porcentaje de cumplimiento respecto al cronograma aprobado."
+                    currentContent={actividadesEjecutadas}
+                    contentSerializer={(_data: unknown) =>
+                        (actividadesEjecutadas as Record<string, unknown>[]).map((act, i) => {
+                            const num    = String(act.NumeroActividad || `Actividad ${i + 1}`);
+                            const desc   = String(act.ActividadesEjecutadas || '');
+                            const result = String(act.ResultadosObtenidos || '');
+                            const pct    = act.PorcentajeAvance != null ? `${String(act.PorcentajeAvance)}%` : '';
+                            const inicio = String(act.FechaInicio || '');
+                            const fin    = String(act.FechaFin || '');
+                            const obs    = String(act.Observaciones || '');
+                            return [
+                                `${i + 1}. ${num}`,
+                                desc    ? `   • Actividad: ${desc}`          : '',
+                                result  ? `   • Resultados: ${result}`        : '',
+                                pct     ? `   • Avance: ${pct}`               : '',
+                                inicio  ? `   • Inicio: ${inicio}`            : '',
+                                fin     ? `   • Fin: ${fin}`                  : '',
+                                obs     ? `   • Observaciones: ${obs}`        : '',
+                            ].filter(Boolean).join('\n');
+                        }).join('\n\n')
+                    }
+                >
+                    <div className="bg-bg-deep border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
                     <div className="flex justify-between items-center border-b border-border-thin pb-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-blue-500/10 rounded-xl text-blue-400">
@@ -580,7 +608,8 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                         </div>
                     )}
                 </div>
-            )}
+            </BlockClipboardWrapper>
+        )}
 
             {/* 2. SECCIÓN: ACTIVIDADES NO PREVISTAS (NP) */}
             {showNoPrevistas && (

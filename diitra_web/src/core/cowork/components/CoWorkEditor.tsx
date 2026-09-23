@@ -11,6 +11,7 @@ import type { CoWorkHandle, ToolbarMode } from '../types';
 import { RemoteCursors } from './RemoteCursors';
 import { CoWorkToolbar } from './CoWorkToolbar';
 import { DocumentDataContext, DocumentMetadataContext, SectionGuardContext, SectionLockContext } from '../../documents/context/DocumentDataContext';
+import { BlockClipboardWrapper } from '../../clipboard/components/BlockClipboardWrapper';
 import { coworkLog } from '../utils/log';
 import {
     Loader2,
@@ -101,6 +102,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
     const ydoc = cowork.ydoc!;
     const awareness = cowork.awareness!;
     const { readOnlyReason } = useContext(DocumentMetadataContext);
+    const guardContext = useContext(SectionGuardContext);
     const lockContext = useContext(SectionLockContext);
     const isGlobalReadOnly = lockContext?.readOnly === true;
 
@@ -300,14 +302,19 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             )}
 
             <div className="flex-1 overflow-y-auto p-2 sm:p-8 bg-bg-deep">
-                <div className="w-full max-w-[95%] mx-auto bg-white rounded-sm shadow-sm min-h-[600px] border border-border-thin relative">
+                <BlockClipboardWrapper
+                    title={guardContext.title || field}
+                    fieldKey={field}
+                    currentContent={editor ? editor.getHTML() : ''}
+                    className="w-full max-w-[95%] mx-auto bg-white rounded-sm shadow-sm min-h-[600px] border border-border-thin relative"
+                >
                     {editor && cowork.awareness && (
                         <>
                             <EditorContent editor={editor} className="cowork-editor-content" />
                             <RemoteCursors editor={editor} awareness={cowork.awareness} field={field} />
                         </>
                     )}
-                </div>
+                </BlockClipboardWrapper>
             </div>
 
             <style>{`
