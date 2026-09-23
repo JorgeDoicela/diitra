@@ -1,12 +1,36 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { Shield, Check, RotateCcw, MessageSquare } from 'lucide-react';
 import WorkspaceHeader from './WorkspaceHeader';
 import { ProjectTraceabilitySection } from './ProjectTraceabilitySection';
 import { ObservationConnectors } from './ObservationConnectors';
 import { parseObservation } from '../hooks/usePreproposalState';
+import { BlockClipboardWrapper } from '../../../../core/clipboard';
+import { DocumentDataContext } from '../../../../core/documents/context/DocumentDataContext';
+
+interface PreproposalProjectData {
+    id?: number | string;
+    code?: string;
+    title?: string;
+    carrera?: string;
+    descripcion?: string;
+    presupuesto?: number | string;
+    status?: string;
+    observacion?: string;
+    directorProyecto?: string;
+    convocatoria?: string;
+    [key: string]: unknown;
+}
+
+interface TrazabilidadItem {
+    estadoNuevo?: string;
+    EstadoNuevo?: string;
+    observacion?: string;
+    Observacion?: string;
+    [key: string]: unknown;
+}
 
 interface PreproposalAdminViewProps {
-    currentProject: any;
+    currentProject: PreproposalProjectData;
     isSidebarCollapsed: boolean;
     urlPrefix: string;
     feedbackMode: 'general' | 'secciones';
@@ -30,7 +54,7 @@ interface PreproposalAdminViewProps {
     isSubmittingAdminReview: boolean;
     handleAdminAprobarPrepropuesta: () => Promise<void>;
     handleAdminDevolverPrepropuesta: () => Promise<void>;
-    trazabilidad: any[];
+    trazabilidad: TrazabilidadItem[];
     isLoadingTrazabilidad: boolean;
 }
 
@@ -101,6 +125,19 @@ export const PreproposalAdminView: React.FC<PreproposalAdminViewProps> = ({
         ? parseObservation(previousRejection.observacion ?? previousRejection.Observacion ?? '')
         : null;
 
+    const docSnapshot = useMemo(() => ({
+        title: currentProject.title || 'Prepropuesta de Investigación',
+        document_type: 'Prepropuesta de Investigación',
+        code: String(currentProject.code || currentProject.id || ''),
+        carrera: currentProject.carrera || '',
+        descripcion: currentProject.descripcion || '',
+        presupuesto: currentProject.presupuesto ? `$${Number(currentProject.presupuesto).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD` : '',
+        director_proyecto: currentProject.directorProyecto || '',
+        convocatoria: currentProject.convocatoria || '',
+        estado: currentProject.status || '',
+        observacion_previa: ultimaObservacion || ''
+    }), [currentProject, ultimaObservacion]);
+
     return (
         <div className="h-screen w-full flex flex-col bg-bg-deep overflow-y-auto pb-20 selection:bg-text-main selection:text-bg-deep">
             <WorkspaceHeader
@@ -119,7 +156,8 @@ export const PreproposalAdminView: React.FC<PreproposalAdminViewProps> = ({
                     hoveredField={activeField}
                 />
                 {/* Panel Izquierdo: Contenido de la Prepropuesta */}
-                <div className="lg:col-span-7 xl:col-span-7 space-y-6">
+                <DocumentDataContext.Provider value={docSnapshot}>
+                    <div className="lg:col-span-7 xl:col-span-7 space-y-6">
                     <div
                         onClick={isEvaluating ? () => focusObservationInput('general') : undefined}
                         className={`p-8 space-y-6 rounded-2xl transition-all duration-200 bg-surface shadow-sm cursor-default ${isEvaluating && feedbackMode === 'general'
@@ -178,204 +216,249 @@ export const PreproposalAdminView: React.FC<PreproposalAdminViewProps> = ({
 
                         <div className="space-y-6">
                             {/* Carrera / Unidad Postulante */}
-                            <div
-                                onClick={isEvaluating ? (e) => {
-                                    e.stopPropagation();
-                                    focusObservationInput('secciones', 'carrera');
-                                } : undefined}
-                                onMouseEnter={() => setHoveredField('carrera')}
-                                onMouseLeave={() => setHoveredField(null)}
-                                className={`space-y-2 ${isEvaluating ? 'group cursor-pointer' : ''}`}
+                            <BlockClipboardWrapper
+                                blockId="carrera"
+                                blockTitle="Carrera / Unidad Postulante"
+                                blockContent={currentProject.carrera || 'No definida'}
+                                meta={{
+                                    observado: Boolean(parsedObs.carrera),
+                                    observacion_anterior: previousObsParsed?.carrera || undefined
+                                }}
+                                role="reviewer"
                             >
                                 <div
-                                    className="flex justify-between items-center cursor-default"
-                                    data-field-anchor="carrera"
+                                    onClick={isEvaluating ? (e) => {
+                                        e.stopPropagation();
+                                        focusObservationInput('secciones', 'carrera');
+                                    } : undefined}
+                                    onMouseEnter={() => setHoveredField('carrera')}
+                                    onMouseLeave={() => setHoveredField(null)}
+                                    className={`space-y-2 ${isEvaluating ? 'group cursor-pointer' : ''}`}
                                 >
-                                    <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isEvaluating ? 'text-text-dim cursor-pointer transition-colors group-hover:text-text-main' : 'text-text-dim'}`}>
-                                        Carrera / Unidad Postulante
-                                    </label>
-                                    {isEvaluating && feedbackMode === 'secciones' && activeSectionTab === 'carrera' && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-                                    )}
-                                    {!isEvaluating && parsedObs.carrera && (
-                                        <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 px-2 py-0.5 rounded ${activeField === 'carrera'
-                                            ? 'bg-error/10 border border-error/25 text-error shadow-sm'
-                                            : 'text-error border border-transparent'
-                                            }`}>
-                                            Observado
-                                        </span>
-                                    )}
-                                </div>
-                                <div className={`input-vercel bg-bg-deep select-none transition-all duration-250 ${isEvaluating
-                                    ? (feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'carrera')
-                                        ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
-                                        : 'opacity-70 group-hover:border-border')
-                                    : (!parsedObs.carrera ? 'border-border-thin opacity-85' : 'border-error/30 bg-error/[0.01] opacity-90')
-                                    }`}>
-                                    {currentProject.carrera || 'No definida'}
-                                </div>
-                                {isEvaluating && previousObsParsed?.carrera && (
-                                    <div className="text-[10px] text-text-dim leading-relaxed pl-1 pt-0.5">
-                                        <span className="font-semibold text-text-main text-[9.5px] uppercase tracking-wider mr-1.5">
-                                            Observación anterior:
-                                        </span>
-                                        <span className="italic">
-                                            &ldquo;{previousObsParsed.carrera}&rdquo;
-                                        </span>
+                                    <div
+                                        className="flex justify-between items-center cursor-default"
+                                        data-field-anchor="carrera"
+                                    >
+                                        <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isEvaluating ? 'text-text-dim cursor-pointer transition-colors group-hover:text-text-main' : 'text-text-dim'}`}>
+                                            Carrera / Unidad Postulante
+                                        </label>
+                                        {isEvaluating && feedbackMode === 'secciones' && activeSectionTab === 'carrera' && (
+                                            <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                        )}
+                                        {!isEvaluating && parsedObs.carrera && (
+                                            <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 px-2 py-0.5 rounded ${activeField === 'carrera'
+                                                ? 'bg-error/10 border border-error/25 text-error shadow-sm'
+                                                : 'text-error border border-transparent'
+                                                }`}>
+                                                Observado
+                                            </span>
+                                        )}
                                     </div>
-                                )}
-                            </div>
+                                    <div className={`input-vercel bg-bg-deep select-none transition-all duration-250 ${isEvaluating
+                                        ? (feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'carrera')
+                                            ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                            : 'opacity-70 group-hover:border-border')
+                                        : (!parsedObs.carrera ? 'border-border-thin opacity-85' : 'border-error/30 bg-error/[0.01] opacity-90')
+                                        }`}>
+                                        {currentProject.carrera || 'No definida'}
+                                    </div>
+                                    {isEvaluating && previousObsParsed?.carrera && (
+                                        <div className="text-[10px] text-text-dim leading-relaxed pl-1 pt-0.5">
+                                            <span className="font-semibold text-text-main text-[9.5px] uppercase tracking-wider mr-1.5">
+                                                Observación anterior:
+                                            </span>
+                                            <span className="italic">
+                                                &ldquo;{previousObsParsed.carrera}&rdquo;
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </BlockClipboardWrapper>
 
                             {/* Tema / Título de la Investigación */}
-                            <div
-                                onClick={isEvaluating ? (e) => {
-                                    e.stopPropagation();
-                                    focusObservationInput('secciones', 'titulo');
-                                } : undefined}
-                                onMouseEnter={() => setHoveredField('titulo')}
-                                onMouseLeave={() => setHoveredField(null)}
-                                className={`space-y-2 ${isEvaluating ? 'group cursor-pointer' : ''}`}
+                            <BlockClipboardWrapper
+                                blockId="titulo"
+                                blockTitle="Tema / Título de la Investigación"
+                                blockContent={currentProject.title || ''}
+                                meta={{
+                                    observado: Boolean(parsedObs.titulo),
+                                    observacion_anterior: previousObsParsed?.titulo || undefined
+                                }}
+                                role="reviewer"
                             >
                                 <div
-                                    className="flex justify-between items-center cursor-default"
-                                    data-field-anchor="titulo"
+                                    onClick={isEvaluating ? (e) => {
+                                        e.stopPropagation();
+                                        focusObservationInput('secciones', 'titulo');
+                                    } : undefined}
+                                    onMouseEnter={() => setHoveredField('titulo')}
+                                    onMouseLeave={() => setHoveredField(null)}
+                                    className={`space-y-2 ${isEvaluating ? 'group cursor-pointer' : ''}`}
                                 >
-                                    <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isEvaluating ? 'text-text-dim cursor-pointer transition-colors group-hover:text-text-main' : 'text-text-dim'}`}>
-                                        Tema / Título de la Investigación
-                                    </label>
-                                    {isEvaluating && feedbackMode === 'secciones' && activeSectionTab === 'titulo' && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-                                    )}
-                                    {!isEvaluating && parsedObs.titulo && (
-                                        <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 px-2 py-0.5 rounded ${activeField === 'titulo'
-                                            ? 'bg-error/10 border border-error/25 text-error shadow-sm'
-                                            : 'text-error border border-transparent'
-                                            }`}>
-                                            Observado
-                                        </span>
-                                    )}
-                                </div>
-                                <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase transition-all duration-250 ${isEvaluating
-                                    ? (feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'titulo')
-                                        ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
-                                        : 'opacity-85 group-hover:border-border')
-                                    : (!parsedObs.titulo ? 'border-border-thin opacity-85' : 'border-error/30 bg-error/[0.01] opacity-90')
-                                    }`}>
-                                    {currentProject.title}
-                                </div>
-                                {isEvaluating && previousObsParsed?.titulo && (
-                                    <div className="text-[10px] text-text-dim leading-relaxed pl-1 pt-0.5">
-                                        <span className="font-semibold text-text-main text-[9.5px] uppercase tracking-wider mr-1.5">
-                                            Observación anterior:
-                                        </span>
-                                        <span className="italic">
-                                            &ldquo;{previousObsParsed.titulo}&rdquo;
-                                        </span>
+                                    <div
+                                        className="flex justify-between items-center cursor-default"
+                                        data-field-anchor="titulo"
+                                    >
+                                        <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isEvaluating ? 'text-text-dim cursor-pointer transition-colors group-hover:text-text-main' : 'text-text-dim'}`}>
+                                            Tema / Título de la Investigación
+                                        </label>
+                                        {isEvaluating && feedbackMode === 'secciones' && activeSectionTab === 'titulo' && (
+                                            <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                        )}
+                                        {!isEvaluating && parsedObs.titulo && (
+                                            <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 px-2 py-0.5 rounded ${activeField === 'titulo'
+                                                ? 'bg-error/10 border border-error/25 text-error shadow-sm'
+                                                : 'text-error border border-transparent'
+                                                }`}>
+                                                Observado
+                                            </span>
+                                        )}
                                     </div>
-                                )}
-                            </div>
+                                    <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[50px] !h-auto font-bold uppercase transition-all duration-250 ${isEvaluating
+                                        ? (feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'titulo')
+                                            ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                            : 'opacity-85 group-hover:border-border')
+                                        : (!parsedObs.titulo ? 'border-border-thin opacity-85' : 'border-error/30 bg-error/[0.01] opacity-90')
+                                        }`}>
+                                        {currentProject.title}
+                                    </div>
+                                    {isEvaluating && previousObsParsed?.titulo && (
+                                        <div className="text-[10px] text-text-dim leading-relaxed pl-1 pt-0.5">
+                                            <span className="font-semibold text-text-main text-[9.5px] uppercase tracking-wider mr-1.5">
+                                                Observación anterior:
+                                            </span>
+                                            <span className="italic">
+                                                &ldquo;{previousObsParsed.titulo}&rdquo;
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </BlockClipboardWrapper>
 
                             {/* Descripción / Justificación detallada */}
-                            <div
-                                onClick={isEvaluating ? (e) => {
-                                    e.stopPropagation();
-                                    focusObservationInput('secciones', 'descripcion');
-                                } : undefined}
-                                onMouseEnter={() => setHoveredField('descripcion')}
-                                onMouseLeave={() => setHoveredField(null)}
-                                className={`space-y-2 ${isEvaluating ? 'group cursor-pointer' : ''}`}
+                            <BlockClipboardWrapper
+                                blockId="descripcion"
+                                blockTitle="Descripción / Justificación detallada"
+                                blockContent={currentProject.descripcion || 'Sin descripción ingresada.'}
+                                meta={{
+                                    observado: Boolean(parsedObs.descripcion),
+                                    observacion_anterior: previousObsParsed?.descripcion || undefined
+                                }}
+                                role="reviewer"
                             >
                                 <div
-                                    className="flex justify-between items-center cursor-default"
-                                    data-field-anchor="descripcion"
+                                    onClick={isEvaluating ? (e) => {
+                                        e.stopPropagation();
+                                        focusObservationInput('secciones', 'descripcion');
+                                    } : undefined}
+                                    onMouseEnter={() => setHoveredField('descripcion')}
+                                    onMouseLeave={() => setHoveredField(null)}
+                                    className={`space-y-2 ${isEvaluating ? 'group cursor-pointer' : ''}`}
                                 >
-                                    <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isEvaluating ? 'text-text-dim cursor-pointer transition-colors group-hover:text-text-main' : 'text-text-dim'}`}>
-                                        Descripción / Justificación detallada
-                                    </label>
-                                    {isEvaluating && feedbackMode === 'secciones' && activeSectionTab === 'descripcion' && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-                                    )}
-                                    {!isEvaluating && parsedObs.descripcion && (
-                                        <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 px-2 py-0.5 rounded ${activeField === 'descripcion'
-                                            ? 'bg-error/10 border border-error/25 text-error shadow-sm'
-                                            : 'text-error border border-transparent'
-                                            }`}>
-                                            Observado
-                                        </span>
-                                    )}
-                                </div>
-                                <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[150px] !h-auto text-xs leading-relaxed transition-all duration-250 ${isEvaluating
-                                    ? (feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'descripcion')
-                                        ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
-                                        : 'opacity-85 group-hover:border-border')
-                                    : (!parsedObs.descripcion ? 'border-border-thin opacity-85' : 'border-error/30 bg-error/[0.01] opacity-90')
-                                    }`}>
-                                    {currentProject.descripcion || 'Sin descripción ingresada.'}
-                                </div>
-                                {isEvaluating && previousObsParsed?.descripcion && (
-                                    <div className="text-[10px] text-text-dim leading-relaxed pl-1 pt-0.5">
-                                        <span className="font-semibold text-text-main text-[9.5px] uppercase tracking-wider mr-1.5">
-                                            Observación anterior:
-                                        </span>
-                                        <span className="italic">
-                                            &ldquo;{previousObsParsed.descripcion}&rdquo;
-                                        </span>
+                                    <div
+                                        className="flex justify-between items-center cursor-default"
+                                        data-field-anchor="descripcion"
+                                    >
+                                        <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isEvaluating ? 'text-text-dim cursor-pointer transition-colors group-hover:text-text-main' : 'text-text-dim'}`}>
+                                            Descripción / Justificación detallada
+                                        </label>
+                                        {isEvaluating && feedbackMode === 'secciones' && activeSectionTab === 'descripcion' && (
+                                            <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                        )}
+                                        {!isEvaluating && parsedObs.descripcion && (
+                                            <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 px-2 py-0.5 rounded ${activeField === 'descripcion'
+                                                ? 'bg-error/10 border border-error/25 text-error shadow-sm'
+                                                : 'text-error border border-transparent'
+                                                }`}>
+                                                Observado
+                                            </span>
+                                        )}
                                     </div>
-                                )}
-                            </div>
+                                    <div className={`input-vercel bg-bg-deep whitespace-pre-wrap break-words leading-relaxed select-none min-h-[150px] !h-auto text-xs leading-relaxed transition-all duration-250 ${isEvaluating
+                                        ? (feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'descripcion')
+                                            ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                            : 'opacity-85 group-hover:border-border')
+                                        : (!parsedObs.descripcion ? 'border-border-thin opacity-85' : 'border-error/30 bg-error/[0.01] opacity-90')
+                                        }`}>
+                                        {currentProject.descripcion || 'Sin descripción ingresada.'}
+                                    </div>
+                                    {isEvaluating && previousObsParsed?.descripcion && (
+                                        <div className="text-[10px] text-text-dim leading-relaxed pl-1 pt-0.5">
+                                            <span className="font-semibold text-text-main text-[9.5px] uppercase tracking-wider mr-1.5">
+                                                Observación anterior:
+                                            </span>
+                                            <span className="italic">
+                                                &ldquo;{previousObsParsed.descripcion}&rdquo;
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </BlockClipboardWrapper>
 
                             {/* Presupuesto Estimado (USD) */}
-                            <div
-                                onClick={isEvaluating ? (e) => {
-                                    e.stopPropagation();
-                                    focusObservationInput('secciones', 'presupuesto');
-                                } : undefined}
-                                onMouseEnter={() => setHoveredField('presupuesto')}
-                                onMouseLeave={() => setHoveredField(null)}
-                                className={`space-y-2 ${isEvaluating ? 'group cursor-pointer' : ''}`}
+                            <BlockClipboardWrapper
+                                blockId="presupuesto"
+                                blockTitle="Presupuesto Estimado (USD)"
+                                blockContent={`$${Number(currentProject.presupuesto).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`}
+                                meta={{
+                                    observado: Boolean(parsedObs.presupuesto),
+                                    observacion_anterior: previousObsParsed?.presupuesto || undefined
+                                }}
+                                role="reviewer"
                             >
                                 <div
-                                    className="flex justify-between items-center cursor-default"
-                                    data-field-anchor="presupuesto"
+                                    onClick={isEvaluating ? (e) => {
+                                        e.stopPropagation();
+                                        focusObservationInput('secciones', 'presupuesto');
+                                    } : undefined}
+                                    onMouseEnter={() => setHoveredField('presupuesto')}
+                                    onMouseLeave={() => setHoveredField(null)}
+                                    className={`space-y-2 ${isEvaluating ? 'group cursor-pointer' : ''}`}
                                 >
-                                    <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isEvaluating ? 'text-text-dim cursor-pointer transition-colors group-hover:text-text-main' : 'text-text-dim'}`}>
-                                        Presupuesto Estimado (USD)
-                                    </label>
-                                    {isEvaluating && feedbackMode === 'secciones' && activeSectionTab === 'presupuesto' && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-                                    )}
-                                    {!isEvaluating && parsedObs.presupuesto && (
-                                        <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 px-2 py-0.5 rounded ${activeField === 'presupuesto'
-                                            ? 'bg-error/10 border border-error/25 text-error shadow-sm'
-                                            : 'text-error border border-transparent'
-                                            }`}>
-                                            Observado
-                                        </span>
-                                    )}
-                                </div>
-                                <div className={`input-vercel bg-bg-deep font-mono font-bold transition-all duration-250 ${isEvaluating
-                                    ? (feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'presupuesto')
-                                        ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
-                                        : 'opacity-85 group-hover:border-border')
-                                    : (!parsedObs.presupuesto ? 'border-border-thin opacity-85' : 'border-error/30 bg-error/[0.01] opacity-90')
-                                    }`}>
-                                    ${Number(currentProject.presupuesto).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
-                                </div>
-                                {isEvaluating && previousObsParsed?.presupuesto && (
-                                    <div className="text-[10px] text-text-dim leading-relaxed pl-1 pt-0.5">
-                                        <span className="font-semibold text-text-main text-[9.5px] uppercase tracking-wider mr-1.5">
-                                            Observación anterior:
-                                        </span>
-                                        <span className="italic">
-                                            &ldquo;{previousObsParsed.presupuesto}&rdquo;
-                                        </span>
+                                    <div
+                                        className="flex justify-between items-center cursor-default"
+                                        data-field-anchor="presupuesto"
+                                    >
+                                        <label className={`text-[10px] font-bold uppercase tracking-widest ml-1 ${isEvaluating ? 'text-text-dim cursor-pointer transition-colors group-hover:text-text-main' : 'text-text-dim'}`}>
+                                            Presupuesto Estimado (USD)
+                                        </label>
+                                        {isEvaluating && feedbackMode === 'secciones' && activeSectionTab === 'presupuesto' && (
+                                            <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                                        )}
+                                        {!isEvaluating && parsedObs.presupuesto && (
+                                            <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-200 px-2 py-0.5 rounded ${activeField === 'presupuesto'
+                                                ? 'bg-error/10 border border-error/25 text-error shadow-sm'
+                                                : 'text-error border border-transparent'
+                                                }`}>
+                                                Observado
+                                            </span>
+                                        )}
                                     </div>
-                                )}
-                            </div>
+                                    <div className={`input-vercel bg-bg-deep font-mono font-bold transition-all duration-250 ${isEvaluating
+                                        ? (feedbackMode === 'general' || (feedbackMode === 'secciones' && activeSectionTab === 'presupuesto')
+                                            ? 'border-text-main ring-2 ring-text-main shadow-md !opacity-100'
+                                            : 'opacity-85 group-hover:border-border')
+                                        : (!parsedObs.presupuesto ? 'border-border-thin opacity-85' : 'border-error/30 bg-error/[0.01] opacity-90')
+                                        }`}>
+                                        ${Number(currentProject.presupuesto).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                                    </div>
+                                    {isEvaluating && previousObsParsed?.presupuesto && (
+                                        <div className="text-[10px] text-text-dim leading-relaxed pl-1 pt-0.5">
+                                            <span className="font-semibold text-text-main text-[9.5px] uppercase tracking-wider mr-1.5">
+                                                Observación anterior:
+                                            </span>
+                                            <span className="italic">
+                                                &ldquo;{previousObsParsed.presupuesto}&rdquo;
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </BlockClipboardWrapper>
 
                         </div>
                     </div>
                 </div>
+                </DocumentDataContext.Provider>
 
                 {/* Panel Derecho: Panel de Evaluación o Historial */}
                 <div className="lg:col-span-5 xl:col-span-5 space-y-6">

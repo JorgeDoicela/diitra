@@ -180,11 +180,11 @@ contentSerializer={(_data: unknown) => {
 
 | Tipo de contenido | ¿Serializer? | Razón |
 |:---|:---:|:---|
-| Texto HTML (CoWorkField) | ❌ No | `stripHtml()` automático |
-| Array con campos `nombre`/`descripcion` estándar | ⚠️ Quizás | Solo si hay campos clave no estándar |
-| Array con campo `titulo` en vez de `nombre` | ✅ Sí | El heurístico no lo detecta |
-| Array con campos propios (`ActividadesEjecutadas`, `PorcentajeAvance`, etc.) | ✅ Sí | Heurístico falla |
-| Campos planos con prefijo (`Impacto_*`) | ✅ Sí | No son arrays — el engine no los agrupa |
+| Texto HTML (CoWorkField) | No | `stripHtml()` automático |
+| Array con campos `nombre`/`descripcion` estándar | Opcional | Solo si hay campos clave no estándar |
+| Array con campo `titulo` en vez de `nombre` | Sí | El heurístico no lo detecta |
+| Array con campos propios (`ActividadesEjecutadas`, `PorcentajeAvance`, etc.) | Sí | Heurístico falla |
+| Campos planos con prefijo (`Impacto_*`) | Sí | No son arrays — el engine no los agrupa |
 
 **Reglas del serializer:**
 1. Firma siempre: `(_data: unknown) => string` — el parámetro no se usa, los datos vienen de variables locales
@@ -221,57 +221,67 @@ if (camposPlanos.length > 0) {
 
 ### 7.6. Estado de implementación — Secciones con clipboard
 
-**✅ Implementado y completo:**
+**Implementado y completo:**
 
-| Sección | Tipo | Serializer | Documento |
+| Sección / Vista | Rol soportado | Serializer | Documento / Pantalla |
 |:---|:---|:---|:---|
-| TechnicalSection (Antecedentes, Justificación, Objetivos, etc.) | HTML | No (automático) | Protocolo / Plan APE |
-| BibliographySection | HTML | No (automático) | Protocolo / Plan APE |
-| ImpactSection | Campos planos `Impacto_*` | ✅ Explícito (`impactSerializer`) | Protocolo |
-| ExpectedProductsSection | Array `ProductosEsperados` (campo real: `titulo`) | ✅ Explícito | Protocolo |
-| LearningPlanSection — Prerrequisitos | Arrays `prerrequisitosCognitivos` + `Procedimentales` | ✅ Explícito | Plan APE |
-| LearningPlanSection — Actividades APE | Array `actividadesPlan` | ✅ Explícito | Plan APE |
-| ProgressReportSection — Actividades Ejecutadas | Array `actividadesEjecutadas` | ✅ Explícito | Informe de Avance |
+| TechnicalSection (Antecedentes, Justificación, Objetivos, etc.) | `'author'` | No (automático) | Protocolo / Plan APE |
+| BibliographySection | `'author'` | No (automático) | Protocolo / Plan APE |
+| ImpactSection | `'author'` | Explícito (`impactSerializer`) | Protocolo |
+| ExpectedProductsSection | `'author'` | Explícito | Protocolo |
+| LearningPlanSection — Prerrequisitos | `'author'` | Explícito | Plan APE |
+| LearningPlanSection — Actividades APE | `'author'` | Explícito | Plan APE |
+| ProgressReportSection — Actividades Ejecutadas | `'author'` | Explícito | Informe de Avance |
+| **InteractiveSections (Vista Revisión Técnica Admin)** | **`'reviewer'`** | Serializers dedicados (presupuesto, entregables, impactos) | **Revisión Técnica Administrador** |
+| **PreproposalAdminView (Revisión Prepropuesta Admin)** | **`'reviewer'`** | No (automático / valores formateados) | **Revisión Prepropuesta Administrador** |
 
-**⏳ Pendiente de implementar (usar este checklist al hacerlo):**
+**Pendiente de implementar (usar este checklist al hacerlo):**
 
 | Sección / Bloque | Documento | Tipo esperado | Prioridad |
 |:---|:---|:---|:---|
 | InvestigatorsSection (Equipo de investigación) | Protocolo | Array `Investigadores` | Alta |
-| BudgetSection / PresupuestoSection | Protocolo | Array de rubros presupuestarios | Alta |
-| ChronogramSection / CronogramaSection | Protocolo | Array de actividades con fechas | Alta |
+| BudgetSection / PresupuestoSection (Editor Investigador) | Protocolo | Array de rubros presupuestarios | Alta |
+| ChronogramSection / CronogramaSection (Editor Investigador) | Protocolo | Array de actividades con fechas | Alta |
 | GanttSection | Plan APE / Informe | Array de tareas Gantt | Media |
 | EvaluationSection | Plan APE | Campos de evaluación de actividades | Media |
 | ConsolidatedReport / Conclusiones / Recomendaciones | Informe de Avance | HTML + arrays mixtos | Media |
 | Informe Final, Artículo Científico, Memoria Técnica | Nuevos documentos | TBD según estructura | A definir |
 
+### 7.6.1. Soporte de Roles: Autor (`'author'`) vs Revisor / Auditor (`'reviewer'`)
+
+El sistema es polimórfico mediante el prop `role?: 'author' | 'reviewer'` en `BlockClipboardWrapper`:
+- **`role="author"` (por defecto):** Orientado a redacción, expansión y corrección de estilo para docentes e investigadores.
+- **`role="reviewer"`:** Orientado a auditoría metodológica, detección de vacíos técnicos, cumplimiento normativo CACES y formulación de observaciones formales para evaluadores y administradores.
+  - En el menú contextual: muestra títulos claros como *"Copiar para Auditar Sección con IA"* y *"Copiar Protocolo Completo (Dictamen)"*.
+  - En el motor de prompts: genera consignas de auditoría técnica con pautas institucionales para emisión de observaciones y dictámenes.
+
 ### 7.7. Checklist de integración (nueva sección, bloque o documento)
 
 ```
 1. ANALIZAR el shape real de los datos:
-   □ ¿HTML/texto? → solo agregar fieldKey + instructions al SectionBlockGuard
-   □ ¿Array de objetos? → anotar los nombres reales de cada campo (no asumir 'nombre')
-   □ ¿Campos planos con prefijo? → patrón Object.keys().filter(k => k.startsWith(...))
+   [ ] ¿HTML/texto? → solo agregar fieldKey + instructions al SectionBlockGuard
+   [ ] ¿Array de objetos? → anotar los nombres reales de cada campo (no asumir 'nombre')
+   [ ] ¿Campos planos con prefijo? → patrón Object.keys().filter(k => k.startsWith(...))
 
 2. EN EL COMPONENTE (.../sections/MiSeccion.tsx):
-   □ Verificar que usa SectionBlockGuard o BlockClipboardWrapper
-   □ Agregar: id, title, fieldKey, instructions, requirementText
-   □ Si array/campos complejos: agregar contentSerializer={(_data: unknown) => ...}
-   □ Usar datos locales del componente dentro del serializer, no el parámetro _data
-   □ Tipos: Record<string, unknown>[] + String() — nunca any[]
+   [ ] Verificar que usa SectionBlockGuard o BlockClipboardWrapper
+   [ ] Agregar: id, title, fieldKey, instructions, requirementText
+   [ ] Si array/campos complejos: agregar contentSerializer={(_data: unknown) => ...}
+   [ ] Usar datos locales del componente dentro del serializer, no el parámetro _data
+   [ ] Tipos: Record<string, unknown>[] + String() — nunca any[]
 
 3. EN promptClipboardEngine.ts → buildFullDocumentMarkdown():
-   □ Agregar bloque de la nueva sección con número de sección correcto
-   □ Texto HTML: usar helper fd(); arrays: cast DataRecord[] + map
+   [ ] Agregar bloque de la nueva sección con número de sección correcto
+   [ ] Texto HTML: usar helper fd(); arrays: cast DataRecord[] + map
 
 4. VERIFICAR CALIDAD:
-   □ npx tsc --noEmit → 0 errores
-   □ npx eslint [archivo modificado] → 0 errores nuevos
-   □ Probar clic derecho sobre la sección en el navegador (dev server)
-   □ Verificar los 3 modos clave: structured, clean_content, full_document
+   [ ] npx tsc --noEmit → 0 errores
+   [ ] npx eslint [archivo modificado] → 0 errores nuevos
+   [ ] Probar clic derecho sobre la sección en el navegador (dev server)
+   [ ] Verificar los 3 modos clave: structured, clean_content, full_document
 
 5. ACTUALIZAR ESTA SKILL:
-   □ Mover la sección de "⏳ Pendiente" a "✅ Implementado" en la tabla 7.6
+   [ ] Mover la sección de "Pendiente" a "Implementado" en la tabla 7.6
 ```
 
 ### 7.8. Reglas ESLint activas del proyecto (relevantes para el clipboard)

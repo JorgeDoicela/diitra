@@ -244,10 +244,17 @@ export const buildFullDocumentMarkdown = (
         sections.push(`\n## 7. REFERENCIAS BIBLIOGRÁFICAS (APA 7ma Ed.)\n${biblio}`);
     }
 
-    sections.push(`\n## PAUTAS METODOLÓGICAS INSTITUCIONALES:
+    if (data.role === 'reviewer') {
+        sections.push(`\n## PAUTAS PARA AUDITORÍA Y PRE-DICTAMEN INSTITUCIONAL (REVISOR):
+1. Evaluar la trazabilidad y coherencia lógica transversal: problema → justificación → objetivos → metodología → cronograma → presupuesto.
+2. Identificar inconsistencias en horas docentes, partidas presupuestarias no justificadas o debilidades metodológicas.
+3. Formular observaciones técnicas constructivas, específicas y fundamentadas bajo normativa institucional y CACES para orientar la subsanación del docente.`);
+    } else {
+        sections.push(`\n## PAUTAS METODOLÓGICAS INSTITUCIONALES:
 1. Mantener estricto rigor metodológico y coherencia lógica entre antecedentes, problema, objetivos y resultados.
 2. Citar bajo norma APA 7ma edición con fuentes indexadas recientes (Scopus, WoS, Latindex Catálogo 2.0).
 3. Asegurar lenguaje formal, tercera persona o voz pasiva impersonal, de acuerdo a los estándares del Instituto.`);
+    }
 
     return sections.join('\n');
 };
@@ -311,6 +318,36 @@ export const buildClipboardPayload = (
 
     const lines: string[] = [];
 
+    // Perfil de Auditor / Revisor Técnico
+    if (data.role === 'reviewer') {
+        lines.push(`# EVALUACIÓN TÉCNICA Y AUDITORÍA DE SECCIÓN`);
+        if (projectTitle) lines.push(`• Proyecto de Investigación: ${projectTitle}`);
+        if (carreraStr) lines.push(`• Carrera / Unidad Académica: ${carreraStr}`);
+        if (data.sectionTitle) lines.push(`• Sección Auditada: ${data.sectionTitle}`);
+
+        lines.push(`\n## CRITERIOS Y NORMATIVA DE EVALUACIÓN:`);
+        if (data.instructions) {
+            lines.push(data.instructions);
+        }
+        if (data.requirementText) {
+            lines.push(`REQUISITO EXIGIDO: ${data.requirementText}`);
+        }
+        if (!data.instructions && !data.requirementText) {
+            lines.push(`Validar rigor metodológico, viabilidad técnica, pertinencia institucional y cumplimiento con estándares CACES.`);
+        }
+
+        lines.push(`\n## CONTENIDO PRESENTADO POR EL INVESTIGADOR:`);
+        lines.push(cleanContent || `(Sin contenido registrado en esta sección)`);
+
+        lines.push(`\n## CONSIGNAS DE AUDITORÍA Y FORMULACIÓN DE OBSERVACIONES:`);
+        lines.push(`1. Evaluar la solidez técnica, exhaustividad y coherencia interna de esta sección frente a los objetivos del proyecto.`);
+        lines.push(`2. Identificar debilidades metodológicas, vacíos de información o incumplimientos normativos.`);
+        lines.push(`3. Redactar una observación técnica formal, precisa y constructiva para que el evaluador/administrador solicite la subsanación correspondiente.`);
+
+        return lines.join('\n');
+    }
+
+    // Perfil de Autor / Investigador (por defecto)
     lines.push(`# CONTEXTO INSTITUCIONAL`);
     if (projectTitle) lines.push(`• Tema del Proyecto: ${projectTitle}`);
     if (carreraStr) lines.push(`• Carrera: ${carreraStr}`);

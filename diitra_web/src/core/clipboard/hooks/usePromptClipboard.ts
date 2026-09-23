@@ -27,11 +27,12 @@ export const usePromptClipboard = () => {
                 document.body.removeChild(textArea);
             }
 
+            const isReviewer = contextData.role === 'reviewer';
             const label = 
-                mode === 'structured'     ? 'Copiado con criterios institucionales' :
+                mode === 'structured'     ? (isReviewer ? 'Copiado para auditoría técnica con IA' : 'Copiado con criterios institucionales') :
                 mode === 'clean_content'  ? 'Contenido copiado' :
-                mode === 'instructions'   ? 'Instrucciones copiadas' :
-                mode === 'full_document'  ? 'Documento completo copiado' :
+                mode === 'instructions'   ? (isReviewer ? 'Criterios normativos copiados' : 'Instrucciones copiadas') :
+                mode === 'full_document'  ? (isReviewer ? 'Protocolo completo copiado para dictamen' : 'Documento completo copiado') :
                                            'Resumen del proyecto copiado';
 
             setCopiedMessage(label);

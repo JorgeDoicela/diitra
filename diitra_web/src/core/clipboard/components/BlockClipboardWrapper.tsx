@@ -12,6 +12,7 @@ interface BlockClipboardWrapperProps {
     currentContent?: string | unknown;
     /** Serializador explícito para arrays/objetos complejos. Tiene precedencia sobre la detección automática. */
     contentSerializer?: (data: unknown) => string;
+    role?: 'author' | 'reviewer';
     children: React.ReactNode;
     className?: string;
 }
@@ -23,6 +24,7 @@ export const BlockClipboardWrapper: React.FC<BlockClipboardWrapperProps> = ({
     requirementText,
     currentContent,
     contentSerializer,
+    role = 'author',
     children,
     className = ''
 }) => {
@@ -77,10 +79,11 @@ export const BlockClipboardWrapper: React.FC<BlockClipboardWrapperProps> = ({
             requirementText,
             currentContent: effectiveContent,
             contentSerializer,
+            role,
         };
 
         copyToClipboard(mode, contextData, globalFormData);
-    }, [title, fieldKey, instructions, requirementText, effectiveContent, contentSerializer, globalFormData, copyToClipboard]);
+    }, [title, fieldKey, instructions, requirementText, effectiveContent, contentSerializer, role, globalFormData, copyToClipboard]);
 
     return (
         <div
@@ -101,6 +104,7 @@ export const BlockClipboardWrapper: React.FC<BlockClipboardWrapperProps> = ({
                     onSelectMode={handleSelectMode}
                     hasInstructions={Boolean(instructions || requirementText)}
                     hasContent={hasActualContent}
+                    role={role}
                 />
             )}
 

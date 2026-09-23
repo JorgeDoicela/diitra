@@ -36,6 +36,8 @@ export interface PromptClipboardContextData {
         lineaInvestigacion?: string;
         tipoInvestigacion?: string;
     };
+    /** Rol del usuario en el flujo actual: autor/investigador o revisor/auditor técnico */
+    role?: 'author' | 'reviewer';
 }
 
 export type CopyMode = 
