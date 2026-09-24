@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 # ==============================================================================
 # DIITRA - Cloudflare Tunnel Professional Control Suite
 # ==============================================================================
@@ -177,14 +177,20 @@ function Start-OnDemandTunnel {
     $configPath = Join-Path $ServiceConfigDir "config.yml"
 
     Write-Host "`n┌─────────────────────────────────────────────────────────────┐" -ForegroundColor Green
-    Write-Host "│  SERVIDOR ONLINE (MODO BAJO DEMANDA)                        │" -ForegroundColor Green -Bold
+    Write-Host "│  TÚNEL ONLINE (MODO BAJO DEMANDA - MULTI-PROYECTO)          │" -ForegroundColor Green -Bold
     Write-Host "├─────────────────────────────────────────────────────────────┤" -ForegroundColor Green
-    Write-Host "│  URL Publica: https://$Hostname/diitra" -ForegroundColor White
-    Write-Host "│  API Ping:    https://$Hostname/apiDiitra/api/ping" -ForegroundColor White
-    Write-Host "│  Destino:     $LocalService (IIS Local)" -ForegroundColor White
+    Write-Host "│  [1] DIITRA Web:     https://diitra.doicela.dev/diitra      │" -ForegroundColor White
+    Write-Host "│      DIITRA API:     https://diitra.doicela.dev/apiDiitra   │" -ForegroundColor Gray
+    Write-Host "│      Destino:        http://localhost:80 (IIS Local)        │" -ForegroundColor DarkGray
+    Write-Host "├─────────────────────────────────────────────────────────────┤" -ForegroundColor Green
+    Write-Host "│  [2] Ateneo RAG:     https://ateneo.doicela.dev             │" -ForegroundColor White
+    Write-Host "│      Destino:        http://localhost:5173 (Docker Local)   │" -ForegroundColor DarkGray
+    Write-Host "├─────────────────────────────────────────────────────────────┤" -ForegroundColor Green
+    Write-Host "│  [3] DOSIER Staging: https://staging-dosier.doicela.dev     │" -ForegroundColor White
+    Write-Host "│      Destino:        http://localhost:8080 (Docker Local)   │" -ForegroundColor DarkGray
     Write-Host "├─────────────────────────────────────────────────────────────┤" -ForegroundColor Green
     Write-Host "│  Para apagar el servidor, presiona [Ctrl + C] en cualquier  │" -ForegroundColor Yellow
-    Write-Host "│  momento. Al salir, tu maquina vuelve a ser 100% privada.   │" -ForegroundColor Yellow
+    Write-Host "│  momento. Al salir, tu máquina vuelve a ser 100% privada.   │" -ForegroundColor Yellow
     Write-Host "└─────────────────────────────────────────────────────────────┘`n" -ForegroundColor Green
 
     # Ejecutar el tunel en primer plano

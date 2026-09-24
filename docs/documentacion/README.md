@@ -12,7 +12,7 @@ Este directorio constituye la fuente centralizada de conocimiento técnico y fun
 | **Desarrollador Frontend (React)** | [01-arquitectura-react-vite.md](./05-frontend-web/01-arquitectura-react-vite.md), [02-componentes-ui-y-builder-shell.md](./05-frontend-web/02-componentes-ui-y-builder-shell.md), [03-integracion-api-y-resiliencia.md](./05-frontend-web/03-integracion-api-y-resiliencia.md) |
 | **Ingeniero de Base de Datos / DBA** | [01-esquema-relacional-sigafi.md](./04-base-de-datos/01-esquema-relacional-sigafi.md), [02-catalogos-normativa-ecuador.md](./04-base-de-datos/02-catalogos-normativa-ecuador.md), [03-gobernanza-lopdp-y-auditoria.md](./02-backend-servicios/03-gobernanza-lopdp-y-auditoria.md) |
 | **Auditor Externa / Par CACES** | [02-guia-acreditacion-caces-2026.md](./07-despliegue-y-operaciones/02-guia-acreditacion-caces-2026.md), [01-motor-documental-pdf.md](./03-motores-especializados/01-motor-documental-pdf.md), [04-motor-firma-digital-y-sellos.md](./03-motores-especializados/04-motor-firma-digital-y-sellos.md) |
-| **Ingeniero de Operaciones / DevOps** | [01-instalacion-entorno-local.md](./07-despliegue-y-operaciones/01-instalacion-entorno-local.md) |
+| **Ingeniero de Operaciones / DevOps** | [01-instalacion-entorno-local.md](./07-despliegue-y-operaciones/01-instalacion-entorno-local.md), [03-acceso-remoto-cloudflare-tunnel.md](./07-despliegue-y-operaciones/03-acceso-remoto-cloudflare-tunnel.md) |
 
 ---
 
@@ -51,3 +51,4 @@ Este directorio constituye la fuente centralizada de conocimiento técnico y fun
 ### Sección 07: Despliegue y Operaciones
 * [01. Guía de Instalación y Configuración en Entorno Local](./07-despliegue-y-operaciones/01-instalacion-entorno-local.md): Requisitos de desarrollo (.NET 8, Node 18, MySQL 3306), scripts SQL iniciales y variables de entorno.
 * [02. Guía de Cumplimiento e Integridad Forense para Acreditación CACES 2026](./07-despliegue-y-operaciones/02-guia-acreditacion-caces-2026.md): Matriz de evidencias técnicas para los indicadores de acreditación institucionales.
+* [03. Acceso Remoto Seguro con Cloudflare Tunnel](./07-despliegue-y-operaciones/03-acceso-remoto-cloudflare-tunnel.md): Arquitectura de túnel inverso saliente, integración con IIS en puerto 80, terminación SSL en el borde y ciclo de vida bajo demanda.
