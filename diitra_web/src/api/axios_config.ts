@@ -57,8 +57,31 @@ function addCamelCaseKeys(obj: any): any {
  *    - El interceptor de Axios duplica automáticamente todas las claves en `snake_case` y `PascalCase` 
  *      a `camelCase` en tiempo de ejecución. Esto garantiza compatibilidad universal en todo el sistema al leer datos.
  */
+/**
+ * Resuelve la URL base de la API de forma automática:
+ * - En IIS (/diitra): conecta directamente con '/apiDiitra/api'.
+ * - En Desarrollo local (localhost): conecta con '/api' (a través del proxy de Vite).
+ */
+export function getApiBaseUrl(): string {
+    if (import.meta.env.VITE_API_BASE_URL) {
+        return import.meta.env.VITE_API_BASE_URL;
+    }
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/diitra')) {
+        return '/apiDiitra/api';
+    }
+    return '/api';
+}
+
+export function getApiRootUrl(): string {
+    const base = getApiBaseUrl();
+    if (base.endsWith('/api')) {
+        return base.slice(0, -4);
+    }
+    return base || (typeof window !== 'undefined' ? window.location.origin : '');
+}
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+    baseURL: getApiBaseUrl(),
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json'

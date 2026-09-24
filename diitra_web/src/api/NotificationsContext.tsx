@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
-import api from './axios_config';
+import api, { getApiRootUrl } from './axios_config';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, AlertCircle, Info, XCircle, Bell, X } from 'lucide-react';
@@ -474,8 +474,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         requestNotificationPermission();
         fetchNotifications();
 
-        const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-        const apiRoot = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || window.location.origin;
+        const apiRoot = getApiRootUrl();
 
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(`${apiRoot}/hubs/notifications`, {

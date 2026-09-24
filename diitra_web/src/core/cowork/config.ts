@@ -3,12 +3,13 @@
 // Constantes y utilidades de configuración del núcleo
 // ═══════════════════════════════════════════════════════════════════
 
-const apiBase = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
-const BASE_URL = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || window.location.origin;
+import { getApiRootUrl } from '../../api/axios_config';
 
 export const COWORK_CONFIG = {
     /** URL del Hub de SignalR para la colaboración */
-    SIGNALR_HUB_URL: `${BASE_URL}/hubs/collaboration`,
+    get SIGNALR_HUB_URL(): string {
+        return `${getApiRootUrl()}/hubs/collaboration`;
+    },
 
     /** Tiempos de espera entre reintentos de reconexión (ms) */
     RECONNECT_DELAYS: [1000, 2000, 5000, 10000, 30000],
