@@ -114,6 +114,17 @@ export function getProjectProgress(p: ProjectDataForProgress): ProjectProgressIn
         };
     }
 
+    if (estadoUpper === 'INCONCLUSO') {
+        return {
+            percentage: 0,
+            label: 'Inconcluso · Disponible para Adopción',
+            badgeClass: 'badge-vercel-error',
+            badgeLabel: 'Inconcluso',
+            statusColor: 'var(--error)',
+            stageDescription: 'Proyecto detenido · Disponible para rescate académico'
+        };
+    }
+
     if (estadoUpper === 'RECHAZADO' || estadoUpper === 'ANULADO') {
         return {
             percentage: 0,

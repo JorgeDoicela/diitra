@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-    FolderKanban, ArrowRight, Search, 
-    Layers, PlusCircle, FileText, Package, Calendar
+    ArrowRight, 
+    Layers, PlusCircle
 } from 'lucide-react';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { getProjectProgress } from '../utils/projectProgress';
@@ -23,6 +23,10 @@ export interface DocenteProjectItem {
     codigo_institucional?: string;
     template_code?: string;
     templateCode?: string;
+    director_nombre?: string;
+    carrera?: string;
+    linea_investigacion?: string;
+    convocatoria_titulo?: string;
 }
 
 export interface DocenteDashboardStats {
@@ -41,21 +45,19 @@ interface DocenteProjectsProgressWidgetProps {
     loading?: boolean;
 }
 
-type FilterTab = 'todos' | 'ejecucion' | 'revision' | 'borradores';
+type FilterTab = 'todos' | 'ejecucion' | 'revision' | 'borradores' | 'inconclusos';
 
 export const DocenteProjectsProgressWidget: React.FC<DocenteProjectsProgressWidgetProps> = ({
     projects,
-    loading = false
+    loading: _loading = false
 }) => {
     const [activeTab, setActiveTab] = useState<FilterTab>('todos');
-    const [searchQuery, setSearchQuery] = useState('');
 
-    // Filtrar proyectos según tab y búsqueda
+    // Filtrar proyectos según tab
     const filteredProjects = useMemo(() => {
         return projects.filter(p => {
             const estadoUpper = (p.estado || '').toUpperCase();
             
-            // Tab filter
             if (activeTab === 'ejecucion') {
                 if (estadoUpper !== 'EN EJECUCIÓN' && estadoUpper !== 'EN_EJECUCION' && estadoUpper !== 'APROBADO') {
                     return false;
@@ -68,81 +70,55 @@ export const DocenteProjectsProgressWidget: React.FC<DocenteProjectsProgressWidg
                 if (estadoUpper !== 'BORRADOR' && estadoUpper !== 'PREPROPUESTA') {
                     return false;
                 }
-            }
-
-            // Search filter
-            if (searchQuery.trim()) {
-                const q = searchQuery.toLowerCase();
-                const matchTitle = (p.titulo || '').toLowerCase().includes(q);
-                const matchCode = (p.codigo_institucional || '').toLowerCase().includes(q);
-                const matchRole = (p.rol_en_proyecto || '').toLowerCase().includes(q);
-                return matchTitle || matchCode || matchRole;
+            } else if (activeTab === 'inconclusos') {
+                if (estadoUpper !== 'INCONCLUSO') {
+                    return false;
+                }
             }
 
             return true;
         });
-    }, [projects, activeTab, searchQuery]);
+    }, [projects, activeTab]);
 
-    // Contadores integrados para pestañas
+    // Contadores de pestañas
     const tabCounts = useMemo(() => {
         let ejecucion = 0;
         let revision = 0;
         let borradores = 0;
+        let inconclusos = 0;
 
         projects.forEach(p => {
             const u = (p.estado || '').toUpperCase();
             if (u === 'EN EJECUCIÓN' || u === 'EN_EJECUCION' || u === 'APROBADO') ejecucion++;
             else if (u === 'EN REVISIÓN' || u === 'EN_REVISION' || u === 'ENVIADO' || u === 'PENDIENTE' || u === 'EN CORRECCIÓN') revision++;
             else if (u === 'BORRADOR' || u === 'PREPROPUESTA') borradores++;
+            else if (u === 'INCONCLUSO') inconclusos++;
         });
 
-        return { todos: projects.length, ejecucion, revision, borradores };
+        return { todos: projects.length, ejecucion, revision, borradores, inconclusos };
     }, [projects]);
 
     return (
         <div className="bento-card static bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden animate-fade-up">
-            {/* Cabecera Vercel Geist: Limpia, sin cajas gigantes */}
-            <div className="p-6 border-b border-border-thin flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <FolderKanban size={14} className="text-text-dim" />
-                        <span className="text-[11px] font-semibold text-text-dim uppercase tracking-widest font-mono">
-                            Mis Proyectos I+D
-                        </span>
-                    </div>
-                    <h3 className="text-xl font-bold tracking-tight text-text-main">
-                        Seguimiento y Avance de Proyectos
-                    </h3>
-                    <p className="text-xs text-text-dim font-medium mt-0.5">
-                        Monitorea en tiempo real el ciclo de vida, porcentaje de cumplimiento e informes técnicos aprobados.
-                    </p>
-                </div>
+            {/* Cabecera y Filtros */}
+            <div className="p-5 pb-3.5 border-b border-border-thin">
+                <h3 className="text-lg font-bold tracking-tight text-text-main mb-3">
+                    Seguimiento y Avance de Proyectos
+                </h3>
 
-                <div className="flex items-center gap-2 shrink-0">
-                    <Link
-                        to="/investigacion/mis-proyectos"
-                        className="btn-vercel-secondary !py-1.5 !px-3.5 text-xs inline-flex items-center gap-2 no-underline"
-                    >
-                        <span>Ver todos los proyectos</span>
-                        <ArrowRight size={13} className="opacity-70" />
-                    </Link>
-                </div>
-            </div>
-
-            {/* Barra de Filtros Segmentados tipo Vercel / Linear (Conteo integrado sin KPIs gigantes) */}
-            <div className="px-6 py-3 bg-bg-deep/20 border-b border-border-thin flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5 p-1 bg-surface border border-border-thin rounded-lg">
+                {/* Barra de Filtros Minimalista */}
+                <div className="flex items-center gap-1 p-0.5 bg-surface border border-border-thin rounded-lg w-fit">
                     <button
                         type="button"
                         onClick={() => setActiveTab('todos')}
-                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                             activeTab === 'todos'
-                                ? 'bg-text-main text-surface font-semibold shadow-sm'
+                                ? 'bg-text-main text-surface font-semibold shadow-xs'
                                 : 'text-text-dim hover:text-text-main'
                         }`}
                     >
                         <span>Todos</span>
-                        <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                        <span className={`text-[10px] font-mono px-1 rounded-full ${
                             activeTab === 'todos' ? 'bg-surface/20 text-surface' : 'bg-bg-deep text-text-dim'
                         }`}>
                             {tabCounts.todos}
@@ -151,14 +127,14 @@ export const DocenteProjectsProgressWidget: React.FC<DocenteProjectsProgressWidg
                     <button
                         type="button"
                         onClick={() => setActiveTab('ejecucion')}
-                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                             activeTab === 'ejecucion'
-                                ? 'bg-text-main text-surface font-semibold shadow-sm'
+                                ? 'bg-text-main text-surface font-semibold shadow-xs'
                                 : 'text-text-dim hover:text-text-main'
                         }`}
                     >
                         <span>En Ejecución</span>
-                        <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                        <span className={`text-[10px] font-mono px-1 rounded-full ${
                             activeTab === 'ejecucion' ? 'bg-surface/20 text-surface' : 'bg-bg-deep text-text-dim'
                         }`}>
                             {tabCounts.ejecucion}
@@ -167,14 +143,14 @@ export const DocenteProjectsProgressWidget: React.FC<DocenteProjectsProgressWidg
                     <button
                         type="button"
                         onClick={() => setActiveTab('revision')}
-                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                             activeTab === 'revision'
-                                ? 'bg-text-main text-surface font-semibold shadow-sm'
+                                ? 'bg-text-main text-surface font-semibold shadow-xs'
                                 : 'text-text-dim hover:text-text-main'
                         }`}
                     >
                         <span>En Revisión</span>
-                        <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                        <span className={`text-[10px] font-mono px-1 rounded-full ${
                             activeTab === 'revision' ? 'bg-surface/20 text-surface' : 'bg-bg-deep text-text-dim'
                         }`}>
                             {tabCounts.revision}
@@ -183,56 +159,61 @@ export const DocenteProjectsProgressWidget: React.FC<DocenteProjectsProgressWidg
                     <button
                         type="button"
                         onClick={() => setActiveTab('borradores')}
-                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                             activeTab === 'borradores'
-                                ? 'bg-text-main text-surface font-semibold shadow-sm'
+                                ? 'bg-text-main text-surface font-semibold shadow-xs'
                                 : 'text-text-dim hover:text-text-main'
                         }`}
                     >
                         <span>Borradores</span>
-                        <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                        <span className={`text-[10px] font-mono px-1 rounded-full ${
                             activeTab === 'borradores' ? 'bg-surface/20 text-surface' : 'bg-bg-deep text-text-dim'
                         }`}>
                             {tabCounts.borradores}
                         </span>
                     </button>
+                    {tabCounts.inconclusos > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('inconclusos')}
+                            className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                                activeTab === 'inconclusos'
+                                    ? 'bg-text-main text-surface font-semibold shadow-xs'
+                                    : 'text-text-dim hover:text-text-main'
+                            }`}
+                        >
+                            <span>Inconclusos</span>
+                            <span className={`text-[10px] font-mono px-1 rounded-full ${
+                                activeTab === 'inconclusos' ? 'bg-surface/20 text-surface' : 'bg-bg-deep text-text-dim'
+                            }`}>
+                                {tabCounts.inconclusos}
+                            </span>
+                        </button>
+                    )}
                 </div>
-
-                {projects.length > 2 && (
-                    <div className="relative w-full sm:w-56">
-                        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-dim/60 pointer-events-none" />
-                        <input
-                            type="text"
-                            placeholder="Buscar por título o código..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-surface border border-border-thin rounded-lg pl-8 pr-2.5 py-1 text-xs text-text-main placeholder:text-text-dim/50 focus:outline-none focus:border-text-dim transition-colors"
-                        />
-                    </div>
-                )}
             </div>
 
-            {/* Estructura Tabular de 1 Sola Capa (divide-y divide-border-thin) */}
+            {/* Listado Limpio y de Alta Densidad */}
             {projects.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                    <div className="w-12 h-12 rounded-full bg-bg-deep border border-border-thin flex items-center justify-center text-text-dim/50 mb-3 shadow-inner">
-                        <Layers size={22} />
+                <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                    <div className="w-10 h-10 rounded-full bg-bg-deep border border-border-thin flex items-center justify-center text-text-dim/50 mb-2.5">
+                        <Layers size={18} />
                     </div>
-                    <h4 className="text-sm font-semibold text-text-main mb-1">Aún no tienes proyectos asignados</h4>
-                    <p className="text-xs text-text-dim max-w-sm leading-relaxed mb-4">
-                        Puedes postular una nueva propuesta académica en las convocatorias institucionales vigentes o formular un nuevo protocolo.
+                    <h4 className="text-xs font-semibold text-text-main mb-1">Sin proyectos registrados</h4>
+                    <p className="text-xs text-text-dim max-w-xs mb-3">
+                        No tienes propuestas en curso en este periodo académico.
                     </p>
                     <Link
                         to="/convocatorias"
-                        className="btn-vercel-primary !py-2 !px-4 text-xs inline-flex items-center gap-1.5 no-underline"
+                        className="btn-vercel-primary !py-1.5 !px-3 text-xs inline-flex items-center gap-1.5 no-underline"
                     >
-                        <PlusCircle size={14} />
-                        <span>Postular a Convocatoria</span>
+                        <PlusCircle size={13} />
+                        <span>Postular Convocatoria</span>
                     </Link>
                 </div>
             ) : filteredProjects.length === 0 ? (
-                <div className="text-center py-10">
-                    <p className="text-xs text-text-dim">No se encontraron proyectos para el filtro seleccionado.</p>
+                <div className="text-center py-8">
+                    <p className="text-xs text-text-dim">No hay proyectos para el filtro seleccionado.</p>
                 </div>
             ) : (
                 <div className="divide-y divide-border-thin">
@@ -240,100 +221,64 @@ export const DocenteProjectsProgressWidget: React.FC<DocenteProjectsProgressWidg
                         const progress = getProjectProgress(p);
                         const tCode = p.template_code || p.templateCode || 'PROTOCOLO_INVESTIGACION';
                         const workspaceUrl = buildWorkspacePath(tCode, p.uuid, '', '/investigacion/mis-proyectos');
-                        const roleLabel = p.rol_en_proyecto || 'Director';
+                        const fechaFormateada = p.fecha_modificacion
+                            ? new Date(p.fecha_modificacion).toLocaleDateString('es-EC', { month: 'short', day: 'numeric' })
+                            : p.fecha_inicio
+                            ? new Date(p.fecha_inicio).toLocaleDateString('es-EC', { month: 'short', day: 'numeric' })
+                            : null;
 
                         return (
                             <Link
                                 key={p.uuid}
                                 to={workspaceUrl}
-                                className="px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-surface-hover/50 transition-colors group no-underline text-inherit cursor-pointer"
+                                className="px-5 py-3.5 flex items-center justify-between gap-4 hover:bg-surface-hover/60 transition-colors group no-underline text-inherit cursor-pointer"
                             >
-                                {/* Columna 1: Información del Proyecto */}
-                                <div className="flex-1 min-w-0 pr-4">
-                                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                        {p.codigo_institucional && (
-                                            <span className="font-mono text-[10px] text-text-dim font-bold uppercase tracking-wider">
-                                                {p.codigo_institucional}
-                                            </span>
-                                        )}
-                                        <span className={`badge-vercel ${progress.badgeClass} !py-0.5 !px-2 text-[9px] font-semibold uppercase tracking-wider`}>
+                                {/* Información Mínima: Estado + Fecha + Título */}
+                                <div className="flex-1 min-w-0 pr-2">
+                                    <div className="flex items-center gap-1.5 mb-1 flex-wrap text-[11px] text-text-dim">
+                                        {/* Estado en texto con color semántico directo (sin bordes ni fondo) */}
+                                        <span
+                                            className="font-bold uppercase tracking-wider text-[10px]"
+                                            style={{ color: progress.statusColor }}
+                                        >
                                             {progress.badgeLabel}
                                         </span>
-                                        <span className="badge-vercel badge-vercel-neutral !py-0.5 !px-2 text-[9px] font-medium tracking-wide">
-                                            {roleLabel}
-                                        </span>
+
+                                        {/* Fecha mínima */}
+                                        {fechaFormateada && (
+                                            <span className="font-mono text-[10px] text-text-dim/60">
+                                                · {fechaFormateada}
+                                            </span>
+                                        )}
                                     </div>
 
+                                    {/* Título Limpio */}
                                     <h4 
-                                        className="text-[14px] font-semibold text-text-main group-hover:text-brand transition-colors tracking-tight leading-snug"
+                                        className="text-[13.5px] font-medium text-text-main group-hover:text-brand transition-colors tracking-tight leading-snug truncate"
                                         title={p.titulo}
                                     >
-                                        {p.titulo || 'Proyecto sin título registrado'}
+                                        {p.titulo || 'Proyecto sin título'}
                                     </h4>
-
-                                    <div className="flex items-center gap-4 text-[11px] text-text-dim mt-2">
-                                        {p.fecha_inicio && (
-                                            <span className="inline-flex items-center gap-1 font-mono text-[10px]">
-                                                <Calendar size={11} className="opacity-60" />
-                                                <span>Inicio: {new Date(p.fecha_inicio).toLocaleDateString('es-EC')}</span>
-                                            </span>
-                                        )}
-                                        {p.fecha_modificacion && (
-                                            <span className="font-mono text-[10px] opacity-70">
-                                                Actualizado: {new Date(p.fecha_modificacion).toLocaleDateString('es-EC', { month: 'short', day: 'numeric' })}
-                                            </span>
-                                        )}
-                                    </div>
                                 </div>
 
-                                {/* Columna 2: Avance Visual y Métricas Técnicas */}
-                                <div className="w-full lg:w-72 shrink-0 flex flex-col justify-center">
-                                    <div className="flex items-center justify-between text-xs mb-1.5 font-mono">
-                                        <span className="text-[11px] text-text-dim truncate max-w-[190px]" title={progress.label}>
-                                            {progress.label}
-                                        </span>
-                                        <span className="font-semibold text-text-main text-[12px]">
+                                {/* Progreso Mínimo y Flecha */}
+                                <div className="flex items-center gap-4 shrink-0">
+                                    <div className="w-24 sm:w-32 flex items-center gap-2">
+                                        <div className="flex-1 h-1.5 bg-bg-deep border border-border-thin/50 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full transition-all duration-300"
+                                                style={{
+                                                    width: `${Math.max(progress.percentage, 3)}%`,
+                                                    backgroundColor: progress.statusColor
+                                                }}
+                                            />
+                                        </div>
+                                        <span className="text-[11px] font-mono font-medium text-text-dim w-7 text-right">
                                             {progress.percentage}%
                                         </span>
                                     </div>
 
-                                    {/* Barra de Progreso Elegante Geist */}
-                                    <div className="w-full h-1.5 bg-bg-deep border border-border-thin/50 rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full transition-all duration-500 ease-out"
-                                            style={{
-                                                width: `${progress.percentage}%`,
-                                                backgroundColor: progress.statusColor
-                                            }}
-                                        />
-                                    </div>
-
-                                    {/* Sub-métricas: Informes y Productos */}
-                                    <div className="flex items-center justify-between text-[10px] text-text-dim font-mono mt-2">
-                                        {(p.total_informes !== undefined && p.total_informes > 0) ? (
-                                            <span className="inline-flex items-center gap-1">
-                                                <FileText size={10} className="text-info" />
-                                                <span>{p.informes_aprobados ?? 0}/{p.total_informes} inf. aprobados</span>
-                                            </span>
-                                        ) : (
-                                            <span className="opacity-50">Sin informes requeridos</span>
-                                        )}
-
-                                        {(p.total_productos !== undefined && p.total_productos > 0) && (
-                                            <span className="inline-flex items-center gap-1">
-                                                <Package size={10} className="text-brand" />
-                                                <span>{p.total_productos} prod.</span>
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Columna 3: Acción Directa */}
-                                <div className="hidden lg:flex items-center justify-end pl-2 text-text-dim group-hover:text-brand transition-colors">
-                                    <span className="text-[11px] font-medium font-mono mr-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        Workspace
-                                    </span>
-                                    <ArrowRight size={14} className="transform group-hover:translate-x-1 transition-transform" />
+                                    <ArrowRight size={14} className="text-text-dim/40 group-hover:text-brand group-hover:translate-x-0.5 transition-all" />
                                 </div>
                             </Link>
                         );
