@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, Pin
+    Loader2, Search, Zap, Target, Trash2, User, Pin, FileText
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -430,9 +430,6 @@ const ResearchProjectsPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 animate-fade-up [animation-delay:100ms]">
                     {filteredProjects.map((p) => {
                         const cfg = getEstadoConfig(p.estado);
-                        const presupuestoPorc = p.presupuesto_total && p.presupuesto_ejecutado
-                            ? Math.min(100, (p.presupuesto_ejecutado / p.presupuesto_total) * 100)
-                            : 0;
 
                         return (
                             <div
@@ -448,11 +445,6 @@ const ResearchProjectsPage = () => {
                                 <div className="space-y-3.5">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="flex-1 min-w-0">
-                                            {p.codigo_institucional && (
-                                                <p className="text-[10px] font-semibold text-text-dim uppercase tracking-wider mb-1 font-mono">
-                                                    {p.codigo_institucional}
-                                                </p>
-                                            )}
                                             <h3 className="font-semibold text-text-main text-sm leading-snug line-clamp-2 group-hover:text-brand transition-colors">
                                                 {p.titulo?.trim() || '(Sin título)'}
                                             </h3>
@@ -499,59 +491,16 @@ const ResearchProjectsPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Estado y Línea de Investigación */}
-                                    <div className="flex items-center flex-wrap gap-2 pt-0.5">
-                                        <span className={`badge-vercel ${cfg.badge} text-[10px] !py-0.5 !px-2 font-medium`} style={cfg.style}>
-                                            <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
+                                    {/* Estado */}
+                                    <div className="flex items-center gap-1.5 pt-0.5">
+                                        <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
+                                        <span className={`${cfg.badge} !bg-transparent !border-0 !p-0 text-xs font-semibold`} style={cfg.style ? { color: cfg.style.color } : undefined}>
                                             {cfg.label}
                                         </span>
-                                        {p.linea_investigacion && (
-                                            <span className="text-[10px] text-text-dim truncate max-w-[180px] flex items-center gap-1" title={p.linea_investigacion}>
-                                                <BookOpen size={10} className="shrink-0 opacity-70" />
-                                                <span className="truncate">{p.linea_investigacion}</span>
-                                            </span>
-                                        )}
                                     </div>
-
-
-                                    {/* Métricas Integradas en una Sola Barra Limpia */}
-                                    <div className="flex items-center justify-between py-1.5 px-3 bg-surface/50 rounded-lg border border-border-thin text-[11px] text-text-dim">
-                                        <span className="flex items-center gap-1 font-medium">
-                                            <span className="font-semibold text-text-main font-mono">{p.total_investigadores}</span>
-                                            <span className="text-[10px]">invest.</span>
-                                        </span>
-                                        <span className="text-border-thin">·</span>
-                                        <span className="flex items-center gap-1 font-medium">
-                                            <span className="font-semibold text-text-main font-mono">{p.total_productos}</span>
-                                            <span className="text-[10px]">prod.</span>
-                                        </span>
-                                        <span className="text-border-thin">·</span>
-                                        <span className="flex items-center gap-1 font-medium">
-                                            <span className="font-semibold text-text-main font-mono">{p.informes_aprobados}/{p.total_informes}</span>
-                                            <span className="text-[10px]">informes</span>
-                                        </span>
-                                    </div>
-
-                                    {p.presupuesto_total !== undefined && p.presupuesto_total > 0 && (
-                                        <div className="space-y-1 pt-1">
-                                            <div className="flex justify-between text-[10px] font-mono text-text-dim">
-                                                <span>Presupuesto</span>
-                                                <span className="text-text-main font-medium">
-                                                    ${(p.presupuesto_ejecutado ?? 0).toLocaleString('es-EC')} / ${(p.presupuesto_total).toLocaleString('es-EC')}
-                                                    <span className="text-text-dim ml-1">({presupuestoPorc.toFixed(0)}%)</span>
-                                                </span>
-                                            </div>
-                                            <div className="w-full h-1 bg-border-thin rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-brand rounded-full transition-all duration-500"
-                                                    style={{ width: `${Math.min(100, presupuestoPorc)}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
 
-                                <div className="flex items-center justify-between pt-3 border-t border-border-thin mt-4 text-[10px] text-text-dim">
+                                <div className="flex items-center justify-between mt-6 text-[10px] text-text-dim">
                                     <div className="flex items-center gap-1">
                                         <Calendar size={10} />
                                         <span>
@@ -562,16 +511,16 @@ const ResearchProjectsPage = () => {
                                                 : '—'}
                                         </span>
                                     </div>
+                                    {(p.total_informes ?? 0) > 0 && (
+                                        <div className="flex items-center gap-1" title="Informes aprobados / total requeridos">
+                                            <FileText size={10} />
+                                            <span>{p.informes_aprobados}/{p.total_informes} inf.</span>
+                                        </div>
+                                    )}
                                     {p.trl_actual != null && (
                                         <div className="flex items-center gap-1">
                                             <Zap size={10} className="text-warning" />
                                             <span className="font-mono font-medium">TRL {p.trl_actual}/{p.trl_meta ?? '—'}</span>
-                                        </div>
-                                    )}
-                                    {p.puntaje_evaluacion != null && (
-                                        <div className="flex items-center gap-1">
-                                            <BarChart3 size={10} className="text-success" />
-                                            <span className="text-success font-bold font-mono">{p.puntaje_evaluacion}/100</span>
                                         </div>
                                     )}
                                 </div>

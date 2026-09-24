@@ -25,7 +25,8 @@ import {
     Trash2,
     Edit3,
     CheckSquare,
-    Folder
+    Folder,
+    DollarSign
 } from 'lucide-react';
 
 export interface ModuleContextInfo {
@@ -81,13 +82,35 @@ export const getModuleContext = (rawPathname: string = '', rawSearch: string = '
     }
 
     // ── 2. Investigación: Submódulos Específicos ─────────────────────────────
-    if (pathname.startsWith('/investigacion/monitoreo')) {
+    if (pathname.includes('/cronograma/')) {
         return {
             modulo: 'Investigación',
-            submodulo: 'Monitoreo',
-            label: 'Investigación · Monitoreo',
-            shortLabel: 'Monitoreo',
-            Icon: BarChart3,
+            submodulo: 'Cronograma',
+            label: 'Investigación · Cronograma',
+            shortLabel: 'Cronograma',
+            Icon: Calendar,
+            categoryKey: 'investigacion'
+        };
+    }
+
+    if (pathname.includes('/presupuesto/')) {
+        return {
+            modulo: 'Investigación',
+            submodulo: 'Presupuesto',
+            label: 'Investigación · Presupuesto',
+            shortLabel: 'Presupuesto',
+            Icon: DollarSign,
+            categoryKey: 'investigacion'
+        };
+    }
+
+    if (pathname.includes('/equipo/')) {
+        return {
+            modulo: 'Investigación',
+            submodulo: 'Equipo',
+            label: 'Investigación · Equipo',
+            shortLabel: 'Equipo',
+            Icon: Users,
             categoryKey: 'investigacion'
         };
     }

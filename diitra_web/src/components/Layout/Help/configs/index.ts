@@ -3,7 +3,7 @@ import {
     DEFAULT_CONFIG, DASHBOARD_CONFIG, SETTINGS_CONFIG, ANALYTICS_CONFIG, NOTIFICATIONS_CONFIG, VERIFY_CONFIG, CONVOCATORIAS_CONFIG, ARCO_CONFIG, LOPDP_ADMIN_CONFIG 
 } from './general';
 import { 
-    INVESTIGACION_CONFIG, MIS_PROYECTOS_CONFIG, ADOPCION_CONFIG, MONITOREO_CONFIG, INFORMES_AVANCE_CONFIG 
+    INVESTIGACION_CONFIG, MIS_PROYECTOS_CONFIG, ADOPCION_CONFIG, CRONOGRAMA_CONFIG, INFORMES_AVANCE_CONFIG 
 } from './investigacion';
 import { 
     REVISIONES_CONFIG, EVALUACION_CONFIG, ARBITRAJE_CONFIG, ARBITRAJE_PROYECTO_CONFIG 
@@ -25,7 +25,7 @@ export const HELP_MAP: Record<string, HelpConfig> = {
     '/investigacion': INVESTIGACION_CONFIG,
     '/investigacion/mis-proyectos': MIS_PROYECTOS_CONFIG,
     '/investigacion/adopcion': ADOPCION_CONFIG,
-    '/investigacion/monitoreo': MONITOREO_CONFIG,
+    '/investigacion/cronograma': CRONOGRAMA_CONFIG,
     '/investigacion/informes-avance': INFORMES_AVANCE_CONFIG,
     
     '/revisiones': REVISIONES_CONFIG,
@@ -45,8 +45,8 @@ export { DEFAULT_CONFIG };
 export const normalizePathname = (path: string): string => {
     const segments = path.split('/').filter(Boolean);
 
-    if (segments[0] === 'investigacion' && segments[1] === 'monitoreo' && segments.length > 2) {
-        return '/investigacion/monitoreo';
+    if (path.includes('/cronograma')) {
+        return '/investigacion/cronograma';
     }
     if (segments[0] === 'investigacion' && segments[1] === 'informes-avance' && segments.length > 2) {
         return '/investigacion/informes-avance';

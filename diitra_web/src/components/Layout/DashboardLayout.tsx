@@ -33,7 +33,6 @@ const getPageTitle = (pathname: string): string => {
     if (pathname === '/parametros-normativos') return 'Parámetros';
     if (pathname === '/investigacion') return 'Proyectos de investigación';
     if (pathname === '/investigacion/mis-proyectos') return 'Mis Proyectos';
-    if (pathname.startsWith('/investigacion/monitoreo/')) return 'Monitoreo de Proyecto';
     if (pathname.includes('/mis-proyectos/workspace/')) return 'Mis Proyectos';
     if (pathname.includes('/investigacion/workspace/')) return 'Proyectos de investigación';
     if (pathname.includes('/innovacion/workspace/')) return 'Innovación';

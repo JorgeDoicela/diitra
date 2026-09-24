@@ -4,7 +4,7 @@ import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ArrowLeft, Plus, CheckCircle, AlertCircle, FileText,
     RefreshCw, ChevronDown, ChevronUp, X, FileSignature, Activity,
-    Upload, Shield, ExternalLink, MessageSquarePlus
+    Upload, Shield, ExternalLink, MessageSquarePlus, Calendar
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
@@ -313,11 +313,11 @@ const InformesAvancePage: React.FC = () => {
                 >
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <Link
-                            to={`${urlPrefix}/monitoreo/${projectId}`}
+                            to={`${urlPrefix}/cronograma/${projectId}`}
                             className="btn-vercel-secondary flex items-center gap-2 no-underline"
                         >
-                            <Activity size={13} />
-                            Monitoreo Gantt
+                            <Calendar size={13} />
+                            Cronograma & Gantt
                         </Link>
                         <button
                             onClick={load}

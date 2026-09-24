@@ -1,5 +1,5 @@
 import { 
-    PenTool, BookOpen, Award, Activity, Folder, FileText, Search
+    PenTool, BookOpen, Award, Activity, Folder, FileText, Search, Calendar
 } from 'lucide-react';
 import type { HelpConfig, MockupProps } from '../types';
 
@@ -351,11 +351,11 @@ export const ADOPCION_CONFIG: HelpConfig = {
     )
 };
 
-export const MONITOREO_CONFIG: HelpConfig = {
-    icon: <Activity size={24} className="text-brand" />,
-    title: "Monitoreo de Proyectos",
-    summary: "Consola de seguimiento técnico y financiero, cronograma de entregables y carga de evidencias en tiempo real.",
-    description: "Interfaz integral para supervisar la ejecución física y financiera de los proyectos de investigación activos. Permite al docente reportar avances semanales, registrar bitácoras, subir archivos de evidencias y solicitar modificaciones presupuestarias o extensiones de plazo.",
+export const CRONOGRAMA_CONFIG: HelpConfig = {
+    icon: <Calendar size={24} className="text-brand" />,
+    title: "Cronograma de Actividades & Gantt",
+    summary: "Planificación de semanas de trabajo (§7), hitos CACES obligatorios y reporte de avance en tiempo real.",
+    description: "Módulo especializado para la programación y control temporal de las actividades de investigación. Permite visualizar el Diagrama de Gantt institucional, dar seguimiento porcentual al cumplimiento semanal y registrar avances.",
     steps: [
         {
             title: "Control del cronograma físico e hitos de actividades",

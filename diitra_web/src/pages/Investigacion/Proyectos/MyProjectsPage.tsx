@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '../../../components/Common/PageHeader';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User, PenTool, FileText, Pin
+    Loader2, Search, Zap, Target, Trash2, User, PenTool, FileText, Pin
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -510,9 +510,6 @@ const MyProjectsPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 animate-fade-up [animation-delay:150ms]">
                 {filtered.map((p) => {
                     const cfg = getEstadoConfig(p.estado);
-                    const presupuestoPorc = p.presupuesto_total && p.presupuesto_ejecutado
-                        ? Math.min(100, (p.presupuesto_ejecutado / p.presupuesto_total) * 100)
-                        : 0;
 
                     return (
                         <div
@@ -527,11 +524,6 @@ const MyProjectsPage: React.FC = () => {
 
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex-1 min-w-0">
-                                    {p.codigo_institucional && (
-                                        <p className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.2em] mb-1 font-mono">
-                                            {p.codigo_institucional}
-                                        </p>
-                                    )}
                                     <h3 className="font-medium text-text-main text-sm leading-snug line-clamp-2 group-hover:text-brand transition-colors">
                                         {p.titulo?.trim() || '(Sin título)'}
                                     </h3>
@@ -580,58 +572,15 @@ const MyProjectsPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className={`status-label ${cfg.badge} mb-4 text-[10px] tracking-wider uppercase font-semibold`} style={cfg.style}>
+                            {/* Estado */}
+                            <div className="flex items-center gap-1.5">
                                 <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
-                                {cfg.label}
-                                {p.rol_en_proyecto && (
-                                    <span className="opacity-60 ml-1">· {p.rol_en_proyecto}</span>
-                                )}
+                                <span className={`${cfg.badge} !bg-transparent !border-0 !p-0 text-xs font-semibold`} style={cfg.style ? { color: cfg.style.color } : undefined}>
+                                    {cfg.label}
+                                </span>
                             </div>
 
-                            {p.linea_investigacion && (
-                                <div className="flex items-center gap-1.5 text-[10px] text-text-dim mb-4">
-                                    <BookOpen size={10} />
-                                    <span className="truncate">{p.linea_investigacion}</span>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-3 gap-2 mb-4">
-                                <div className="text-center p-2 bg-bg-deep rounded-lg border border-border-thin">
-                                    <p className="stat-number--sm !text-base font-bold text-text-main font-mono">{p.total_investigadores}</p>
-                                    <p className="text-[9px] text-text-dim uppercase tracking-wide">Invest.</p>
-                                </div>
-                                <div className="text-center p-2 bg-bg-deep rounded-lg border border-border-thin">
-                                    <p className="stat-number--sm !text-base font-bold text-text-main font-mono">{p.total_productos}</p>
-                                    <p className="text-[9px] text-text-dim uppercase tracking-wide">Produc.</p>
-                                </div>
-                                <div className="text-center p-2 bg-bg-deep rounded-lg border border-border-thin">
-                                    <p className="stat-number--sm !text-base font-bold text-text-main font-mono">
-                                        {p.informes_aprobados}/{p.total_informes}
-                                    </p>
-                                    <p className="text-[9px] text-text-dim uppercase tracking-wide">Informes</p>
-                                </div>
-                            </div>
-
-                            {p.presupuesto_total !== undefined && p.presupuesto_total > 0 && (
-                                <div className="mb-3">
-                                    <div className="flex justify-between text-[10px] font-mono text-text-dim mb-1">
-                                        <span>Ejecución presupuestaria</span>
-                                        <span className="text-text-main font-bold">{presupuestoPorc.toFixed(0)}%</span>
-                                    </div>
-                                    <div className="w-full h-1 bg-border-thin rounded-full overflow-hidden">
-                                        <div
-                                            className="progress-fill progress-fill--brand"
-                                            style={{ width: `${presupuestoPorc}%` }}
-                                        />
-                                    </div>
-                                    <div className="flex justify-between text-[9px] text-text-dim mt-1">
-                                        <span>${(p.presupuesto_ejecutado ?? 0).toLocaleString('es-EC')}</span>
-                                        <span>${(p.presupuesto_total).toLocaleString('es-EC')}</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="flex items-center justify-between pt-3 border-t border-border mt-4 text-[10px] text-text-dim">
+                            <div className="flex items-center justify-between mt-6 text-[10px] text-text-dim">
                                 <div className="flex items-center gap-1">
                                     <Calendar size={10} />
                                     <span>
@@ -642,16 +591,16 @@ const MyProjectsPage: React.FC = () => {
                                             : '—'}
                                     </span>
                                 </div>
+                                {(p.total_informes ?? 0) > 0 && (
+                                    <div className="flex items-center gap-1" title="Informes aprobados / total requeridos">
+                                        <FileText size={10} />
+                                        <span>{p.informes_aprobados}/{p.total_informes} inf.</span>
+                                    </div>
+                                )}
                                 {p.trl_actual != null && (
                                     <div className="flex items-center gap-1">
                                         <Zap size={10} className="text-warning" />
                                         <span>TRL {p.trl_actual}/{p.trl_meta ?? '—'}</span>
-                                    </div>
-                                )}
-                                {p.puntaje_evaluacion != null && (
-                                    <div className="flex items-center gap-1">
-                                        <BarChart3 size={10} className="text-success" />
-                                        <span className="text-success font-bold">{p.puntaje_evaluacion}/100</span>
                                     </div>
                                 )}
                             </div>
