@@ -51,9 +51,10 @@ Esta skill documenta de forma exacta las convenciones de diseño del sistema DII
 * Prohibido el uso de emojis en cualquier parte de la interfaz.
 * Prohibidos los iconos SVG decorativos superfluos.
 
-### 1.8. Expansión Dinámica de Bloques (Permitir Crecer, Nunca Reducir ni Comprimir)
+### 1.8. Expansión Dinámica y Evolución Aditiva de Bloques (Añadir Libremente, Nunca Quitar ni Comprimir)
 * Los bloques de contenido y componentes estructurados deben fluir libremente con altura automática (`h-auto`, `min-h-fit`).
-* Si un bloque requiere alojar nuevos datos, tablas o controles de edición para producción, **debe expandirse hacia abajo todo lo necesario**.
+* Si un bloque requiere alojar nuevos datos, tablas o controles de edición para adaptarse al 100% a los formatos oficiales, **se autoriza activamente editarlos para añadir todo lo necesario**.
+* **Principio Aditivo (Sumar, jamás restar):** Se añaden campos, columnas o herramientas; queda prohibido quitar elementos existentes para "hacer espacio".
 * Queda estrictamente prohibido aplicar alturas fijas forzadas (`h-[xxx]`), scrolls internos restrictivos o recortes que asfixien, compriman o reduzcan el bloque.
 
 ---

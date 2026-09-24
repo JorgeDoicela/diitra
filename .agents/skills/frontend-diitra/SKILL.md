@@ -79,7 +79,14 @@ Al transformar, estilizar, refinar o alinear cualquier bloque de fábrica (`canv
 | **Densidad y Espacio** | Achicar fuentes a `text-[9px]` o quitar padding para que "quepa en una hoja". | Mantener tipografía legible y espaciado ergonómico; el bloque crece verticalmente. |
 | **Manejo de Textos** | Usar `truncate` o `line-clamp-2` ocultando texto del usuario en edición. | Mostrar todo el texto sin truncamientos, expandiendo la altura del campo automáticamente. |
 
-* **Regla de Oro:** Todo rediseño hacia producción se realiza mejorando el CSS, la tipografía y los tokens visuales, **garantizando que el bloque conserve intactas todas sus capacidades de edición y crezca holgadamente hacia abajo sin jamás comprimirse ni reducirse**.
+### 6.5. Evolución Aditiva de los Bloques (Añadir Libremente, Jamás Quitar)
+* **Plena Libertad para Editar y Enriquecer:** El agente tiene **autorización total y activa** para modificar y editar los bloques (`canvasRenderers/`, `DocumentTemplateRegistry`, paneles de propiedades, schemas) con el objetivo de **añadir todo lo necesario** para que se adapten al 100% a los formatos oficiales ISTPET, CACES o SENESCYT.
+* **Principio Aditivo Estricto (Añadir, Nunca Restar):**
+  - Si un formato oficial requiere nuevos campos de texto, selectores de catálogo, tablas anidadas, columnas metodológicas, sub-secciones de impacto o metadatos de evaluación, **se añaden directamente al bloque**.
+  - **PROHIBIDO QUITAR COSAS:** Nunca elimines campos, configuraciones previas o herramientas existentes con la excusa de simplificar o por falta de espacio. Se conservan los existentes y se incorporan los nuevos requerimientos.
+  - El bloque crece verticalmente con holgura (`h-auto`) para alojar todas las nuevas adiciones sin asfixiar la interfaz.
+
+* **Regla de Oro:** Todo rediseño hacia producción se realiza mejorando el CSS, la tipografía y los tokens visuales, **garantizando que el bloque conserve intactas todas sus capacidades de edición, incorpore aditivamente cualquier nuevo requisito de los formatos oficiales y crezca holgadamente hacia abajo sin jamás comprimirse ni reducirse**.
 
 ## 7. Sistema de Portapapeles Estructurado para IA (core/clipboard)
 
@@ -295,5 +302,43 @@ El sistema es polimórfico mediante el prop `role?: 'author' | 'reviewer'` en `B
 - `any` explícito **siempre viola** ESLint → usar `unknown` / `Record<string, unknown>` / `Record<string, unknown>[]`
 - Parámetros no usados → prefijo `_` (ej: `_data`)
 - Hooks → `useMemo`/`useState`/`useCallback` **siempre ANTES** de cualquier `return` condicional (Rules of Hooks)
+
+---
+
+## 8. Trayecto de Vida del Documento y Catálogo Oficial V1
+
+### 8.1. Catálogo Oficial de Formatos Institucionales (V1)
+El sistema gestiona 4 formatos normativos oficiales (`DocumentTemplateRegistry.ts`):
+1. **`PROTOCOLO_INVESTIGACION` (Formulación de Proyecto I+D):** Estructura completa (identificación, equipo, metodología, presupuesto, cronograma Gantt, impactos y bibliografía).
+2. **`INFORME_AVANCE` (Seguimiento Semestral):** Matriz estandarizada de reporte periódico de hitos, actividades ejecutadas y evidencias.
+3. **`INFORME_FINAL` (Cierre Técnico):** Documento de culminación técnica con productos académicos alcanzados e impactos institucionales.
+4. **`PLAN_APRENDIZAJE` (APE):** Vinculación y aprendizaje práctico para estudiantes investigadores colaboradores.
+
+### 8.2. Arquitectura del Trayecto de Extremo a Extremo (Lifecycle)
+El documento recorre un pipeline estricto donde el diseño y los datos permanecen desacoplados:
+```
+1. MOLDE MAESTRO           2. INSTANCIACIÓN          3. WORKSPACE COLABORATIVO     4. ARBITRAJE / REVISIÓN      5. EMISIÓN OFICIAL
+   /admin/templates    →      Clonación          →      DocumentEditor + CoWork  →    Evaluación Técnica    →    DocumentEngine
+   (Bloques, Paleta,          (Snapshot JSON en         (Yjs en tiempo real,          (Dictamen CACES,           (PDF/Word A4,
+    Lienzo interactivo)        inv_document_instances)   persistencia por field_key)   candados de aprobación)    firmas electrónicas)
+```
+
+* **Molde (`/admin/templates`):** El Administrador diseña los bloques en el lienzo ([BlockCanvas](file:///c:/Users/DESARROLLADOR/Desktop/Proyectos/diitra/diitra_web/src/pages/Admin/Templates/components/BlockCanvas.tsx)). Los cambios aquí son moldes para futuros proyectos.
+* **Instancia Inmutable:** Al crear el proyecto se guarda `TemplateConfigSnapshotJson`. Los documentos en curso leen su snapshot; nunca sufren desconfiguración por cambios posteriores en la plantilla.
+* **Workspace Activo (`DocumentEditor` / `DIITRABuilderShell`):** Docentes redactan de forma colaborativa con `<CoWorkField>`. Los datos se guardan desacoplados por `field_key` (`data_snapshot_json`).
+* **Preservación Innegociable:** En ninguna etapa de edición se aplanan los bloques a HTML estático ni se eliminan inputs/botones dinámicos.
+
+---
+
+## 9. Herramientas del Editor: Bloqueo de Secciones y Control de Concurrencia
+
+### 9.1. Arquitectura de Protección con `SectionBlockGuard`
+Cada sección en el lienzo se envuelve con `<SectionBlockGuard>`, centralizando:
+1. **Control de Concurrencia (Inline Lock):** Con `showInlineLock={true}`, previene colisiones visuales mostrando el estado de edición activa y candados de presencia.
+2. **Bloqueo por Estado y Rol (`readOnly` / `readOnlyReason`):**
+   - Cuando una sección o documento ha sido revisado o aprobado por la coordinación o CACES (`State != Draft`), se bloquea la edición sin alterar la presentación visual de alta fidelidad.
+   - Si un usuario no tiene permisos sobre la sección, se despliega el motivo descriptivo (`readOnlyReason`), impidiendo modificaciones accidentales.
+3. **Unificación con el Portapapeles de IA:** `SectionBlockGuard` integra automáticamente el `<BlockClipboardWrapper>` en su interior, garantizando que el usuario pueda copiar el contenido de la sección estructurado para IA incluso si está bloqueada para edición.
+
 
 

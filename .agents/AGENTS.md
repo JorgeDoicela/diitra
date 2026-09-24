@@ -20,9 +20,9 @@ Este archivo define el stack tecnológico y las convenciones exclusivas del proy
 
 Para garantizar que el agente aplique tanto los estándares globales como los patrones específicos del proyecto, activa siempre las habilidades en **cascada/combinación**:
 
-* **Tareas de Frontend (UI, componentes React, Yjs, cliente API):**
+* **Tareas de Frontend (UI, componentes React, Yjs, cliente API, Plantillas y Documentos):**
   1. Activar skill global `desarrollo-frontend` (reglas generales de UX/UI, React, Hooks y tipado estricto).
-  2. Activar skill local `frontend-diitra` (convenciones de CoWorkField, snake_case, umbral de 700 líneas y cliente Axios).
+  2. Activar skill local `frontend-diitra` (CoWorkField, snake_case, umbral de 700 líneas, preservación innegociable de editabilidad en plantillas V1, trayecto del documento y portapapeles/bloqueos con SectionBlockGuard).
 
 * **Tareas de Sistema de Diseño Visual, Tokens CSS, Paleta de Colores, Animaciones o Estilo Vercel:**
   1. Activar skill global `desarrollo-frontend`.
