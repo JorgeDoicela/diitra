@@ -193,13 +193,15 @@ export const BASE_STYLES = `
       letter-spacing: 0.5px;
   }
 
-  /* Títulos de sección */
+  /* Títulos de sección con prevención estricta de encabezados huérfanos */
   .title-h1 { 
       font-size: 16pt; 
       font-weight: bold; 
       color: {{default theme.colors.primary "#222c57"}}; 
       margin-top: 35px; 
       text-transform: uppercase; 
+      break-after: avoid;
+      page-break-after: avoid;
   }
   .title-h2 { 
       font-size: 10pt; 
@@ -209,6 +211,8 @@ export const BASE_STYLES = `
       padding: 6px 12px; 
       margin-top: 25px; 
       text-transform: uppercase; 
+      break-after: avoid;
+      page-break-after: avoid;
   }
   .title-h3 { 
       font-size: 9.5pt; 
@@ -216,15 +220,33 @@ export const BASE_STYLES = `
       color: {{default theme.colors.secondary "#c4a857"}}; 
       margin-top: 15px; 
       text-transform: uppercase; 
+      break-after: avoid;
+      page-break-after: avoid;
+  }
+  .doc-section-header, p.section-title-p {
+      break-after: avoid;
+      page-break-after: avoid;
   }
   
   /* Tablas generales compactas con bordes negros (formato premium original) */
-  .info-table, .data-table { 
+  .info-table, .data-table, table { 
       width: 100%; 
       border-collapse: collapse; 
       margin-bottom: 12px; 
       font-size: 9pt; 
       background: #ffffff; 
+  }
+  thead {
+      display: table-header-group !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+  }
+  tfoot {
+      display: table-footer-group !important;
+  }
+  tr {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
   }
   .info-table td, .info-table th, .data-table td, .data-table th { 
       border: 1px solid #000000; 
@@ -250,32 +272,45 @@ export const BASE_STYLES = `
       font-size: 8.5pt; 
   }
   
-  /* Texto enriquecido */
+  /* Texto enriquecido con control de líneas huérfanas y viudas */
   .rich-content { 
       font-size: 9.5pt; 
       text-align: justify; 
       color: #000000; 
       margin-top: 10px; 
       line-height: 1.4; 
+      orphans: 3;
+      widows: 3;
   }
-  .rich-content p { margin: 6px 0; }
-  .rich-content ul, .rich-content ol { padding-left: 20px; margin: 6px 0; }
+  .rich-content p { margin: 6px 0; orphans: 3; widows: 3; }
+  .rich-content ul, .rich-content ol { padding-left: 20px; margin: 6px 0; break-inside: avoid; page-break-inside: avoid; }
   .rich-content table { width: 100%; border-collapse: collapse; margin: 10px 0; }
   .rich-content table td, .rich-content table th { border: 1px solid #000000; padding: 6px 8px; font-size: 9pt; }
   .rich-content table th { background: {{ theme.colors.table_header_bg }}; color: {{ theme.colors.table_header_color }}; font-weight: bold; }
   
   /* Dos columnas */
-  .two-col-wrapper { display: table; width: 100%; border-collapse: collapse; margin-top: 15px; }
+  .two-col-wrapper { display: table; width: 100%; border-collapse: collapse; margin-top: 15px; break-inside: avoid; page-break-inside: avoid; }
   .two-col-cell    { display: table-cell; width: 50%; border: 1px solid #000000; vertical-align: top; }
-  .col-header      { padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
+  .col-header      { padding: 8px 12px; font-weight: bold; text-transform: uppercase; font-size: 9pt; break-after: avoid; page-break-after: avoid; }
   .col-body        { padding: 10px 12px; font-size: 9pt; line-height: 1.4; }
   
-  /* Salto de página */
-  .page-break { page-break-after: always; height: 0; }
+  /* Salto de página canónico W3C / iText */
+  .page-break { 
+      break-after: page !important; 
+      page-break-after: always !important; 
+      height: 0 !important; 
+      line-height: 0 !important; 
+      font-size: 0 !important; 
+      clear: both; 
+  }
+  .keep-together { 
+      break-inside: avoid !important; 
+      page-break-inside: avoid !important; 
+  }
   
   /* Firmas y Trazabilidad */
-  .signatures-row { display: flex; justify-content: space-around; margin-top: 80px; flex-wrap: wrap; gap: 20px; page-break-inside: avoid; }
-  .sig-box        { text-align: center; min-width: 180px; padding-top: 12px; border-top: 1px solid #000000; font-size: 9pt; line-height: 1.5; }
+  .signatures-row { display: flex; justify-content: space-around; margin-top: 80px; flex-wrap: wrap; gap: 20px; break-inside: avoid; page-break-inside: avoid; }
+  .sig-box        { text-align: center; min-width: 180px; padding-top: 12px; border-top: 1px solid #000000; font-size: 9pt; line-height: 1.5; break-inside: avoid; page-break-inside: avoid; }
   .sig-label      { font-weight: bold; font-size: 8pt; color: #475569; text-transform: uppercase; margin-bottom: 6px; }
   .sig-footer     { text-align: center; font-size: 8pt; color: #94a3b8; margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
 </style>

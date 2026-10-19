@@ -141,6 +141,26 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                 );
                             })()}
 
+                            {/* Control Universal de Paginación Editorial */}
+                            {activeBlock.type !== 'cover' && activeBlock.type !== 'page_break' && activeBlock.type !== 'gantt' && (
+                                <div className="flex items-center justify-between p-2.5 bg-surface-hover/30 border border-border-thin rounded-md select-none">
+                                    <div className="pr-2">
+                                        <label className="text-[11px] font-semibold text-text-main block">
+                                            Iniciar en nueva página A4
+                                        </label>
+                                        <p className="text-[9.5px] text-text-dim leading-tight">
+                                            Fuerza un salto de página limpio antes de este bloque en el PDF y en el lienzo.
+                                        </p>
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={Boolean(activeBlock.config?.pageBreakBefore)}
+                                        onChange={e => onUpdateConfig(activeBlock.id, 'pageBreakBefore', e.target.checked)}
+                                        className="w-4 h-4 rounded border-border-thin text-blue-600 focus:ring-0 cursor-pointer"
+                                    />
+                                </div>
+                            )}
+
                             {activeBlock.type === 'cover' && (
                                 <CoverProperties
                                     activeBlock={activeBlock}

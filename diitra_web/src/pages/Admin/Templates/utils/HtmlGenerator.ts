@@ -66,6 +66,11 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
         if (isFirstNonCoverBlock && docCode) {
             html += `\n<div class="doc-normative-code">${docCode}</div>`;
             isFirstNonCoverBlock = false;
+        } else if ((block.config as any)?.pageBreakBefore === true && block.type !== 'page_break') {
+            html += generatePageBreakHtml();
+            if (docCode) {
+                html += `\n<div class="doc-normative-code">${docCode}</div>`;
+            }
         }
 
         switch (block.type) {

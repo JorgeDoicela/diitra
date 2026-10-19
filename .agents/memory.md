@@ -11,10 +11,24 @@ Este archivo almacena el contexto operativo, decisiones arquitectónicas consoli
   - Serialización estricta en `snake_case` desde el backend: mapear en React esperando `snake_case` con fallback dual defensivo (`has_template_update || hasTemplateUpdate`).
   - Colaboración en tiempo real: integración obligatoria de Yjs mediante `<CoWorkField>`.
   - Estilos: Sistema Geist Design con Tailwind CSS v4 nativo en `base.css`. Prohibido introducir estilos ad-hoc si existe la clase semántica (`.bento-card`, `.btn-vercel-*`, etc.). Mapeo estricto de `--font-mono: "Geist Mono", monospace` y eliminación de importaciones redundantes de tokens (`theme.css`).
+  - Paginación y Maquetación Editorial (W3C Paged Media):
+    - `BlockCanvas.tsx` segmenta dinámicamente hojas A4 individuales (794px portrait y 1123px landscape para Gantt). Cada hoja incluye cabecera normativa oficial superior derecha y pie de página institucional (`Página X de Y`).
+    - Soporta salto semántico directo `pageBreakBefore: true` a nivel de bloque sin necesidad de inyectar bloques auxiliares descartables de tipo `page_break`.
+    - Distribución oficial por hojas para Protocolos de Investigación e Innovación:
+      * Página 1: Portada Institucional (Cover).
+      * Página 2: 1. Identificación del Proyecto + 2. Investigadores (~750px, cabe holgada en A4).
+      * Página 3: 3. Especificación del Proyecto (`pageBreakBefore: true`).
+      * Página 4: 4. Recursos, Costo y Financiamiento (`pageBreakBefore: true`) + 5. Productos Esperados + 6. Impactos.
+      * Página 5: 7. Cronograma de Actividades (Gantt, apaisada 1123x794px).
+      * Página 6: 8. Bibliografía + Firmas de Responsabilidad.
+    - `useDocumentTemplatesPage.ts` normaliza automáticamente `pageBreakBefore: true` en bloques técnicos y presupuestarios si no están definidos, asegurando que las plantillas cargadas reflejen siempre la separación física A4.
+    - Generación HTML modular (`sectionsGenerator.ts`): los saltos de subsección cierran y abren tablas independientes con `<div class="page-break"></div>` a nivel de bloque, eliminando el antipatrón de saltos en `<tr>`.
 * **Backend y Persistencia:**
   - ASP.NET Core Web API (.NET 8) con Pomelo MySQL (`sigafi_es`, puerto 3306).
   - Separación de esquemas: tablas del dominio DIITRA llevan prefijo `inv_` (escritura).
   - Frontera SIGAFI: tablas de catálogos institucionales externos son estrictamente de **solo lectura**.
+  - Motor de Renderizado PDF (iText 7 pdfHTML):
+    - Reglas editoriales estrictas en `InstitutionalBaseCss` y `WrapInFullHtmlDocument`: prevención de encabezados huérfanos (`break-after: avoid !important`), filas de tabla indivisibles (`tr { break-inside: avoid !important }`), repetición automática de cabeceras en páginas subsiguientes (`thead { display: table-header-group !important }`) y control de viudas/huérfanas (`orphans/widows: 3`).
 
 ---
 

@@ -407,6 +407,7 @@ export interface DocumentBlock {
     title: string;
     isActive: boolean;
     config: {
+        pageBreakBefore?: boolean;
         isEditableWorkspace?: boolean;
         allowDynamicRows?: boolean;
 

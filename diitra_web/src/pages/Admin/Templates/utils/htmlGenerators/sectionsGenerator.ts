@@ -395,8 +395,8 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
 
     if (activeSections.length === 0) return '';
 
-    // Matriz Reticular Interactiva Institucional (table_2col)
-    const renderedRows: string[] = [];
+    // Matriz Reticular Interactiva Institucional (table_2col con segmentación W3C de saltos)
+    const tableSegments: string[][] = [[]];
     let i = 0;
 
     while (i < activeSections.length) {
@@ -407,13 +407,19 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
         const colSpan = sec.colSpan || 2;
         const variant = sec.variant || 'standard';
         const isGroup = sec.isGroupHeader || sec.hasContent === false;
-        const breakBefore = sec.pageBreakBefore ? 'page-break-before: always;' : '';
         const avoidInside = sec.avoidBreakInside !== false ? 'page-break-inside: avoid;' : '';
         const { bg: color, fg: fontColor } = resolveVariantStyles(variant);
 
+        // Si la subsección requiere salto de página y el segmento actual ya contiene filas,
+        // iniciamos un nuevo segmento de tabla independiente (estándar W3C / iText 7).
+        if (sec.pageBreakBefore && tableSegments[tableSegments.length - 1].length > 0) {
+            tableSegments.push([]);
+        }
+        const currentSegment = tableSegments[tableSegments.length - 1];
+
         if (isGroup || variant === 'banner_gold') {
-            renderedRows.push(`
-      <tr style="${avoidInside} ${breakBefore}">
+            currentSegment.push(`
+      <tr style="${avoidInside}">
         <td colspan="2" style="background-color: ${color} !important; color: ${fontColor} !important; font-weight: bold; text-align: center; padding: 6px 10px; font-size: 9pt; ${cellBorder} text-transform: uppercase; font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
       </tr>`);
             i++;
@@ -430,8 +436,8 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
                 const defaultText2 = nextSec.placeholder || (nextSec.requirementText ? `[${nextSec.requirementText}]` : 'Sin contenido redactado.');
                 const tag2 = `{{{default ${nextVarName} ${nextVarName.toUpperCase()} ${nextPascalVar} ${JSON.stringify(defaultText2)}}}}`;
 
-                renderedRows.push(`
-      <tr style="${avoidInside} ${breakBefore}">
+                currentSegment.push(`
+      <tr style="${avoidInside}">
         <td colspan="2" style="padding: 0; border: 0;">
           <table style="width: 100%; border-collapse: collapse; margin: 0; border: 0; table-layout: fixed;">
             <colgroup>
@@ -453,8 +459,8 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
       </tr>`);
                 i += 2;
             } else {
-                renderedRows.push(`
-      <tr style="${avoidInside} ${breakBefore}">
+                currentSegment.push(`
+      <tr style="${avoidInside}">
         <td colspan="2" style="padding: 0; border: 0;">
           <table style="width: 100%; border-collapse: collapse; margin: 0; border: 0; table-layout: fixed;">
             <colgroup>
@@ -480,8 +486,8 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
             const defaultText1 = sec.placeholder || (sec.requirementText ? `[${sec.requirementText}]` : 'Sin contenido redactado.');
             const tag1 = `{{{default ${varName} ${varName.toUpperCase()} ${pascalVar} ${JSON.stringify(defaultText1)}}}}`;
             const textAlign = variant === 'banner_navy' ? 'center' : 'left';
-            renderedRows.push(`
-      <tr style="${avoidInside} ${breakBefore}">
+            currentSegment.push(`
+      <tr style="${avoidInside}">
         <td style="background-color: ${color} !important; color: ${fontColor} !important; padding: 6px 10px; font-weight: bold; font-size: 8.5pt; text-transform: uppercase; width: 26%; text-align: ${textAlign}; vertical-align: middle; ${cellBorder} font-family: {{ theme.typography.font_family }};">${displayTitle}</td>
         <td style="padding: 8px 10px; font-size: 8.5pt; color: #000000; vertical-align: top; width: 74%; ${cellBorder} font-family: {{ theme.typography.font_family }}; line-height: 1.4;">${tag1}</td>
       </tr>`);
@@ -489,16 +495,17 @@ export const generateProjectTechnicalHtml = (block: DocumentBlock): string => {
         }
     }
 
-    const bodyHtml = `
+    const validSegments = tableSegments.filter(seg => seg.length > 0);
+    const bodyHtml = validSegments.map((segRows) => `
     <table style="width: 100%; border-collapse: collapse; margin-top: 6px; ${tableBorder} table-layout: fixed;">
       <colgroup>
         <col style="width: 26%;" />
         <col style="width: 74%;" />
       </colgroup>
       <tbody>
-        ${renderedRows.join('\n')}
+        ${segRows.join('\n')}
       </tbody>
-    </table>`;
+    </table>`).join('\n  <div class="page-break" style="page-break-after: always; break-after: page; height: 0;"></div>\n');
 
     const sectionTitle = block.title || '3. ESPECIFICACIÓN DEL PROYECTO';
     return `

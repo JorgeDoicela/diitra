@@ -107,12 +107,28 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 width: auto;
             }
             
-            /* ── Títulos de Sección ── */
-            .section-title {
+            /* ── Títulos de Sección y Prevención de Encabezados Huérfanos ── */
+            .section-title, .title-h1, .title-h2, .title-h3, .title-h4, .doc-section-header {
                 font-size: 11pt;
                 font-weight: bold;
                 text-transform: uppercase;
                 margin: 15px 0 10px 0;
+                break-after: avoid !important;
+                page-break-after: avoid !important;
+            }
+            
+            /* ── Tablas Institucionales y Repetición de Cabeceras ── */
+            thead {
+                display: table-header-group !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            tfoot {
+                display: table-footer-group !important;
+            }
+            tr {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
             }
             
             /* ── Tablas de Identificación (Info) ── */
@@ -155,18 +171,36 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 font-size: 8.5pt;
             }
             
-            /* ── Firma Electrónica ── */
-            .firmas-container {
+            /* ── Firma Electrónica y Cajas Indivisibles ── */
+            .firmas-container, .signatures-row {
                 width: 100%;
                 margin-top: 30px;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
             }
-            .firma-box {
+            .firma-box, .sig-box {
                 border: 1px solid #000;
                 padding: 10px;
                 text-align: center;
                 min-height: 80px;
                 width: 48%;
                 display: inline-block;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            
+            /* ── Salto de Página Canónico W3C ── */
+            .page-break {
+                break-after: page !important;
+                page-break-after: always !important;
+                height: 0 !important;
+                line-height: 0 !important;
+                font-size: 0 !important;
+                clear: both;
+            }
+            .keep-together {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
             }
         ";
 
@@ -426,6 +460,38 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     margin-bottom: 2cm;
                     margin-left: 2cm;
                     margin-right: 2cm;
+                }
+                .section-title, .title-h1, .title-h2, .title-h3, .title-h4, .doc-section-header {
+                    break-after: avoid !important;
+                    page-break-after: avoid !important;
+                }
+                thead {
+                    display: table-header-group !important;
+                    break-inside: avoid;
+                    page-break-inside: avoid;
+                }
+                tfoot {
+                    display: table-footer-group !important;
+                }
+                tr {
+                    break-inside: avoid !important;
+                    page-break-inside: avoid !important;
+                }
+                .keep-together, .sig-box, .firma-box, .signatures-row, .firmas-container {
+                    break-inside: avoid !important;
+                    page-break-inside: avoid !important;
+                }
+                .page-break {
+                    break-after: page !important;
+                    page-break-after: always !important;
+                    height: 0 !important;
+                    line-height: 0 !important;
+                    font-size: 0 !important;
+                    clear: both;
+                }
+                p, .rich-content {
+                    orphans: 3;
+                    widows: 3;
                 }
             ");
 

@@ -126,6 +126,9 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     let currentPageNum = 1;
 
     blocks.forEach((block, idx) => {
+        const hasBreakBefore = (block.config as any)?.pageBreakBefore === true;
+        const isLandscape = block.type === 'gantt';
+
         if (block.type === 'page_break') {
             pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks, pageBreakBlockId: block.id });
             currentPageBlocks = [];
@@ -137,6 +140,20 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
             }
             pages.push({ pageNum: currentPageNum, blocks: [{ block, originalIndex: idx }] });
             currentPageBlocks = [];
+            currentPageNum++;
+        } else if (isLandscape) {
+            // El bloque de cronograma horizontal (Landscape) reside en su propia página exclusiva
+            if (currentPageBlocks.length > 0) {
+                pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
+                currentPageNum++;
+            }
+            pages.push({ pageNum: currentPageNum, blocks: [{ block, originalIndex: idx }] });
+            currentPageBlocks = [];
+            currentPageNum++;
+        } else if (hasBreakBefore && currentPageBlocks.length > 0) {
+            // Salto de página semántico solicitado en la configuración del bloque
+            pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
+            currentPageBlocks = [{ block, originalIndex: idx }];
             currentPageNum++;
         } else {
             currentPageBlocks.push({ block, originalIndex: idx });
@@ -237,6 +254,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                         <div className="space-y-8 flex flex-col items-center">
                             {pages.map((page, pIdx) => {
                                 const isCoverPage = page.blocks.some(b => b.block.type === 'cover');
+                                const isLandscapePage = page.blocks.some(b => b.block.type === 'gantt');
                                 const docCode = themeConfig?.brand?.documentCode || themeConfig?.brand?.document_code || getOfficialDocumentCode(selectedTemplate?.code);
                                 const bgImg = !isCoverPage && themeConfig?.brand?.backgroundImage;
                                 const bgOpacity = parseFloat(themeConfig?.brand?.backgroundOpacity ?? '0.12');
@@ -266,7 +284,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                                 paddingLeft: isCoverPage ? '0' : marginLeft,
                                                 paddingRight: isCoverPage ? '0' : marginRight,
                                             }}
-                                            className={`force-light-theme max-w-[794px] w-full bg-white text-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col transition-all cursor-default ${isCoverPage ? 'gap-0' : 'gap-2'
+                                            className={`force-light-theme ${isLandscapePage ? 'max-w-[1123px] min-h-[794px]' : 'max-w-[794px] min-h-[1123px]'} w-full bg-white text-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 rounded-sm relative flex flex-col transition-all cursor-default ${isCoverPage ? 'gap-0' : 'gap-2'
                                                 }`}
                                         >
                                             {bgImg && (
@@ -317,6 +335,16 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                                         </div>
                                                     );
                                                 })
+                                            )}
+
+                                            {/* Pie de página A4 con numeración oficial del documento */}
+                                            {!isCoverPage && (
+                                                <div className="mt-auto pt-6 pb-1 flex items-center justify-between text-[8pt] text-slate-400 font-sans select-none pointer-events-none border-t border-slate-100 dark:border-slate-800/40 relative z-10">
+                                                    <span className="truncate max-w-[360px] text-slate-400 font-medium">{docTitle}</span>
+                                                    <span className="font-mono text-slate-400 font-semibold tracking-wider">
+                                                        Página {page.pageNum} de {pages.length}
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
                                     </React.Fragment>

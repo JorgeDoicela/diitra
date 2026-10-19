@@ -198,6 +198,20 @@ export const useDocumentTemplatesPage = () => {
                 }
             if (loadedBlocks.length === 0) {
                 loadedBlocks = generateDefaultBlocksForTemplate(tmpl, fullData);
+            } else {
+                // Normalización de saltos de página semánticos para maquetación limpia en lienzo A4
+                loadedBlocks = loadedBlocks.map(b => {
+                    if ((b.type === 'project_technical_section' || b.type === 'project_budget_section') && (b.config as any)?.pageBreakBefore === undefined) {
+                        return {
+                            ...b,
+                            config: {
+                                ...b.config,
+                                pageBreakBefore: true
+                            }
+                        };
+                    }
+                    return b;
+                });
             }
 
             setBlocks(loadedBlocks);

@@ -201,6 +201,7 @@ export function generateDefaultBlocksForTemplate(
                 title: '3. DESCRIPCIÓN DEL PROYECTO',
                 isActive: true,
                 config: {
+                    pageBreakBefore: true,
                     technicalSections: INNOVATION_TECHNICAL_SUBSECTIONS,
                     technicalHeaderColor: '#222c57',
                     technicalBorderStyle: 'solid',
@@ -237,6 +238,7 @@ export function generateDefaultBlocksForTemplate(
                 title: '4. RECURSOS, COSTO Y FINANCIAMIENTO',
                 isActive: true,
                 config: {
+                    pageBreakBefore: true,
                     showRecursosDisponibles: true,
                     showRecursosNecesarios: true,
                     showFinanciamiento: true,
@@ -308,6 +310,7 @@ export function generateDefaultBlocksForTemplate(
                 title: '3. ESPECIFICACIÓN DEL PROYECTO',
                 isActive: true,
                 config: {
+                    pageBreakBefore: true,
                     technicalSections: RESEARCH_TECHNICAL_SUBSECTIONS,
                     technicalHeaderColor: '#222c57',
                     technicalBorderStyle: 'solid',
@@ -321,6 +324,7 @@ export function generateDefaultBlocksForTemplate(
                 title: '4. RECURSOS, COSTO Y FINANCIAMIENTO',
                 isActive: true,
                 config: {
+                    pageBreakBefore: true,
                     showRecursosDisponibles: true,
                     showRecursosNecesarios: true,
                     showFinanciamiento: true,
