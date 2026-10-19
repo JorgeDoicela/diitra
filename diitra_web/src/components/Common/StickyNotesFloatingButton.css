@@ -48,7 +48,7 @@
     position: absolute;
     top: -6px;
     left: -6px;
-    background: #EF4444;
+    background: var(--error);
     color: #fff;
     border-radius: 50%;
     min-width: 18px;
@@ -61,12 +61,12 @@
     padding: 0 3px;
     border: 2px solid var(--bg);
     animation: badge-pulse 2s ease-in-out infinite;
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 0 0 var(--error-subtle);
 }
 
 @keyframes badge-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35); }
-    50%       { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+    0%, 100% { box-shadow: 0 0 0 0 var(--error-subtle); }
+    50%       { box-shadow: 0 0 0 5px transparent; }
 }
 
 /* Chip de contexto de página */
