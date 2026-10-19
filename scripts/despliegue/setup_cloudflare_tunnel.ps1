@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 # ==============================================================================
 # DIITRA - Cloudflare Tunnel Professional Control Suite
 # ==============================================================================
@@ -14,27 +14,58 @@ param (
     [string]$LocalService = "http://localhost:80",
 
     [Parameter(Mandatory = $false, HelpMessage = "Nombre identificador del tunel")]
-    [string]$TunnelName = "diitra-tunnel"
+    [string]$TunnelName = "diitra-tunnel",
+
+    [Parameter(Mandatory = $false, HelpMessage = "Iniciar en segundo plano silencioso")]
+    [switch]$Background,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Detener tunel en segundo plano")]
+    [switch]$Stop,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Ejecutar diagnostico de salud y salir")]
+    [switch]$Check,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Habilitar auto-arranque a nivel usuario")]
+    [switch]$EnableAutoStart,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Deshabilitar auto-arranque a nivel usuario")]
+    [switch]$DisableAutoStart,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Instalar como Servicio Permanente de Windows (Requiere Admin)")]
+    [switch]$InstallService,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Desinstalar Servicio Permanente de Windows (Requiere Admin)")]
+    [switch]$UninstallService
 )
 
 $ErrorActionPreference = "Stop"
 $Host.UI.RawUI.WindowTitle = "DIITRA - Cloudflare Tunnel Control Suite"
 
-# 1. Elevacion automatica de privilegios
+# 1. Deteccion de privilegios (Permite ejecucion tanto de Usuario como de Administrador)
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $isAdmin) {
-    Write-Host "======================================================================" -ForegroundColor Red
-    Write-Host " [!] Este script requiere privilegios de Administrador de Windows." -ForegroundColor Red
-    Write-Host " Elevando permisos en una nueva ventana..." -ForegroundColor Yellow
-    Write-Host "======================================================================" -ForegroundColor Red
-    Start-Process powershell -ArgumentList "-NoExit -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -Hostname `"$Hostname`" -LocalService `"$LocalService`" -TunnelName `"$TunnelName`"" -Verb RunAs
-    exit
+
+function Assert-AdminPrivileges {
+    param ([string]$ActionDescription = "esta operacion")
+    if (-not $isAdmin) {
+        Write-Host ""
+        Write-Host "======================================================================" -ForegroundColor Yellow
+        Write-Host " [!] Se requieren privilegios de Administrador para $ActionDescription." -ForegroundColor Yellow
+        Write-Host "======================================================================" -ForegroundColor Yellow
+        $elev = Read-Host "Deseas abrir una ventana elevada como Administrador para completar esta accion? [S/N]"
+        if ($elev -match '^(s|y)$') {
+            Start-Process powershell -ArgumentList "-NoExit -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -Hostname `"$Hostname`" -LocalService `"$LocalService`" -TunnelName `"$TunnelName`"" -Verb RunAs
+        }
+        return $false
+    }
+    return $true
 }
 
 # Rutas de configuracion y perfiles
 $CloudflaredDir = Join-Path $env:USERPROFILE ".cloudflared"
 $ServiceConfigDir = "C:\ProgramData\cloudflared"
 $SystemProfileDir = "C:\Windows\System32\config\systemprofile\.cloudflared"
+$UserStartupDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup"
+$UserStartupVbs = Join-Path $UserStartupDir "Start-Cloudflare-Tunnel.vbs"
 
 function Write-Header ($text) {
     Write-Host ""
@@ -197,6 +228,78 @@ function Start-OnDemandTunnel {
     cmd.exe /c "cloudflared tunnel --config `"$configPath`" run"
 }
 
+# 4.1 Utilidades de Proceso y Segundo Plano (Nivel Usuario)
+function Test-IsTunnelProcessRunning {
+    $proc = Get-Process -Name "cloudflared" -ErrorAction SilentlyContinue
+    return [bool]$proc
+}
+
+function Start-BackgroundTunnel {
+    Write-Header "Iniciando Tunel en Segundo Plano (Proceso de Usuario)"
+    if (Test-IsTunnelProcessRunning) {
+        $p = Get-Process -Name "cloudflared" -ErrorAction SilentlyContinue | Select-Object -First 1
+        Write-Success "El proceso 'cloudflared' ya se encuentra en ejecucion (PID: $($p.Id))."
+        return
+    }
+    if (-not (Ensure-Cloudflared)) { return }
+    if (-not (Ensure-TunnelConfig)) { return }
+
+    $configPath = Join-Path $ServiceConfigDir "config.yml"
+    $exe = (Get-Command cloudflared -ErrorAction SilentlyContinue).Source
+    if (-not $exe) { $exe = "cloudflared.exe" }
+
+    Start-Process -FilePath $exe -ArgumentList "tunnel --config `"$configPath`" run" -WindowStyle Hidden
+    Start-Sleep -Seconds 3
+
+    if (Test-IsTunnelProcessRunning) {
+        $p = Get-Process -Name "cloudflared" -ErrorAction SilentlyContinue | Select-Object -First 1
+        Write-Success "Tunel iniciado exitosamente en segundo plano (PID: $($p.Id))."
+        Write-Host "Tus proyectos estan en linea sin consolas visibles requeridas." -ForegroundColor Green
+    } else {
+        Write-Failure "No se pudo iniciar el proceso en segundo plano."
+    }
+}
+
+function Stop-BackgroundTunnel {
+    Write-Header "Deteniendo Tunel en Segundo Plano"
+    $procs = Get-Process -Name "cloudflared" -ErrorAction SilentlyContinue
+    if ($procs) {
+        $procs | ForEach-Object { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue }
+        Start-Sleep -Seconds 1
+        Write-Success "Procesos de cloudflared detenidos."
+    } else {
+        Write-Success "No habia ningun proceso de cloudflared en ejecucion."
+    }
+}
+
+function Enable-UserAutoStart {
+    Write-Header "Configurando Auto-Inicio del Tunel (Nivel Usuario - Sin Admin)"
+    if (-not (Test-Path $UserStartupDir)) {
+        New-Item -ItemType Directory -Force -Path $UserStartupDir | Out-Null
+    }
+    $configPath = Join-Path $ServiceConfigDir "config.yml"
+    $vbsContent = @"
+' ==============================================================================
+' DIITRA - Cloudflare Tunnel Silent Auto-Launcher
+' ==============================================================================
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run "cloudflared.exe tunnel --config ""$configPath"" run", 0, False
+"@
+    [System.IO.File]::WriteAllText($UserStartupVbs, $vbsContent, [System.Text.Encoding]::ASCII)
+    Write-Success "Acceso de inicio automatico creado en: $UserStartupVbs"
+    Write-Host "El tunel arrancara de forma silenciosa cada vez que inicies sesion en Windows." -ForegroundColor Green
+}
+
+function Disable-UserAutoStart {
+    Write-Header "Deshabilitando Auto-Inicio del Tunel (Nivel Usuario)"
+    if (Test-Path $UserStartupVbs) {
+        Remove-Item -Path $UserStartupVbs -Force -ErrorAction SilentlyContinue
+        Write-Success "Auto-inicio a nivel de usuario eliminado."
+    } else {
+        Write-Success "El auto-inicio a nivel de usuario no estaba configurado."
+    }
+}
+
 # 5. Diagnostico Integral de Salud (Health Check)
 function Run-HealthCheck {
     Write-Header "Diagnostico de Salud del Sistema (Health Check)"
@@ -245,15 +348,23 @@ function Run-HealthCheck {
         Write-Host " [AVISO: No se pudo resolver CNAME via DNS local]" -ForegroundColor Yellow
     }
 
-    # 5.5 Estado del Servicio de Windows
-    Write-Host "5. Estado del Servicio de Windows (24/7):" -NoNewline
+    # 5.5 Estado del Servicio / Proceso
+    Write-Host "5. Estado del Tunel Cloudflare:"
     $svc = Get-Service Cloudflared -ErrorAction SilentlyContinue
     if ($svc) {
         $color = if ($svc.Status -eq 'Running') { "Green" } else { "Yellow" }
-        Write-Host " [$($svc.Status)]" -ForegroundColor $color
+        Write-Host "   - Servicio Windows (24/7):  [$($svc.Status)]" -ForegroundColor $color
     } else {
-        Write-Host " [No instalado / Modo Bajo Demanda]" -ForegroundColor Gray
+        Write-Host "   - Servicio Windows (24/7):  [No instalado]" -ForegroundColor Gray
     }
+    if (Test-IsTunnelProcessRunning) {
+        $p = Get-Process -Name "cloudflared" -ErrorAction SilentlyContinue | Select-Object -First 1
+        Write-Host "   - Proceso de Fondo (Usuario): [RUNNING (PID: $($p.Id))]" -ForegroundColor Green
+    } else {
+        Write-Host "   - Proceso de Fondo (Usuario): [INACTIVO]" -ForegroundColor Gray
+    }
+    $autoText = if (Test-Path $UserStartupVbs) { "[CONFIGURADO]" } else { "[NO CONFIGURADO]" }
+    Write-Host "   - Auto-Inicio nivel usuario:  $autoText" -ForegroundColor $(if (Test-Path $UserStartupVbs) { "Green" } else { "DarkGray" })
 
     # 5.6 Ping a la URL Publica HTTPS
     Write-Host "6. Conectividad Publica HTTPS (https://$Hostname):" -NoNewline
@@ -272,6 +383,7 @@ function Run-HealthCheck {
 # 6. Gestion del Servicio Permanente 24/7 (Instalar)
 function Install-PermanentService {
     Write-Header "Instalando Tunel como Servicio de Windows (24/7 Persistente)"
+    if (-not (Assert-AdminPrivileges "instalar el Servicio Windows 24/7")) { return }
     $origEAP = $ErrorActionPreference
     $ErrorActionPreference = "SilentlyContinue"
 
@@ -326,6 +438,7 @@ function Install-PermanentService {
 # 7. Desinstalar Servicio Permanente
 function Uninstall-PermanentService {
     Write-Header "Desinstalando Servicio Permanente de Windows"
+    if (-not (Assert-AdminPrivileges "desinstalar el Servicio Windows")) { return }
     $origEAP = $ErrorActionPreference
     $ErrorActionPreference = "SilentlyContinue"
 
@@ -358,6 +471,7 @@ function Uninstall-PermanentService {
 # 8. Redireccion Raiz en IIS
 function Setup-RootRedirect {
     Write-Header "Configurando Redireccion Raiz (/) -> (/diitra) en IIS"
+    if (-not (Assert-AdminPrivileges "configurar la redireccion raiz de IIS")) { return }
     $rootPath = "C:\inetpub\wwwroot"
     if (Test-Path $rootPath) {
         $htmlRedirect = @"
@@ -394,50 +508,117 @@ function Clean-SecurityCert {
     }
 }
 
-# 10. Bucle Principal de Control
+# 10. Despacho por Parametros CLI (Modo No Interactivo)
+if ($Background) {
+    Start-BackgroundTunnel
+    exit 0
+}
+if ($Stop) {
+    Stop-BackgroundTunnel
+    exit 0
+}
+if ($Check) {
+    Run-HealthCheck
+    exit 0
+}
+if ($EnableAutoStart) {
+    Enable-UserAutoStart
+    exit 0
+}
+if ($DisableAutoStart) {
+    Disable-UserAutoStart
+    exit 0
+}
+if ($InstallService) {
+    Install-PermanentService
+    exit 0
+}
+if ($UninstallService) {
+    Uninstall-PermanentService
+    exit 0
+}
+
+# 11. Bucle Principal de Control Interactivo
 do {
     Write-Host ""
     Write-Host "==================================================" -ForegroundColor Cyan
     Write-Host "        DIITRA - CLOUDFLARE TUNNEL MANAGER        " -ForegroundColor Cyan -Bold
     Write-Host "==================================================" -ForegroundColor Cyan
-    Write-Host " Dominio: https://$Hostname" -ForegroundColor White
-    Write-Host " Destino: $LocalService (IIS Local)" -ForegroundColor White
+    Write-Host " Dominio:  https://$Hostname" -ForegroundColor White
+    Write-Host " Destino:  $LocalService (IIS Local)" -ForegroundColor White
+    
+    $privText = if ($isAdmin) { "Administrador" } else { "Usuario Estandar" }
+    $privColor = if ($isAdmin) { "Cyan" } else { "Yellow" }
+    Write-Host " Sesion:   [$privText]" -ForegroundColor $privColor
 
     $svc = Get-Service -Name "cloudflared" -ErrorAction SilentlyContinue
+    $isProc = Test-IsTunnelProcessRunning
+    $isAuto = Test-Path $UserStartupVbs
+
     if ($svc -and $svc.Status -eq 'Running') {
-        $modeText = "SERVICIO 24/7 ACTIVO"
+        $modeText = "SERVICIO WINDOWS 24/7 ACTIVO"
+        $modeColor = "Green"
+    } elseif ($isProc) {
+        $modeText = "PROCESO EN SEGUNDO PLANO ACTIVO"
         $modeColor = "Green"
     } elseif ($svc) {
         $modeText = "SERVICIO INSTALADO ($($svc.Status))"
         $modeColor = "Yellow"
     } else {
-        $modeText = "MODO BAJO DEMANDA (DETENIDO)"
+        $modeText = "TUNEL DETENIDO"
         $modeColor = "Gray"
     }
-    Write-Host " Estado:  " -NoNewline
+    Write-Host " Estado:   " -NoNewline
     Write-Host "[$modeText]" -ForegroundColor $modeColor
+
+    $autoStatusText = if ($isAuto) { "Habilitado (Start-Cloudflare-Tunnel.vbs)" } else { "No configurado" }
+    $autoStatusColor = if ($isAuto) { "Green" } else { "DarkGray" }
+    Write-Host " AutoBoot: [$autoStatusText]" -ForegroundColor $autoStatusColor
     Write-Host "--------------------------------------------------" -ForegroundColor Cyan
-    Write-Host " [1] INICIAR SERVIDOR BAJO DEMANDA (Recomendado)" -ForegroundColor Green -Bold
+    Write-Host " [1] Iniciar Tunel en Primer Plano (Consola)"
+    Write-Host " [B] Iniciar Tunel en Segundo Plano (Silencioso)" -ForegroundColor Green -Bold
+    Write-Host " [S] Detener Tunel en Segundo Plano" -ForegroundColor Yellow
     Write-Host " [2] Diagnostico de Salud (Health Check Completo)"
-    Write-Host " [3] Configurar Redireccion Raiz en IIS (/ -> /diitra)"
     Write-Host "--------------------------------------------------" -ForegroundColor Cyan
-    Write-Host " [4] Instalar como Servicio Permanente 24/7 (Fijo)"
+    Write-Host " Automatizacion de Inicio de Sesion (Nivel Usuario - Sin Admin):" -ForegroundColor White
+    Write-Host " [6] Habilitar Auto-Inicio del Tunel al encender/iniciar sesion"
+    Write-Host " [7] Deshabilitar Auto-Inicio del Tunel"
+    Write-Host "--------------------------------------------------" -ForegroundColor Cyan
+    Write-Host " Modo Servicio Nativo 24/7 (Requiere Permisos de Administrador):" -ForegroundColor DarkGray
+    Write-Host " [4] Instalar como Servicio Permanente de Windows"
     Write-Host " [5] Desinstalar Servicio Permanente de Windows"
+    Write-Host " [3] Configurar Redireccion Raiz en IIS (/ -> /diitra)"
     Write-Host "--------------------------------------------------" -ForegroundColor Cyan
     Write-Host " [C] Cambiar Dominio o Servicio Destino"
     Write-Host " [L] Limpieza de Seguridad (Borrar cert.pem)"
     Write-Host " [Q] Salir"
     Write-Host "==================================================" -ForegroundColor Cyan
 
-    $opt = Read-Host "Selecciona una opcion [1-5, C, L o Q]"
+    $opt = Read-Host "Selecciona una opcion [1, B, S, 2, 6, 7, 4, 5, 3, C, L o Q]"
 
     switch ($opt.ToLower()) {
         '1' {
             Start-OnDemandTunnel
             Read-Host "`nPresiona Enter para volver al menu..."
         }
+        'b' {
+            Start-BackgroundTunnel
+            Read-Host "`nPresiona Enter para volver al menu..."
+        }
+        's' {
+            Stop-BackgroundTunnel
+            Read-Host "`nPresiona Enter para volver al menu..."
+        }
         '2' {
             Run-HealthCheck
+            Read-Host "`nPresiona Enter para volver al menu..."
+        }
+        '6' {
+            Enable-UserAutoStart
+            Read-Host "`nPresiona Enter para volver al menu..."
+        }
+        '7' {
+            Disable-UserAutoStart
             Read-Host "`nPresiona Enter para volver al menu..."
         }
         '3' {
@@ -469,7 +650,7 @@ do {
             Read-Host "`nPresiona Enter para volver al menu..."
         }
         'q' {
-            Write-Host "`nSaliendo del administrador del tunel. ¡Buen dia!`n" -ForegroundColor Cyan
+            Write-Host "`nSaliendo del suite de control. ¡Servidor operativo!`n" -ForegroundColor Cyan
             break
         }
         default {
