@@ -133,9 +133,9 @@ namespace Diitra.Application.Common.Documents
         Task<IEnumerable<DocumentTemplate>> GetAvailableTemplatesAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Actualiza el contenido HTML de una plantilla (panel de administración).
+        /// Actualiza el contenido HTML y metadatos normativos de una plantilla (panel de administración).
         /// </summary>
-        Task UpdateTemplateAsync(string templateCode, string newHtmlContent, string? customCss, string? collaborativeFieldsJson, string? themeConfigJson, string updatedBy, CancellationToken cancellationToken = default);
+        Task UpdateTemplateAsync(string templateCode, string newHtmlContent, string? customCss, string? collaborativeFieldsJson, string? themeConfigJson, string updatedBy, string? regulatoryCode = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Restablece una plantilla en la BD a sus archivos físicos oficiales de origen.

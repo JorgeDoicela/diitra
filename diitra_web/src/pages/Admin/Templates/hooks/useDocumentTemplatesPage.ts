@@ -214,7 +214,25 @@ export const useDocumentTemplatesPage = () => {
                 });
             }
 
-            setBlocks(loadedBlocks);
+            // Filtrar cualquier bloque residual de tipo regulatory_code para usar el modelo free-form de lienzo
+            const sanitizedBlocks = loadedBlocks.filter(b => b.type !== 'regulatory_code');
+
+            const activeRegCode = fullData.regulatoryCode || fullData.regulatory_code || tmpl.regulatoryCode || tmpl.regulatory_code;
+            if (activeRegCode && fullData.themeConfigJson) {
+                try {
+                    const parsed = JSON.parse(fullData.themeConfigJson);
+                    parsed.brand = parsed.brand || {};
+                    if (!parsed.brand.documentCode && !parsed.brand.document_code) {
+                        parsed.brand.documentCode = activeRegCode;
+                        parsed.brand.document_code = activeRegCode;
+                        fullData.themeConfigJson = JSON.stringify(parsed);
+                    }
+                } catch {
+                    // ignorar json inválido
+                }
+            }
+
+            setBlocks(sanitizedBlocks);
             setActiveBlockId(loadedBlocks[0]?.id || null);
             setActiveMobileTab('canvas');
             setIsDirty(false);
@@ -648,6 +666,9 @@ export const useDocumentTemplatesPage = () => {
     const handleUpdateConfig = (blockId: string, key: string, value: any) => {
         setBlocks(prev => prev.map(b => {
             if (b.id === blockId) {
+                if (b.type === 'regulatory_code' && (key === 'code' || key === 'regulatoryCode')) {
+                    handleUpdateRegulatoryCode(value);
+                }
                 return {
                     ...b,
                     config: { ...b.config, [key]: value }
@@ -660,6 +681,29 @@ export const useDocumentTemplatesPage = () => {
 
     const handleUpdateThemeConfig = (newThemeJson: string) => {
         setSelectedTemplate(prev => prev ? { ...prev, themeConfigJson: newThemeJson } : null);
+        setIsDirty(true);
+    };
+
+    const handleUpdateRegulatoryCode = (newCode: string) => {
+        setSelectedTemplate(prev => {
+            if (!prev) return null;
+            let updatedThemeJson = prev.themeConfigJson;
+            try {
+                const parsed = prev.themeConfigJson ? JSON.parse(prev.themeConfigJson) : {};
+                parsed.brand = parsed.brand || {};
+                parsed.brand.documentCode = newCode;
+                parsed.brand.document_code = newCode;
+                updatedThemeJson = JSON.stringify(parsed);
+            } catch (err) {
+                console.error('[DIITRA] Error al sincronizar regulatoryCode en themeConfig:', err);
+            }
+            return {
+                ...prev,
+                regulatoryCode: newCode,
+                regulatory_code: newCode,
+                themeConfigJson: updatedThemeJson
+            };
+        });
         setIsDirty(true);
     };
 
@@ -731,6 +775,8 @@ export const useDocumentTemplatesPage = () => {
             const collaborativeFieldsJson = JSON.stringify(extractedFields);
 
             await api.put(`/admin/templates/${selectedTemplate.code}`, {
+                regulatoryCode: selectedTemplate.regulatoryCode || (selectedTemplate as any).regulatory_code || null,
+                regulatory_code: selectedTemplate.regulatoryCode || (selectedTemplate as any).regulatory_code || null,
                 htmlContent: htmlWithEmbeddedJson,
                 html_content: htmlWithEmbeddedJson,
                 customCss: selectedTemplate.customCss || (selectedTemplate as any).custom_css || null,
@@ -959,6 +1005,7 @@ export const useDocumentTemplatesPage = () => {
         handleToggleActive,
         handleUpdateConfig,
         handleUpdateThemeConfig,
+        handleUpdateRegulatoryCode,
         handleSaveTemplate,
         handleResetToDefault,
         handleCellChange,

@@ -200,6 +200,64 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                 </div>
                             )}
 
+                            {/* ── CÓDIGO NORMATIVO OFICIAL ───────────────────────────── */}
+                            {activeBlock.type === 'regulatory_code' && (
+                                <div className="space-y-4 border-t border-border-thin/20 pt-4">
+                                    <LabeledField label="Código Normativo Oficial">
+                                        <input
+                                            type="text"
+                                            className={inputCls}
+                                            value={activeBlock.config.code || activeBlock.config.regulatoryCode || ''}
+                                            onChange={e => {
+                                                onUpdateConfig(activeBlock.id, 'code', e.target.value);
+                                                onUpdateConfig(activeBlock.id, 'regulatoryCode', e.target.value);
+                                            }}
+                                            placeholder="Ej: F – ISTPET – 001 – INDIV – ABR 2026"
+                                        />
+                                    </LabeledField>
+
+                                    <LabeledField label="Alineación Horizontal">
+                                        <select
+                                            className={selectCls}
+                                            value={activeBlock.config.align || activeBlock.config.alignment || 'right'}
+                                            onChange={e => {
+                                                onUpdateConfig(activeBlock.id, 'align', e.target.value);
+                                                onUpdateConfig(activeBlock.id, 'alignment', e.target.value);
+                                            }}
+                                        >
+                                            <option value="right">Alinear a la Derecha (Norma oficial)</option>
+                                            <option value="center">Centrado</option>
+                                            <option value="left">Alinear a la Izquierda</option>
+                                        </select>
+                                    </LabeledField>
+
+                                    <LabeledField label="Estilo Visual del Código">
+                                        <select
+                                            className={selectCls}
+                                            value={activeBlock.config.variant || 'minimal'}
+                                            onChange={e => onUpdateConfig(activeBlock.id, 'variant', e.target.value)}
+                                        >
+                                            <option value="minimal">Texto Plano Monospaciado</option>
+                                            <option value="badge">Cápsula / Badge Suave</option>
+                                            <option value="boxed">Recuadro Oficial con Borde</option>
+                                        </select>
+                                    </LabeledField>
+
+                                    <LabeledField label="Tamaño de Fuente">
+                                        <select
+                                            className={selectCls}
+                                            value={activeBlock.config.fontSize || '8.5pt'}
+                                            onChange={e => onUpdateConfig(activeBlock.id, 'fontSize', e.target.value)}
+                                        >
+                                            <option value="7.5pt">Muy Pequeño (7.5pt)</option>
+                                            <option value="8.5pt">Estándar (8.5pt)</option>
+                                            <option value="9.5pt">Mediano (9.5pt)</option>
+                                            <option value="11pt">Grande (11pt)</option>
+                                        </select>
+                                    </LabeledField>
+                                </div>
+                            )}
+
                             {/* ── TEXTO ENRIQUECIDO ────────────────────────────────────────── */}
                             {activeBlock.type === 'rich_text' && (
                                 <div className="space-y-4 border-t border-border-thin/20 pt-4">
@@ -491,7 +549,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                     />
 
                                     <BorderPickerField
-                                        title="Bordes de las Tablas"
+                                        label="Bordes de las Tablas"
                                         borderStyle={(activeBlock.config as any)?.budgetBorderStyle || 'solid'}
                                         borderColor={(activeBlock.config as any)?.budgetBorderColor || '#000000'}
                                         borderWidth={(activeBlock.config as any)?.budgetBorderWidth ?? 1}

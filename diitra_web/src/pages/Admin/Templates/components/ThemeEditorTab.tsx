@@ -22,7 +22,7 @@ const inputCls = "w-full text-[11px] bg-surface-hover/60 hover:bg-surface-hover/
 const selectCls = "w-full text-[11px] bg-surface-hover/60 hover:bg-surface-hover/90 border border-border-thin rounded-md p-2 text-text-main focus:bg-surface focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black dark:focus:ring-white transition-all focus:outline-none";
 
 const CATEGORY_META = {
-    brand: { label: 'Identidad y Código Oficial', icon: Shield },
+    brand: { label: 'Identidad Visual (Portada y Fondo)', icon: Shield },
     colors: { label: 'Paleta de Colores', icon: Palette },
     typography: { label: 'Tipografía', icon: Type },
     layout: { label: 'Diseño y Márgenes', icon: Layout },
@@ -65,11 +65,11 @@ export const ThemeEditorTab: React.FC<ThemeEditorTabProps> = ({
                 <button
                     type="button"
                     onClick={() => onUpdateThemeConfig(JSON.stringify(buildDefaultTheme()))}
-                    className="p-1.5 text-[10px] font-medium text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md border border-border-thin shrink-0 flex items-center gap-1 transition-all cursor-pointer"
-                    title="Restablecer valores institucionales por defecto"
+                    className="p-1.5 text-[10px] font-medium text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md border border-border-thin shrink-0 flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+                    title="Restablece únicamente los colores, tipografías y márgenes por defecto (no altera bloques ni contenido)"
                 >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Restablecer</span>
+                    <RotateCcw className="w-3 h-3 text-text-dim" />
+                    <span>Restablecer Estilos</span>
                 </button>
             </div>
 
@@ -201,6 +201,152 @@ export const ThemeEditorTab: React.FC<ThemeEditorTabProps> = ({
                                 );
                             })}
                         </div>
+
+                        {cat === 'brand' && (
+                            <div className="mt-4 pt-4 border-t border-border-thin/25 space-y-3 bg-surface-hover/20 p-3 rounded-lg border border-border-thin/20">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10.5px] font-bold text-text-main flex items-center gap-1.5 uppercase tracking-wide">
+                                        <Shield className="w-3.5 h-3.5 text-indigo-500" />
+                                        Código Normativo Oficial
+                                    </span>
+                                    <span className="text-[9px] font-mono text-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800">
+                                        Arrastrable en lienzo
+                                    </span>
+                                </div>
+                                <p className="text-[9.5px] text-text-dim leading-relaxed">
+                                    Puedes arrastrar este código con el mouse directamente sobre cualquier hoja A4 del lienzo para ubicarlo con total libertad, o ajustar sus coordenadas aquí:
+                                </p>
+
+                                <LabeledField label="Texto del Código Normativo">
+                                    <input
+                                        type="text"
+                                        value={theme.brand.documentCode || theme.brand.document_code || ''}
+                                        onChange={e => {
+                                            handleThemeChange('brand', 'documentCode', e.target.value);
+                                            handleThemeChange('brand', 'document_code', e.target.value);
+                                        }}
+                                        className={inputCls}
+                                        placeholder="Ej: F – ISTPET – 001 – INDIV – ABR 2026"
+                                    />
+                                </LabeledField>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <LabeledField label="Posición X (% horizontal)">
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="90"
+                                                step="0.5"
+                                                value={theme.brand.codePosition?.x ?? 65}
+                                                onChange={e => handleThemeChange('brand', 'codePosition', {
+                                                    ...(theme.brand.codePosition || { y: 1.2 }),
+                                                    x: Number(e.target.value)
+                                                })}
+                                                className="w-full accent-indigo-600 cursor-pointer"
+                                            />
+                                            <span className="text-[10px] font-mono text-text-main w-8 text-right font-bold">
+                                                {theme.brand.codePosition?.x ?? 65}%
+                                            </span>
+                                        </div>
+                                    </LabeledField>
+
+                                    <LabeledField label="Posición Y (% vertical)">
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="95"
+                                                step="0.5"
+                                                value={theme.brand.codePosition?.y ?? 1.2}
+                                                onChange={e => handleThemeChange('brand', 'codePosition', {
+                                                    ...(theme.brand.codePosition || { x: 65 }),
+                                                    y: Number(e.target.value)
+                                                })}
+                                                className="w-full accent-indigo-600 cursor-pointer"
+                                            />
+                                            <span className="text-[10px] font-mono text-text-main w-8 text-right font-bold">
+                                                {theme.brand.codePosition?.y ?? 1.2}%
+                                            </span>
+                                        </div>
+                                    </LabeledField>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 pt-1">
+                                    <span className="text-[9px] text-text-dim font-bold uppercase tracking-wider">Alineación rápida:</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleThemeChange('brand', 'codePosition', { x: 3, y: 1.2 })}
+                                        className="px-2 py-0.5 text-[9px] font-medium bg-surface border border-border-thin hover:border-text-main rounded text-text-dim hover:text-text-main cursor-pointer transition-colors"
+                                    >
+                                        Izquierda
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleThemeChange('brand', 'codePosition', { x: 35, y: 1.2 })}
+                                        className="px-2 py-0.5 text-[9px] font-medium bg-surface border border-border-thin hover:border-text-main rounded text-text-dim hover:text-text-main cursor-pointer transition-colors"
+                                    >
+                                        Centro
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleThemeChange('brand', 'codePosition', { x: 65, y: 1.2 })}
+                                        className="px-2 py-0.5 text-[9px] font-medium bg-surface border border-border-thin hover:border-text-main rounded text-text-dim hover:text-text-main cursor-pointer transition-colors"
+                                    >
+                                        Derecha
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                    <LabeledField label="Variante Visual">
+                                        <select
+                                            value={theme.brand.codeVariant || 'minimal'}
+                                            onChange={e => handleThemeChange('brand', 'codeVariant', e.target.value)}
+                                            className={selectCls}
+                                        >
+                                            <option value="minimal">Texto Plano Monospaciado</option>
+                                            <option value="badge">Cápsula / Badge Suave</option>
+                                            <option value="boxed">Recuadro Oficial con Borde</option>
+                                        </select>
+                                    </LabeledField>
+
+                                    <LabeledField label="Tamaño Tipográfico">
+                                        <select
+                                            value={theme.brand.codeFontSize || '8pt'}
+                                            onChange={e => handleThemeChange('brand', 'codeFontSize', e.target.value)}
+                                            className={selectCls}
+                                        >
+                                            <option value="7pt">Muy Pequeño (7pt)</option>
+                                            <option value="8pt">Estándar (8pt)</option>
+                                            <option value="8.5pt">Medio (8.5pt)</option>
+                                            <option value="9pt">Enfático (9pt)</option>
+                                            <option value="10pt">Grande (10pt)</option>
+                                        </select>
+                                    </LabeledField>
+                                </div>
+
+                                <div className="space-y-2 pt-2 border-t border-border-thin/20">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-text-dim">Mostrar en Hojas de Contenido (Páginas 2+)</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={theme.brand.showCodeOnPages ?? true}
+                                            onChange={e => handleThemeChange('brand', 'showCodeOnPages', e.target.checked)}
+                                            className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] text-text-dim">Mostrar también en la Portada</span>
+                                        <input
+                                            type="checkbox"
+                                            checked={theme.brand.showCodeOnCover ?? false}
+                                            onChange={e => handleThemeChange('brand', 'showCodeOnCover', e.target.checked)}
+                                            className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             })}

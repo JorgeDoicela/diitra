@@ -1255,6 +1255,7 @@ INSERT INTO inv_pnd_objetivos (uuid, codigo, nombre, descripcion) VALUES
 CREATE TABLE inv_document_templates (
     id                      INT           AUTO_INCREMENT PRIMARY KEY,
     code                    VARCHAR(100)  NOT NULL UNIQUE COMMENT 'Código único (ej: PROTOCOLO_INVESTIGACION)',
+    regulatory_code         VARCHAR(100)  NULL COMMENT 'Código normativo CACES/ISTPET (ej: F – ISTPET – 001 – INDIV – ABR 2026)',
     name                    VARCHAR(255)  NOT NULL,
     description             TEXT,
     html_content            LONGTEXT      NOT NULL,
@@ -1271,7 +1272,8 @@ CREATE TABLE inv_document_templates (
     is_active               TINYINT(1)    NOT NULL DEFAULT 1,
     created_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    updated_by              VARCHAR(100)
+    updated_by              VARCHAR(100),
+    INDEX idx_templates_regulatory_code (regulatory_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_documentos_instancias (
@@ -1279,6 +1281,7 @@ CREATE TABLE inv_documentos_instancias (
     uuid                    VARCHAR(36)   NOT NULL UNIQUE COMMENT 'UUID público de la instancia',
     template_code           VARCHAR(100)  NOT NULL,
     template_version        INT           NOT NULL,
+    regulatory_code         VARCHAR(100)  NULL COMMENT 'Snapshot del código normativo oficial para auditorías CACES en el momento de creación',
     entity_uuid             VARCHAR(36)   NOT NULL        COMMENT 'UUID de la entidad a la que pertenece (Proyecto, Informe, etc)',
     entity_type             VARCHAR(50)   NOT NULL DEFAULT 'Proyecto' COMMENT 'Tipo de entidad (Proyecto, Informe, etc)',
     titulo_instancia        VARCHAR(255)  NULL            COMMENT 'Título descriptivo para el usuario',
@@ -1295,6 +1298,7 @@ CREATE TABLE inv_documentos_instancias (
     purged_at               TIMESTAMP     NULL            COMMENT 'Fecha y hora de la depuración del archivo físico',
     purged_by               VARCHAR(100)  NULL            COMMENT 'Usuario o Job que ejecutó la depuración del archivo',
     INDEX idx_entity (entity_uuid),
+    INDEX idx_instancias_regulatory_code (regulatory_code),
     CONSTRAINT fk_instancia_template FOREIGN KEY (template_code) REFERENCES inv_document_templates(code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

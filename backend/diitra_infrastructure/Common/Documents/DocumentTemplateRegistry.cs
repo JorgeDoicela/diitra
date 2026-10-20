@@ -38,7 +38,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"programa\", \"grupo_investigacion\", \"dominio\", \"linea_investigacion\", \"sublinea_investigacion\", \"tipo_investigacion\", \"campo_amplio\", \"campo_especifico\", \"campo_detallado\", \"antecedentes\", \"descripcion_proyecto\", \"justificacion\", \"objetivo_general\", \"objetivos_especificos\", \"ods\", \"marco_teorico\", \"metodologia\", \"evaluacion\", \"bibliografia\"]",
-                version: 411);
+                version: 411,
+                regulatoryCode: "F – ISTPET – 001 – INDIV – ABR 2026");
 
             // 2. FORMATO PROYECTO DE INNOVACIÓN
             yield return DocumentTemplate.Create(
@@ -52,7 +53,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"programa\", \"grupo_investigacion\", \"tipo_innovacion\", \"linea_investigacion\", \"sublinea_investigacion\", \"campo_amplio\", \"campo_especifico\", \"campo_detallado\", \"carrera\", \"alcance\", \"resumen_proyecto\", \"objetivo_general\", \"objetivos_especificos\", \"antecedentes\", \"justificacion_innovacion\", \"descripcion_innovacion\", \"vinculacion_sociedad\", \"convenio_asociado\", \"estado_arte_conceptual\", \"metodologia_aplicacion\", \"metodologia_evaluacion\", \"beneficiarios\", \"viabilidad\", \"transferencia_conocimiento\", \"recursos_disponibles\", \"recursos_necesarios\", \"financiamiento\", \"impactos\"]",
-                version: 100);
+                version: 100,
+                regulatoryCode: "F – ISTPET – 001 – INNOV – ABR 2026");
 
             // 3. PLAN DE APRENDIZAJE DE PROYECTO (ELABORACIÓN DIRECTOR / EQUIPO)
             yield return DocumentTemplate.Create(
@@ -66,7 +68,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"NombreProyecto\", \"LineaInvestigacion\", \"SublineaInvestigacion\", \"Carrera\", \"DirectorProyecto\", \"NumeroEstudiantes\", \"FechaAprobacion\", \"FechaTerminacion\", \"PeriodoAcademico\", \"NombreEstudiante\", \"ObjetivoGeneral\", \"PrerrequisitosCognitivos\", \"PrerrequisitosProcedimentales\", \"ActividadesPlan\", \"FirmasResponsabilidad\"]",
-                version: 201);
+                version: 201,
+                regulatoryCode: "F – ISTPET – 002 – INDIV – ABR 2026");
 
             // 4. INSTRUMENTO DE EVALUACIÓN DEL PLAN DE APRENDIZAJE (REVISIÓN ADMINISTRADOR)
             yield return DocumentTemplate.Create(
@@ -80,7 +83,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"NombreProyecto\", \"LineaInvestigacion\", \"SublineaInvestigacion\", \"Carrera\", \"DirectorProyecto\", \"PeriodoAcademico\", \"EstudiantesEvaluaciones\", \"FirmasResponsabilidad\"]",
-                version: 200);
+                version: 200,
+                regulatoryCode: "F – ISTPET – 003 – INDIV – ABR 2026");
 
             // ══════════════════════════════════════════════════════════════
             // OTRAS ÁREAS (Registro de marcadores de posición)
@@ -96,7 +100,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 supportsBlind: false,
                 requiresTraceability: true,
                 requiresSignature: true,
-                version: 20);
+                version: 20,
+                regulatoryCode: "F – ISTPET – 004 – INDIV – ABR 2026");
 
             yield return DocumentTemplate.Create(
                 code: InformeFinalTemplate.CODE,
@@ -109,7 +114,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"Indice\", \"sec_indice\", \"Resumen\", \"sec_resumen\", \"resumen_ejecutivo\", \"Introduccion\", \"sec_introduccion\", \"Objetivos\", \"sec_objetivos\", \"cumplimiento_objetivos\", \"Fundamentos\", \"sec_fundamentos\", \"Metodos\", \"sec_metodos\", \"Resultados\", \"sec_resultados\", \"Productos\", \"sec_productos\", \"Impactos\", \"sec_impactos\", \"impacto_final\", \"Transferencia\", \"sec_transferencia\", \"transferencia_conocimiento\", \"InformeFinanciero\", \"sec_informe_financiero\", \"Conclusiones\", \"sec_conclusiones\", \"Recomendaciones\", \"sec_recomendaciones\", \"Bibliografia\", \"sec_bibliografia\", \"bibliografia_final\", \"Anexos\", \"sec_anexos\"]",
-                version: 20);
+                version: 20,
+                regulatoryCode: "F – ISTPET – 005 – INDIV – ABR 2026");
 
             yield return DocumentTemplate.Create(
                 code: RubricaEvaluacionTemplate.CODE,

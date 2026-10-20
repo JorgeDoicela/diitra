@@ -61,13 +61,10 @@ const renderSingleBlockHtml = (block: DocumentBlock, themeConfig?: any, docCode?
             return generateMultiSectionTableHtml(block);
         case 'two_column':
             return generateTwoColumnHtml(block);
-        case 'page_break': {
-            let pb = generatePageBreakHtml();
-            if (docCode) {
-                pb += `\n<div class="doc-normative-code">${docCode}</div>`;
-            }
-            return pb;
-        }
+        case 'regulatory_code':
+            return generateRegulatoryCodeHtml(block, docCode);
+        case 'page_break':
+            return generatePageBreakHtml();
         case 'gantt':
             return generateGanttHtml(block);
         case 'researchers_table':
@@ -195,21 +192,26 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
     let html = `${BASE_STYLES}\n<div class="doc-container" data-document-orientation="${globalDocOrientation}">`;
     let isFirstNonCoverBlock = true;
 
+    const hasExplicitRegulatoryBlock = blockList.some(b => b.type === 'regulatory_code' && b.isActive !== false);
+
     for (const page of pages) {
         if (page.isCover) {
             html += generateCoverHtml(page.blocks[0], themeConfig);
             continue;
         }
 
+        const isLandscape = page.orientation === 'landscape';
+        const normativeCodeHtml = formatNormativeCodePdf(docCode, themeConfig, isLandscape);
+
         let pageHtml = '';
         for (const block of page.blocks) {
-            if (isFirstNonCoverBlock && docCode) {
-                pageHtml += `\n<div class="doc-normative-code">${docCode}</div>`;
+            if (isFirstNonCoverBlock && normativeCodeHtml && !hasExplicitRegulatoryBlock) {
+                pageHtml += normativeCodeHtml;
                 isFirstNonCoverBlock = false;
             } else if (page.hasExplicitPageBreakBefore && block === page.blocks[0] && pageHtml === '') {
                 pageHtml += generatePageBreakHtml();
-                if (docCode) {
-                    pageHtml += `\n<div class="doc-normative-code">${docCode}</div>`;
+                if (normativeCodeHtml && !hasExplicitRegulatoryBlock) {
+                    pageHtml += normativeCodeHtml;
                 }
             }
 
@@ -234,6 +236,56 @@ export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?:
     html += '\n</div>';
     return html.trim();
 };
+
+function formatNormativeCodePdf(docCode: string, themeConfig: any, isLandscape: boolean): string {
+    if (!docCode) return '';
+    const brand = themeConfig?.brand || {};
+    if (brand.showCodeOnPages === false) return '';
+
+    const pos = isLandscape
+        ? (brand.codePositionLandscape || brand.codePosition || { x: 72, y: 1.5 })
+        : (brand.codePosition || { x: 65, y: 1.2 });
+
+    const posX = Number(pos.x ?? (isLandscape ? 72 : 65));
+    const posY = Number(pos.y ?? (isLandscape ? 1.5 : 1.2));
+    const variant = brand.codeVariant || 'minimal';
+    const fontSize = brand.codeFontSize || '8pt';
+
+    const mmX = (posX * (isLandscape ? 2.97 : 2.10)).toFixed(1);
+    const mmY = (posY * (isLandscape ? 2.10 : 2.97)).toFixed(1);
+
+    let content = docCode;
+    if (variant === 'badge') {
+        content = `<span style="display: inline-block; padding: 2px 7px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px;">${docCode}</span>`;
+    } else if (variant === 'boxed') {
+        content = `<span style="display: inline-block; padding: 2px 8px; border: 1.5px solid #222c57; border-radius: 4px; color: #222c57;">${docCode}</span>`;
+    } else {
+        content = `<span>${docCode}</span>`;
+    }
+
+    return `\n<div class="doc-normative-code" style="position: absolute; left: ${mmX}mm; top: ${mmY}mm; font-family: var(--font-mono, 'Geist Mono', monospace); font-size: ${fontSize}; font-weight: 700; color: #475569; letter-spacing: 0.05em; z-index: 50; text-transform: uppercase;">\n    ${content}\n</div>`;
+}
+
+function generateRegulatoryCodeHtml(block: DocumentBlock, defaultCode?: string): string {
+    const code = block.config?.code || block.config?.regulatoryCode || defaultCode || '';
+    if (!code) return '';
+    const align = block.config?.align || block.config?.alignment || 'right';
+    const variant = block.config?.variant || 'minimal';
+    const fontSize = block.config?.fontSize || '8.5pt';
+
+    let textAlignStyle = 'text-align: right;';
+    if (align === 'center') textAlignStyle = 'text-align: center;';
+    if (align === 'left') textAlignStyle = 'text-align: left;';
+
+    let content = code;
+    if (variant === 'badge') {
+        content = `<span style="display: inline-block; padding: 2px 8px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px;">${code}</span>`;
+    } else if (variant === 'boxed') {
+        content = `<span style="display: inline-block; padding: 3px 10px; border: 1.5px solid #222c57; border-radius: 4px; color: #222c57;">${code}</span>`;
+    }
+
+    return `\n<div class="regulatory-code-block" style="font-family: var(--font-mono, 'Geist Mono', monospace); font-size: ${fontSize}; font-weight: 700; color: #475569; letter-spacing: 0.05em; margin: 4px 0 10px 0; ${textAlignStyle}">\n    ${content}\n</div>`;
+}
 
 function generateArbitrationDictamenHtml(_block?: DocumentBlock): string {
     return `

@@ -17,6 +17,7 @@ import { SortableBlockItem } from './SortableBlockItem';
 import { DYN_COLORS, HEADER_STYLE_OPTIONS, getHeaderStylePair } from './canvasRenderers/RenderCover';
 import type { HeaderStylePair } from './canvasRenderers/RenderCover';
 import { mergeWithDefaults, getOfficialDocumentCode } from '../utils/theme-schema';
+import { FreeFormRegulatoryCode } from './FreeFormRegulatoryCode';
 
 export { DYN_COLORS, HEADER_STYLE_OPTIONS, getHeaderStylePair };
 export type { HeaderStylePair };
@@ -36,6 +37,7 @@ interface BlockCanvasProps {
     themeConfig?: any;
     onUpdateThemeConfig?: (newThemeJson: string) => void;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+    onUpdateRegulatoryCode?: (newCode: string) => void;
     selectedTemplate?: any;
     onSaveTemplate?: () => void;
     saving?: boolean;
@@ -140,6 +142,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     themeConfig: propsThemeConfig,
     onUpdateThemeConfig,
     onUpdateConfig,
+    onUpdateRegulatoryCode,
     selectedTemplate,
 }) => {
     const activeRef = useRef<HTMLDivElement>(null);
@@ -153,6 +156,17 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
         }
         return mergeWithDefaults(null, selectedTemplate?.code);
     }, [propsThemeConfig, selectedTemplate?.themeConfigJson, selectedTemplate?.code]);
+
+    const docCode = useMemo(() => {
+        return (
+            selectedTemplate?.regulatoryCode ||
+            selectedTemplate?.regulatory_code ||
+            themeConfig?.brand?.documentCode ||
+            themeConfig?.brand?.document_code ||
+            getOfficialDocumentCode(selectedTemplate?.code)
+        );
+    }, [selectedTemplate?.regulatoryCode, selectedTemplate?.regulatory_code, themeConfig?.brand?.documentCode, themeConfig?.brand?.document_code, selectedTemplate?.code]);
+
 
     // Actualización de colores e identidad tipográfica del canvas en base a themeConfig
     if (themeConfig?.colors) {
@@ -350,7 +364,6 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                             {pages.map((page, pIdx) => {
                                 const isCoverPage = page.blocks.some(b => b.block.type === 'cover');
                                 const isLandscapePage = page.orientation === 'landscape';
-                                const docCode = themeConfig?.brand?.documentCode || themeConfig?.brand?.document_code || getOfficialDocumentCode(selectedTemplate?.code);
                                 const bgImg = !isCoverPage && themeConfig?.brand?.backgroundImage;
                                 const bgOpacity = parseFloat(themeConfig?.brand?.backgroundOpacity ?? '0.12');
                                 const bgFit = themeConfig?.brand?.backgroundFit || 'contain';
@@ -394,75 +407,31 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                                 }
                                             />
                                         )}
-                                        <div
-                                            onClick={e => e.stopPropagation()}
-                                            style={{
-                                                fontFamily: DYN_COLORS.fontFamily,
-                                                fontSize: DYN_COLORS.baseSize,
-                                                lineHeight: themeConfig?.typography?.lineHeight || '1.4',
-                                                paddingTop: isCoverPage ? '0' : marginTop,
-                                                paddingBottom: isCoverPage ? '0' : marginBottom,
-                                                paddingLeft: isCoverPage ? '0' : marginLeft,
-                                                paddingRight: isCoverPage ? '0' : marginRight,
-                                            }}
-                                            className={`force-light-theme w-[794px] min-w-[794px] max-w-[794px] ${
-                                                isLandscapePage 
-                                                    ? 'min-h-[561px]' 
-                                                    : 'min-h-[1123px]'
-                                            } bg-white text-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 rounded-sm relative flex flex-col transition-all cursor-default ${
-                                                isCoverPage ? 'gap-0' : 'gap-2'
-                                            }`}
-                                        >
-                                            {bgImg && (
-                                                <div
-                                                    className="absolute inset-0 pointer-events-none rounded-sm overflow-hidden z-0"
-                                                    style={{
-                                                        backgroundImage: `url(${bgImg})`,
-                                                        backgroundSize: bgFit,
-                                                        backgroundPosition: 'center center',
-                                                        backgroundRepeat: 'no-repeat',
-                                                        opacity: bgOpacity,
-                                                    }}
-                                                />
-                                            )}
-
-                                            {/* Código normativo en esquina superior derecha de la hoja (cabecera oficial no portada) */}
-                                            {!isCoverPage && docCode && (
-                                                <div
-                                                    className="absolute top-3.5 right-5 text-[8pt] md:text-[8.5pt] font-bold text-slate-500 select-none tracking-wider font-mono z-20 pointer-events-none"
-                                                    title="Código normativo oficial del formato (editable en la pestaña Estilos)"
-                                                >
-                                                    {docCode}
-                                                </div>
-                                            )}
-
-                                            {page.blocks.length === 0 ? (
-                                                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded p-6 text-slate-400 italic text-[10px] relative z-10">
-                                                    Página vacía. Arrastra bloques aquí o escribe contenido.
-                                                </div>
-                                            ) : (
-                                                page.blocks.map(({ block, originalIndex }) => {
-                                                    const isActiveBlock = activeBlockId === block.id;
-
-                                                    return (
-                                                        <div key={block.id} ref={isActiveBlock ? activeRef : undefined} className="relative z-10">
-                                                            <SortableBlockItem
-                                                                block={block}
-                                                                index={originalIndex}
-                                                                isActive={isActiveBlock}
-                                                                coverImage={themeConfig?.brand?.coverImage || undefined}
-                                                                onSelectBlock={onSelectBlock}
-                                                                onToggleActive={onToggleActive}
-                                                                onDeleteBlock={onDeleteBlock}
-                                                                onDuplicateBlock={onDuplicateBlock}
-                                                                onUpdateConfig={onUpdateConfig}
-                                                                themeConfig={themeConfig}
-                                                            />
-                                                        </div>
-                                                    );
-                                                })
-                                            )}
-                                        </div>
+                                        <PageSheetWrapper
+                                            key={`page-sheet-${pIdx}`}
+                                            page={page}
+                                            pIdx={pIdx}
+                                            isCoverPage={isCoverPage}
+                                            isLandscapePage={isLandscapePage}
+                                            themeConfig={themeConfig}
+                                            onUpdateThemeConfig={onUpdateThemeConfig}
+                                            onUpdateRegulatoryCode={onUpdateRegulatoryCode}
+                                            docCode={docCode}
+                                            bgImg={bgImg}
+                                            bgFit={bgFit}
+                                            bgOpacity={bgOpacity}
+                                            marginTop={marginTop}
+                                            marginBottom={marginBottom}
+                                            marginLeft={marginLeft}
+                                            marginRight={marginRight}
+                                            activeBlockId={activeBlockId}
+                                            activeRef={activeRef}
+                                            onSelectBlock={onSelectBlock}
+                                            onToggleActive={onToggleActive}
+                                            onDeleteBlock={onDeleteBlock}
+                                            onDuplicateBlock={onDuplicateBlock}
+                                            onUpdateConfig={onUpdateConfig}
+                                        />
                                     </React.Fragment>
                                 );
                             })}
@@ -470,6 +439,134 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                     </SortableContext>
                 )}
             </div>
+        </div>
+    );
+};
+
+interface PageSheetWrapperProps {
+    page: any;
+    pIdx: number;
+    isCoverPage: boolean;
+    isLandscapePage: boolean;
+    themeConfig: any;
+    onUpdateThemeConfig?: (newThemeJson: string) => void;
+    onUpdateRegulatoryCode?: (newCode: string) => void;
+    docCode: string;
+    bgImg: any;
+    bgFit: string;
+    bgOpacity: number;
+    marginTop: string;
+    marginBottom: string;
+    marginLeft: string;
+    marginRight: string;
+    activeBlockId: string | null;
+    activeRef: React.RefObject<HTMLDivElement | null>;
+    onSelectBlock: (id: string | null) => void;
+    onToggleActive: (index: number) => void;
+    onDeleteBlock: (id: string) => void;
+    onDuplicateBlock: (id: string) => void;
+    onUpdateConfig?: (blockId: string, key: string, value: any) => void;
+}
+
+const PageSheetWrapper: React.FC<PageSheetWrapperProps> = ({
+    page,
+    pIdx,
+    isCoverPage,
+    isLandscapePage,
+    themeConfig,
+    onUpdateThemeConfig,
+    onUpdateRegulatoryCode,
+    docCode,
+    bgImg,
+    bgFit,
+    bgOpacity,
+    marginTop,
+    marginBottom,
+    marginLeft,
+    marginRight,
+    activeBlockId,
+    activeRef,
+    onSelectBlock,
+    onToggleActive,
+    onDeleteBlock,
+    onDuplicateBlock,
+    onUpdateConfig,
+}) => {
+    const pageRef = useRef<HTMLDivElement>(null);
+
+    return (
+        <div
+            ref={pageRef}
+            onClick={e => e.stopPropagation()}
+            style={{
+                fontFamily: DYN_COLORS.fontFamily,
+                fontSize: DYN_COLORS.baseSize,
+                lineHeight: themeConfig?.typography?.lineHeight || '1.4',
+                paddingTop: isCoverPage ? '0' : marginTop,
+                paddingBottom: isCoverPage ? '0' : marginBottom,
+                paddingLeft: isCoverPage ? '0' : marginLeft,
+                paddingRight: isCoverPage ? '0' : marginRight,
+            }}
+            className={`force-light-theme w-[794px] min-w-[794px] max-w-[794px] ${
+                isLandscapePage 
+                    ? 'min-h-[561px]' 
+                    : 'min-h-[1123px]'
+            } bg-white text-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 rounded-sm relative flex flex-col transition-all cursor-default ${
+                isCoverPage ? 'gap-0' : 'gap-2'
+            }`}
+        >
+            {bgImg && (
+                <div
+                    className="absolute inset-0 pointer-events-none rounded-sm overflow-hidden z-0"
+                    style={{
+                        backgroundImage: `url(${bgImg})`,
+                        backgroundSize: bgFit,
+                        backgroundPosition: 'center center',
+                        backgroundRepeat: 'no-repeat',
+                        opacity: bgOpacity,
+                    }}
+                />
+            )}
+
+            {/* Código Normativo Libremente Arrastrable con useFreeFormDrag */}
+            <FreeFormRegulatoryCode
+                pageIndex={pIdx}
+                pageNum={page.pageNum}
+                isCoverPage={isCoverPage}
+                isLandscape={isLandscapePage}
+                docCode={docCode}
+                themeConfig={themeConfig}
+                onUpdateThemeConfig={onUpdateThemeConfig}
+                onUpdateRegulatoryCode={onUpdateRegulatoryCode}
+                containerRef={pageRef}
+            />
+
+            {page.blocks.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded p-6 text-slate-400 italic text-[10px] relative z-10">
+                    Página vacía. Arrastra bloques aquí o escribe contenido.
+                </div>
+            ) : (
+                page.blocks.map(({ block, originalIndex }: any) => {
+                    const isActiveBlock = activeBlockId === block.id;
+
+                    return (
+                        <div key={block.id} ref={isActiveBlock ? activeRef : undefined} className="relative z-10">
+                            <SortableBlockItem
+                                block={block}
+                                index={originalIndex}
+                                isActive={isActiveBlock}
+                                coverImage={themeConfig?.brand?.coverImage || undefined}
+                                onSelectBlock={onSelectBlock}
+                                onToggleActive={onToggleActive}
+                                onDeleteBlock={onDeleteBlock}
+                                onDuplicateBlock={onDuplicateBlock}
+                                onUpdateConfig={onUpdateConfig}
+                                themeConfig={themeConfig}
+                            />
+                        </div>
+                    );
+                })
+            )}
         </div>
     );
 };

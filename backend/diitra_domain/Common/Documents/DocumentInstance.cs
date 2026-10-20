@@ -15,6 +15,12 @@ namespace Diitra.Domain.Common.Documents
         public int TemplateVersion { get; private set; }
         
         /// <summary>
+        /// Snapshot inmutable del código normativo oficial (ej: F – ISTPET – 001 – INDIV – ABR 2026) al momento de emitir la instancia.
+        /// Indexado para auditorías y filtros de acreditación CACES.
+        /// </summary>
+        public string? RegulatoryCode { get; private set; }
+
+        /// <summary>
         /// UUID de la entidad que "es dueña" del documento (Proyecto, Convocatoria, etc).
         /// </summary>
         public string EntityUuid { get; private set; } = string.Empty;
@@ -53,7 +59,8 @@ namespace Diitra.Domain.Common.Documents
             string? title = null,
             string entityType = "Proyecto",
             string? dataSnapshotJson = null,
-            string? templateConfigSnapshotJson = null)
+            string? templateConfigSnapshotJson = null,
+            string? regulatoryCode = null)
         {
             return new DocumentInstance
             {
@@ -65,7 +72,8 @@ namespace Diitra.Domain.Common.Documents
                 Title = title,
                 State = DocumentState.Draft,
                 DataSnapshotJson = dataSnapshotJson,
-                TemplateConfigSnapshotJson = templateConfigSnapshotJson
+                TemplateConfigSnapshotJson = templateConfigSnapshotJson,
+                RegulatoryCode = regulatoryCode
             };
         }
 

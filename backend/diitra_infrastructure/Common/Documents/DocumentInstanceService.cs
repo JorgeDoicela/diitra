@@ -69,7 +69,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 createdBy, 
                 title, 
                 entityType, 
-                templateConfigSnapshotJson: blocksJson);
+                templateConfigSnapshotJson: blocksJson,
+                regulatoryCode: template.RegulatoryCode);
             
             _context.DocumentInstances.Add(instance);
             await _context.SaveChangesAsync(ct);

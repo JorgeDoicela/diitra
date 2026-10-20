@@ -123,9 +123,28 @@ export const generateCoverHtml = (block: DocumentBlock, themeConfig?: any): stri
       </div>
     </div>` : '';
 
+    const showCodeOnCover = Boolean(c.showCodeOnCover ?? gCover.showCodeOnCover ?? themeConfig?.brand?.showCodeOnCover);
+    const docCode = themeConfig?.brand?.documentCode || themeConfig?.brand?.document_code || '';
+    const codePos = themeConfig?.brand?.codePosition || { x: 65, y: 1.2 };
+    const codeVariant = themeConfig?.brand?.codeVariant || 'minimal';
+    const codeFontSize = themeConfig?.brand?.codeFontSize || '8pt';
+
+    let regCodeContent = docCode;
+    if (codeVariant === 'badge') {
+        regCodeContent = `<span style="display:inline-block; padding:2px 7px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:4px;">${docCode}</span>`;
+    } else if (codeVariant === 'boxed') {
+        regCodeContent = `<span style="display:inline-block; padding:2px 8px; border:1.5px solid #222c57; border-radius:4px; color:#222c57;">${docCode}</span>`;
+    }
+
+    const regCodeEl = (showCodeOnCover && docCode) ? `
+    <div style="position:absolute; left:${toMmX(codePos.x)}; top:${toMmY(codePos.y)}; font-family:var(--font-mono, 'Geist Mono', monospace); font-size:${codeFontSize}; font-weight:bold; color:#475569; letter-spacing:0.05em; text-transform:uppercase; z-index:1001;">
+      ${regCodeContent}
+    </div>` : '';
+
     return `
   <!-- BLOQUE: PORTADA CANVAS LIBRE -->
   <div class="cover-page">
+    ${regCodeEl}
     ${logoEl}
     ${instEl}
     ${titleEl}

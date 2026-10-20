@@ -66,6 +66,7 @@ export function resolveBorderCss(config?: Partial<BorderConfig>) {
 
 interface BorderPickerFieldProps {
     label?: string;
+    title?: string;
     borderStyle?: string;
     borderColor?: string;
     borderWidth?: number | string;
@@ -79,7 +80,8 @@ interface BorderPickerFieldProps {
 }
 
 export const BorderPickerField: React.FC<BorderPickerFieldProps> = ({
-    label = 'Bordes de Sección',
+    label,
+    title,
     borderStyle = 'solid',
     borderColor = '#cbd5e1',
     borderWidth = 1,
@@ -118,13 +120,14 @@ export const BorderPickerField: React.FC<BorderPickerFieldProps> = ({
     };
 
     const isNone = currentStyle === 'none';
+    const displayLabel = label ?? title ?? 'Bordes de Sección';
 
     return (
         <div className="space-y-2.5 font-sans w-full max-w-full">
-            {label && (
+            {displayLabel && (
                 <div className="flex items-center justify-between">
                     <label className="text-[10px] font-bold text-text-dim block uppercase tracking-wider">
-                        {label}
+                        {displayLabel}
                     </label>
                     {/* Indicador visual en miniatura del borde actual */}
                     <div

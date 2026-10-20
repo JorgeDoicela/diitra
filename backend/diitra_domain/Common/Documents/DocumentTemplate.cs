@@ -12,8 +12,17 @@ namespace Diitra.Domain.Common.Documents
         /// <summary>
         /// Código único e inmutable de la plantilla. Ej: "PROTOCOLO_INVESTIGACION", "ACTA_APROBACION", "INFORME_CACES"
         /// Se usa como clave de búsqueda desde el código; no debe cambiarse en producción.
+        /// <summary>
+        /// Código único e inmutable de la plantilla. Ej: "PROTOCOLO_INVESTIGACION", "ACTA_APROBACION", "INFORME_CACES"
+        /// Se usa como clave de búsqueda desde el código; no debe cambiarse en producción.
         /// </summary>
         public string Code { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// Código normativo oficial exigido por CACES / ISTPET para auditorías (ej: "F – ISTPET – 001 – INDIV – ABR 2026").
+        /// Indexado en base de datos para búsquedas, filtros y reportes de calidad.
+        /// </summary>
+        public string? RegulatoryCode { get; private set; }
 
         /// <summary>Nombre legible para el administrador del instituto.</summary>
         public string Name { get; private set; } = string.Empty;
@@ -81,7 +90,8 @@ namespace Diitra.Domain.Common.Documents
             bool requiresTraceability = true, bool requiresSignature = false,
             string signatureType = "DIITRA",
             string? collaborativeFields = null, int version = 1,
-            string? themeConfigJson = null)
+            string? themeConfigJson = null,
+            string? regulatoryCode = null)
         {
             return new DocumentTemplate
             {
@@ -97,7 +107,8 @@ namespace Diitra.Domain.Common.Documents
                 SignatureType = signatureType,
                 CollaborativeFieldsJson = collaborativeFields,
                 Version = version,
-                ThemeConfigJson = themeConfigJson
+                ThemeConfigJson = themeConfigJson,
+                RegulatoryCode = regulatoryCode
             };
         }
 
@@ -139,6 +150,17 @@ namespace Diitra.Domain.Common.Documents
             UpdatedBy = updatedBy;
         }
 
+        /// <summary>
+        /// Actualiza el código normativo oficial del formato (ej: F – ISTPET – 001 – INDIV – ABR 2026).
+        /// </summary>
+        public void UpdateRegulatoryCode(string? regulatoryCode, string updatedBy)
+        {
+            RegulatoryCode = regulatoryCode;
+            Version++;
+            UpdatedAt = DateTime.UtcNow;
+            UpdatedBy = updatedBy;
+        }
+
         public void UpdateHtmlContentOnly(string newHtmlContent)
         {
             HtmlContent = newHtmlContent;
@@ -168,6 +190,10 @@ namespace Diitra.Domain.Common.Documents
             if (seed.ThemeConfigJson != null)
             {
                 ThemeConfigJson = seed.ThemeConfigJson;
+            }
+            if (!string.IsNullOrWhiteSpace(seed.RegulatoryCode) && RegulatoryCode != seed.RegulatoryCode)
+            {
+                RegulatoryCode = seed.RegulatoryCode;
             }
             UpdatedAt = DateTime.UtcNow;
             UpdatedBy = "SYSTEM_SYNC";

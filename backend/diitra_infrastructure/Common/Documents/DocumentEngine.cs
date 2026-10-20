@@ -305,7 +305,11 @@ namespace Diitra.Infrastructure.Common.Documents
 
                 bool isDbCustomized = !string.IsNullOrWhiteSpace(template.HtmlContent)
                     && !template.HtmlContent.StartsWith("<!-- Cargado desde")
-                    && (template.HtmlContent.Contains("<!-- DIITRA_SECTIONS_JSON:") || template.Version >= 400 || (!string.IsNullOrWhiteSpace(template.UpdatedBy) && template.UpdatedBy != "SEED"));
+                    && template.UpdatedBy != "PHYSICAL_FILE_SYNC"
+                    && template.UpdatedBy != "system"
+                    && template.UpdatedBy != "seeder"
+                    && template.UpdatedBy != "SEED"
+                    && (!string.IsNullOrWhiteSpace(template.UpdatedBy) || template.Version >= 400);
 
                 var htmlToRender = !string.IsNullOrWhiteSpace(request.CustomHtmlContent)
                     ? request.CustomHtmlContent
@@ -474,8 +478,11 @@ namespace Diitra.Infrastructure.Common.Documents
                     extraImageVars["logo_negro_base64"] = logoBase64;
                 }
 
-                // Extracción de Código Normativo del Formato (Document Code) en esquina superior derecha
-                string? documentCode = null;
+                // Extracción de Código Normativo del Formato (Regulatory Code)
+                // Fuente de la verdad de primer nivel: template.RegulatoryCode
+                string? documentCode = template.RegulatoryCode;
+
+                // Override opcional si el usuario personalizó el código en el tema
                 if (baseThemeDict.TryGetValue("brand", out var brandDcObj) && brandDcObj != null)
                 {
                     try
@@ -484,30 +491,20 @@ namespace Diitra.Infrastructure.Common.Documents
                         {
                             if (brandDcEl.TryGetProperty("documentCode", out var dcEl) || brandDcEl.TryGetProperty("document_code", out dcEl))
                             {
-                                if (dcEl.ValueKind == JsonValueKind.String) documentCode = dcEl.GetString();
+                                if (dcEl.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(dcEl.GetString()))
+                                    documentCode = dcEl.GetString();
                             }
                         }
                         else if (brandDcObj is Dictionary<string, object> brandDcDict)
                         {
                             if (brandDcDict.TryGetValue("documentCode", out var dcVal) || brandDcDict.TryGetValue("document_code", out dcVal))
                             {
-                                documentCode = dcVal?.ToString();
+                                if (!string.IsNullOrWhiteSpace(dcVal?.ToString()))
+                                    documentCode = dcVal.ToString();
                             }
                         }
                     }
                     catch { }
-                }
-
-                // Fallback institucional oficial ISTPET si no se configuró explícitamente en el tema
-                if (string.IsNullOrWhiteSpace(documentCode))
-                {
-                    documentCode = template.Code.ToUpperInvariant() switch
-                    {
-                        "PROTOCOLO_INVESTIGACION" => "F – ISTPET – 001 – INDIV – ABR 2026",
-                        "PLAN_APRENDIZAJE" => "F – ISTPET – 002 – INDIV – ABR 2026",
-                        "EVALUACION_PLAN_APRENDIZAJE" or "RUBRICA_EVALUACION" => "F – ISTPET – 003 – INDIV – ABR 2026",
-                        _ => null
-                    };
                 }
 
                 if (!string.IsNullOrWhiteSpace(documentCode))
@@ -1333,6 +1330,7 @@ namespace Diitra.Infrastructure.Common.Documents
         public async Task UpdateTemplateAsync(
             string templateCode, string newHtmlContent,
             string? customCss, string? collaborativeFieldsJson, string? themeConfigJson, string updatedBy,
+            string? regulatoryCode = null,
             CancellationToken cancellationToken = default)
         {
             var template = await _templateRepository.FindByCodeAsync(templateCode, cancellationToken)
@@ -1340,6 +1338,10 @@ namespace Diitra.Infrastructure.Common.Documents
 
             template.UpdateContent(newHtmlContent, customCss, collaborativeFieldsJson, updatedBy);
             template.UpdateThemeConfig(themeConfigJson, updatedBy);
+            if (regulatoryCode != null)
+            {
+                template.UpdateRegulatoryCode(regulatoryCode, updatedBy);
+            }
             await _templateRepository.SaveAsync(template, cancellationToken);
 
             // Sincronización bidireccional en disco para mantener 100% de paridad con los archivos en caliente (.html/.css)
@@ -1419,6 +1421,10 @@ namespace Diitra.Infrastructure.Common.Documents
         private string ProcessAndOptimizeHtml(string html)
         {
             if (string.IsNullOrEmpty(html)) return html;
+
+            // Saneamiento defensivo de porcentajes escapados (ej: "100\%" -> "100%")
+            // Evita que parsers CSS estrictos (iText7) fallen con FormatException al interpretar dimensiones
+            html = Regex.Replace(html, @"\\%", "%");
 
             // 1. Inyectar estilos globales de seguridad para el PDF
             string globalStyles = @"<style>

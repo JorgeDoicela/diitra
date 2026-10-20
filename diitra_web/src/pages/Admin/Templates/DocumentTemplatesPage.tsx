@@ -91,6 +91,7 @@ export const DocumentTemplatesPage: React.FC = () => {
         handleToggleActive,
         handleUpdateConfig,
         handleUpdateThemeConfig,
+        handleUpdateRegulatoryCode,
         handleSaveTemplate,
         handleResetToDefault,
         handleCellChange,
@@ -144,11 +145,11 @@ export const DocumentTemplatesPage: React.FC = () => {
                             type="button"
                             onClick={handleResetToDefault}
                             disabled={loading || saving}
-                            title="Restablecer la plantilla a la versión oficial de fábrica"
+                            title="Restablece la plantilla completa a su versión oficial (recarga todos los bloques y secciones de fábrica)"
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-thin text-text-muted hover:text-text-main bg-surface hover:bg-surface-hover hover:border-border-hover text-xs font-medium transition-all cursor-pointer"
                         >
                             <RotateCcw className="w-3.5 h-3.5" />
-                            <span>Restablecer a Fábrica</span>
+                            <span>Restablecer Plantilla</span>
                         </button>
 
                         <div ref={paletteRef} className="relative">
@@ -304,6 +305,7 @@ export const DocumentTemplatesPage: React.FC = () => {
                             onToggleActive={handleToggleActive}
                             onUpdateConfig={handleUpdateConfig}
                             onUpdateThemeConfig={handleUpdateThemeConfig}
+                            onUpdateRegulatoryCode={handleUpdateRegulatoryCode}
                             onCellChange={handleCellChange}
                             onAddRow={handleAddRow}
                             onRemoveRow={handleRemoveRow}

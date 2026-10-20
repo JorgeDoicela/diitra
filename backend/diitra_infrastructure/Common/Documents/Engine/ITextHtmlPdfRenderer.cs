@@ -226,6 +226,10 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
             string mergedCss = (string.IsNullOrEmpty(customCss) ? "" : customCss + "\n") + extractedStyles.ToString();
 
+            // Normalización defensiva para evitar fallos de iText con porcentajes escapados en CSS/HTML
+            mergedCss = System.Text.RegularExpressions.Regex.Replace(mergedCss, @"\\%", "%");
+            cleanedHtmlContent = System.Text.RegularExpressions.Regex.Replace(cleanedHtmlContent, @"\\%", "%");
+
             // ── Detección de orientación global del documento (A4 Landscape) ──
             bool isDocumentGloballyLandscape = 
                 mergedCss.Contains("size: A4 landscape", StringComparison.OrdinalIgnoreCase) ||

@@ -51,11 +51,18 @@ namespace diitra_api.Controllers
         /// <summary>
         /// Lista todas las plantillas registradas en el motor.
         /// Los usuarios estándar (Docentes/Estudiantes) reciben únicamente las plantillas activas/publicadas.
+        /// Soporta filtrado directo por código normativo CACES/ISTPET (?regulatoryCode=001).
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetAll(CancellationToken ct)
+        public async Task<IActionResult> GetAll([FromQuery] string? regulatoryCode, CancellationToken ct)
         {
             var templates = await _documentEngine.GetAvailableTemplatesAsync(ct);
+
+            // Filtrado por código normativo si fue solicitado
+            if (!string.IsNullOrWhiteSpace(regulatoryCode))
+            {
+                templates = templates.Where(t => t.RegulatoryCode != null && t.RegulatoryCode.Contains(regulatoryCode, StringComparison.OrdinalIgnoreCase));
+            }
             
             // Intentar cargar el orden personalizado guardado en BD
             List<string>? customOrder = null;
@@ -103,6 +110,7 @@ namespace diitra_api.Controllers
             {
                 t.Id,
                 t.Code,
+                t.RegulatoryCode,
                 t.Name,
                 t.Description,
                 t.Category,
@@ -150,6 +158,7 @@ namespace diitra_api.Controllers
             {
                 template.Id,
                 template.Code,
+                template.RegulatoryCode,
                 template.Name,
                 template.Description,
                 template.Category,
@@ -168,7 +177,7 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
-        /// Actualiza el HTML de una plantilla existente en base de datos.
+        /// Actualiza el HTML y metadatos de una plantilla existente en base de datos.
         /// El cambio aplica inmediatamente en el siguiente documento generado.
         /// </summary>
         [HttpPut("{code}")]
@@ -182,7 +191,7 @@ namespace diitra_api.Controllers
             try
             {
                 var updatedBy = User.Identity?.Name ?? "admin";
-                await _documentEngine.UpdateTemplateAsync(code, request.HtmlContent, request.CustomCss, request.CollaborativeFieldsJson, request.ThemeConfigJson, updatedBy, ct);
+                await _documentEngine.UpdateTemplateAsync(code, request.HtmlContent, request.CustomCss, request.CollaborativeFieldsJson, request.ThemeConfigJson, updatedBy, request.RegulatoryCode, ct);
                 
                 // Transmitir evento WebSocket en vivo a todos los usuarios y pestañas del sistema
                 await _hubContext.Clients.All.SendAsync("TemplatePublished", new
@@ -565,6 +574,9 @@ namespace diitra_api.Controllers
 
         [JsonPropertyName("themeConfigJson")]
         public string? ThemeConfigJson { get; set; }
+
+        [JsonPropertyName("regulatoryCode")]
+        public string? RegulatoryCode { get; set; }
     }
 
     public class UpdateSignatureConfigRequest

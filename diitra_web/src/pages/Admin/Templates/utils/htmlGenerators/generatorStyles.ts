@@ -53,6 +53,7 @@ export const BASE_STYLES = `
   .landscape-section {
       page: landscape-page;
       width: 100%;
+      position: relative;
   }
 
   @page portrait-page {
@@ -62,6 +63,7 @@ export const BASE_STYLES = `
   .portrait-section {
       page: portrait-page;
       width: 100%;
+      position: relative;
   }
 
   /* Reset y Core del Documento con Tematización Dinámica */
@@ -72,6 +74,7 @@ export const BASE_STYLES = `
       line-height: {{ theme.typography.line_height }};
       padding: 0; 
       background: transparent; 
+      position: relative;
   }
   
   /* Marca de Agua / Imagen de Fondo de Hojas Paginadas (PDF Paged Media) */

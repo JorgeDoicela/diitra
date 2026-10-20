@@ -70,7 +70,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     // No sobreescribir si un usuario/admin personalizó la plantilla desde la interfaz web, a menos que esté corrupta o la semilla tenga versión mayor
                     bool isUserCustomized = !string.IsNullOrEmpty(template.UpdatedBy) && 
                                            template.UpdatedBy != "system" && 
-                                           template.UpdatedBy != "seeder";
+                                           template.UpdatedBy != "seeder" &&
+                                           template.UpdatedBy != "PHYSICAL_FILE_SYNC" &&
+                                           template.UpdatedBy != "SEED";
 
                     if (dbHtmlIsEmptyOrCorrupt || versionBumped || (contentDiffers && !isUserCustomized))
                     {
@@ -87,10 +89,11 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     }
                     else if (seed.SupportsBlindMode          != template.SupportsBlindMode     ||
                              seed.RequiresLopdpClause        != template.RequiresLopdpClause   ||
-                             seed.RequiresElectronicSignature!= template.RequiresElectronicSignature)
+                             seed.RequiresElectronicSignature!= template.RequiresElectronicSignature ||
+                             (!string.IsNullOrWhiteSpace(seed.RegulatoryCode) && seed.RegulatoryCode != template.RegulatoryCode))
                     {
                         // Solo metadatos cambiaron
-                        logger.LogInformation("DIITRA DocumentSeeder: Sincronizando metadatos de plantilla [{Code}]...", seed.Code);
+                        logger.LogInformation("DIITRA DocumentSeeder: Sincronizando metadatos/código normativo de plantilla [{Code}]...", seed.Code);
                         template.SyncWithSeed(seed);
                         dbSet.Update(template);
                     }

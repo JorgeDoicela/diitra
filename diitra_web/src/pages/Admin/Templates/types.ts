@@ -4,6 +4,8 @@ export type SignaturesMode = 'team_dynamic' | 'institutional_chain' | 'custom_ma
 export interface DocumentTemplateDto {
     id: number;
     code: string;
+    regulatoryCode?: string | null;
+    regulatory_code?: string | null;
     name: string;
     description: string | null;
     category: number;
@@ -70,6 +72,7 @@ export type BlockType =
     | 'learning_plan_prerequisites_section'
     | 'learning_plan_activities_section'
     | 'learning_plan_evaluation_table'
+    | 'regulatory_code'
     | 'project_budget_section';
 
 export interface BlockMetaInfo {
@@ -85,6 +88,7 @@ export const BLOCK_METADATA: Record<BlockType, BlockMetaInfo> = {
     advanced_table: { label: 'Tabla Avanzada', defaultTitle: 'Tabla de Datos', category: 'Tablas' },
     multi_section_table: { label: 'Tabla Multi-Sección', defaultTitle: 'Tabla Multi-Sección', category: 'Tablas' },
     two_column: { label: 'Dos Columnas', defaultTitle: 'Dos Columnas', category: 'Estructural' },
+    regulatory_code: { label: 'Código Normativo Oficial', defaultTitle: 'Código Normativo', category: 'Estructural' },
     page_break: { label: 'Salto de Página', defaultTitle: 'Salto de Página', category: 'Estructural' },
     gantt: { label: 'Cronograma de Actividades (Gantt)', defaultTitle: 'Cronograma de Actividades (Gantt)', category: 'Planificación' },
     project_general_section: { label: 'Identificación del Proyecto', defaultTitle: '1. IDENTIFICACIÓN DEL PROYECTO', category: 'Base de Datos' },
@@ -467,7 +471,7 @@ export interface DocumentBlock {
 
         // ── title ──────────────────────────────────────────────────────────
         text?: string;
-        fontSize?: 'H1' | 'H2' | 'H3';
+        fontSize?: 'H1' | 'H2' | 'H3' | string;
         color?: string;
         alignment?: 'left' | 'center' | 'right' | 'justify';
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import { FileText, PanelLeft, GripVertical, Sparkles, Award, FlaskConical, BarChart3, Eye, Download } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { FileText, PanelLeft, GripVertical, Sparkles, Award, FlaskConical, BarChart3, Eye, Download, Search, X, FileSearch } from 'lucide-react';
 import {
     DndContext,
     rectIntersection,
@@ -119,18 +119,20 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
                             v{template.version}
                         </span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                        {cat === 'INNOVACION' && (
-                            <span className="text-[8px] font-medium uppercase px-1 py-0.2 rounded bg-surface-hover text-text-dim border border-border-thin">
-                                Innovación
-                            </span>
-                        )}
-                        {cat === 'CERTIFICADOS' && (
-                            <span className="text-[8px] font-medium uppercase px-1 py-0.2 rounded bg-surface-hover text-text-dim border border-border-thin">
-                                Certificado
-                            </span>
-                        )}
-                    </div>
+                    {(cat === 'INNOVACION' || cat === 'CERTIFICADOS') && (
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            {cat === 'INNOVACION' && (
+                                <span className="text-[8px] font-medium uppercase px-1 py-0.2 rounded bg-surface-hover text-text-dim border border-border-thin">
+                                    Innovación
+                                </span>
+                            )}
+                            {cat === 'CERTIFICADOS' && (
+                                <span className="text-[8px] font-medium uppercase px-1 py-0.2 rounded bg-surface-hover text-text-dim border border-border-thin">
+                                    Certificado
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
             </button>
 
@@ -257,42 +259,139 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
 
     const activeTemplate = templates.find(t => t.code === activeId);
 
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Normalizador de texto insensible a mayúsculas, tildes y diacríticos
+    const normalizeSearchText = (text: string): string => {
+        return (text || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+    };
+
+    const filteredTemplates = useMemo(() => {
+        if (!searchQuery.trim()) return templates;
+
+        const rawQuery = normalizeSearchText(searchQuery);
+        const tokens = rawQuery.split(/\s+/).filter(Boolean);
+
+        const scored = templates
+            .map(t => {
+                const nameNorm = normalizeSearchText(t.name);
+                const codeNorm = normalizeSearchText(t.code);
+                const descNorm = normalizeSearchText(t.description || '');
+                const regCodeNorm = normalizeSearchText(t.regulatoryCode || t.regulatory_code || '');
+                const catNorm = normalizeSearchText(getTemplateCategory(t.code));
+                const combined = `${nameNorm} ${codeNorm} ${descNorm} ${regCodeNorm} ${catNorm}`;
+
+                // Requerimiento: todas las palabras ingresadas deben coincidir en el documento
+                const matchesAllTokens = tokens.every(token => combined.includes(token));
+                if (!matchesAllTokens) return { template: t, score: -1 };
+
+                let score = 10;
+                // Prioridad máxima si el nombre empieza con la frase buscada
+                if (nameNorm.startsWith(rawQuery)) {
+                    score += 120;
+                } else if (nameNorm.includes(rawQuery)) {
+                    score += 70;
+                }
+
+                // Bonificación por palabras individuales que coincidan en el nombre o código
+                tokens.forEach(tok => {
+                    if (nameNorm.includes(tok)) score += 25;
+                    if (codeNorm.includes(tok)) score += 10;
+                    if (regCodeNorm.includes(tok)) score += 15;
+                });
+
+                return { template: t, score };
+            })
+            .filter(item => item.score > 0);
+
+        // Ordenar por relevancia cuando hay una búsqueda activa
+        scored.sort((a, b) => b.score - a.score);
+        return scored.map(item => item.template);
+    }, [templates, searchQuery]);
+
     // Agrupación de plantillas
-    const investigacionTemplates = templates.filter(t => getTemplateCategory(t.code) === 'INVESTIGACION');
-    const innovacionTemplates = templates.filter(t => getTemplateCategory(t.code) === 'INNOVACION');
-    const certificadosTemplates = templates.filter(t => getTemplateCategory(t.code) === 'CERTIFICADOS');
-    const reportesTemplates = templates.filter(t => getTemplateCategory(t.code) === 'REPORTES');
+    const investigacionTemplates = filteredTemplates.filter(t => getTemplateCategory(t.code) === 'INVESTIGACION');
+    const innovacionTemplates = filteredTemplates.filter(t => getTemplateCategory(t.code) === 'INNOVACION');
+    const certificadosTemplates = filteredTemplates.filter(t => getTemplateCategory(t.code) === 'CERTIFICADOS');
+    const reportesTemplates = filteredTemplates.filter(t => getTemplateCategory(t.code) === 'REPORTES');
 
     return (
         <div className="w-full h-full border border-border-thin rounded-md bg-surface flex flex-col overflow-hidden min-h-0">
-            {/* Header del panel */}
-            <div className="p-3 border-b border-border-thin bg-surface flex items-center justify-between shrink-0 h-10">
-                <div className="flex items-center gap-2 min-w-0">
-                    {onToggleSidebar && headerCollapsed && isSidebarCollapsed && (
+            {/* Header del panel con buscador potente por nombre */}
+            <div className="p-2.5 border-b border-border-thin bg-surface flex flex-col gap-2 shrink-0">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                        {onToggleSidebar && headerCollapsed && isSidebarCollapsed && (
+                            <button
+                                type="button"
+                                onClick={onToggleSidebar}
+                                title={isSidebarCollapsed ? "Mostrar panel lateral" : "Ocultar panel lateral"}
+                                className="p-1 rounded hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer shrink-0"
+                            >
+                                <PanelLeft className="w-4 h-4" />
+                            </button>
+                        )}
+                        <span className="text-xs font-semibold text-text-main truncate">
+                            Catálogo ({filteredTemplates.length}{searchQuery ? ` de ${templates.length}` : ''})
+                        </span>
+                    </div>
+                </div>
+
+                {/* Input de búsqueda en tiempo real potente por nombre */}
+                <div className="relative w-full">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-dim/60" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Escape') setSearchQuery('');
+                        }}
+                        placeholder="Buscar documento por nombre..."
+                        className="w-full bg-surface-hover/50 border border-border-thin rounded pl-8 pr-7 py-1.5 text-xs text-text-main placeholder:text-text-dim/50 focus:outline-none focus:border-border-hover transition-colors font-sans"
+                    />
+                    {searchQuery && (
                         <button
                             type="button"
-                            onClick={onToggleSidebar}
-                            title={isSidebarCollapsed ? "Mostrar panel lateral" : "Ocultar panel lateral"}
-                            className="p-1 rounded hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer shrink-0"
+                            onClick={() => setSearchQuery('')}
+                            title="Limpiar búsqueda (Esc)"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-text-dim/60 hover:text-text-main transition-colors p-0.5 cursor-pointer"
                         >
-                            <PanelLeft className="w-4 h-4" />
+                            <X className="w-3.5 h-3.5" />
                         </button>
                     )}
-                    <span className="text-xs font-semibold text-text-main truncate">
-                        Catálogo de Documentos ({templates.length})
-                    </span>
                 </div>
             </div>
 
             {/* Lista dividida por categorías institucionales con scroll fluido */}
             <div className="flex-1 overflow-y-auto divide-y divide-border-thin/30 custom-scrollbar min-h-0 pb-12">
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={rectIntersection}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                    onDragCancel={handleDragCancel}
-                >
+                {filteredTemplates.length === 0 ? (
+                    <div className="p-8 text-center flex flex-col items-center justify-center text-text-dim gap-2 min-h-[220px]">
+                        <FileSearch className="w-8 h-8 text-text-dim/40 stroke-[1.5]" />
+                        <p className="text-xs font-semibold text-text-main">No se encontraron documentos</p>
+                        <p className="text-[11px] text-text-dim max-w-[210px] leading-relaxed">
+                            Ninguna plantilla coincide con &ldquo;{searchQuery}&rdquo;.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setSearchQuery('')}
+                            className="mt-1 text-[11px] font-medium text-accent hover:underline cursor-pointer"
+                        >
+                            Limpiar búsqueda
+                        </button>
+                    </div>
+                ) : (
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={rectIntersection}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        onDragCancel={handleDragCancel}
+                    >
                     <SortableContext items={templates.map(t => t.code)} strategy={verticalListSortingStrategy}>
                         <div className="flex flex-col">
                             {/* SECCIÓN 1: INVESTIGACIÓN CIENTÍFICA */}
@@ -415,6 +514,7 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                         ) : null}
                     </DragOverlay>
                 </DndContext>
+                )}
             </div>
         </div>
     );

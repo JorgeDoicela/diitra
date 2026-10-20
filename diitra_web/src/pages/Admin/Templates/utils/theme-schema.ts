@@ -43,7 +43,6 @@ export const THEME_SCHEMA: ThemeToken[] = [
     { key: 'margin_left', camelKey: 'marginLeft', label: 'Margen Izquierdo', type: 'text', category: 'layout', defaultValue: '2cm', unit: 'cm' },
     { key: 'margin_right', camelKey: 'marginRight', label: 'Margen Derecho', type: 'text', category: 'layout', defaultValue: '2cm', unit: 'cm' },
     // BRAND
-    { key: 'document_code', camelKey: 'documentCode', label: 'Código Normativo del Formato', type: 'text', category: 'brand', defaultValue: '', description: 'Código normativo en esquina superior derecha (ej: F – ISTPET – 001 – INDIV – ABR 2026)' },
     { key: 'cover_image', camelKey: 'coverImage', label: 'Imagen de Portada (Personalizada)', type: 'image', category: 'brand', defaultValue: '' },
     { key: 'background_image', camelKey: 'backgroundImage', label: 'Imagen de Fondo de Hojas', type: 'image', category: 'brand', defaultValue: '' },
     {

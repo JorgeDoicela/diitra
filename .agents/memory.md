@@ -34,6 +34,19 @@ Este archivo almacena el contexto operativo, decisiones arquitectónicas consoli
   - Frontera SIGAFI: tablas de catálogos institucionales externos son estrictamente de **solo lectura**.
   - Motor de Renderizado PDF (iText 7 pdfHTML):
     - Reglas editoriales estrictas en `InstitutionalBaseCss` y `WrapInFullHtmlDocument`: prevención de encabezados huérfanos (`break-after: avoid !important`), filas de tabla indivisibles (`tr { break-inside: avoid !important }`), repetición automática de cabeceras en páginas subsiguientes (`thead { display: table-header-group !important }`) y control de viudas/huérfanas (`orphans/widows: 3`).
+    - Saneamiento de dimensiones CSS: los valores de porcentaje nunca deben contener barras invertidas (`\%`), ya que iText extrae el prefijo numérico como `'100\'` causando `FormatException` en `Single.Parse`. Tanto el pipeline de `DocumentEngine.cs` como `ITextHtmlPdfRenderer.cs` sanitizan defensivamente `\%` a `%`.
+  - Código Normativo Oficial e Identidad CACES (`RegulatoryCode`):
+    - Ciudadano de Primer Nivel: Se desacopla el código normativo oficial (ej: `F – ISTPET – 001 – INDIV – ABR 2026`) de los estilos cosméticos (`ThemeConfigJson`). Reside en la columna `regulatory_code` indexada en `inv_document_templates` e `inv_documentos_instancias`.
+    - Trazabilidad e Historicidad: Al instanciar un documento, se congela el snapshot del código normativo oficial en la instancia para garantizar auditorías CACES inmutables.
+    - Cero Switches Quemados: Se eliminan los mapeos hardcodeados en C# y TypeScript; la fuente de la verdad reside en la base de datos y se inicializa mediante el seeder oficial (`DocumentTemplateRegistry.cs`).
+    - Búsqueda y Filtros en Tiempo Real: Expuesto nativamente en `DocumentTemplateDto.regulatoryCode`, soportado con query en `GET /api/admin/templates?regulatoryCode=...` y buscable tanto en el Catálogo Oficial de Formatos (`OfficialTemplatesCatalogView.tsx`) como en el Catálogo de Administración (`TemplateCatalog.tsx`).
+    - Posicionamiento Libre 2D en Lienzo y PDF (`useFreeFormDrag` / `FreeFormRegulatoryCode`):
+      * Posicionamiento Absoluto Determinista (Cero Desplazamientos): Eliminación de transforms relativos (`translate(-10%, 0)`) y escalados elásticos que causaban saltos al hacer hover o editar. Las coordenadas `left: X%` y `top: Y%` son la única fuente de posición en pantalla y coinciden 1:1 con las proyecciones físicas milimétricas del PDF (`HtmlGenerator.ts`).
+      * Edición In-Place sin Deformación de Layout: El campo de entrada en edición inline preserva exactamente la misma tipografía mono (`ch` width), tamaño y padding que el texto en reposo. Los botones de acción rápida se presentan en un menú flotante superior (`-top-7`) para no comprimir ni desplazar horizontalmente el texto. Guardado automático con `Enter` o `onBlur`, cancelación con `Esc`.
+      * Interacción Minimalista en Lienzo (Cero Barras Invasivas): Se eliminaron barras y popups emergentes sobre el lienzo; la interacción se concentra en el arrastre libre directo a cualquier coordenada 2D y el clic para modificar el texto in-place. La configuración cosmética avanzada (variantes visuales) permanece centralizada en el panel lateral de temas.
+      * Claridad Semántica de Restablecimiento: Se diferencian explícitamente en la interfaz:
+        - "Restablecer Plantilla" (barra superior): Reconstruye en backend la estructura completa (bloques, secciones oficiales, cronograma y firmas).
+        - "Restablecer Estilos" (pestaña lateral Estilos): Resetea exclusivamente la configuración cosmética (paleta de colores, márgenes de página y tipografía), sin tocar bloques ni contenido.
 
 ---
 

@@ -155,8 +155,9 @@ export const OfficialTemplatesCatalogView: React.FC<OfficialTemplatesCatalogView
             const q = search.toLowerCase().trim();
             const name = (tmpl.name || '').toLowerCase();
             const code = (tmpl.code || '').toLowerCase();
+            const regCode = (tmpl.regulatoryCode || tmpl.regulatory_code || '').toLowerCase();
             const desc = getTemplateDescription(tmpl).toLowerCase();
-            return name.includes(q) || code.includes(q) || desc.includes(q);
+            return name.includes(q) || code.includes(q) || regCode.includes(q) || desc.includes(q);
         });
     }, [visibleTemplates, selectedCategory, search]);
 
@@ -293,12 +294,19 @@ export const OfficialTemplatesCatalogView: React.FC<OfficialTemplatesCatalogView
                                 className="bg-surface border border-border-thin hover:border-border-hover rounded-xl p-5 flex flex-col justify-between transition-colors duration-150"
                             >
                                 <div>
-                                    {/* Cabecera de Tarjeta: Categoría */}
-                                    <div className={`flex items-center gap-1.5 mb-3 ${categoryInfo.textClass}`}>
-                                        <Icon className="w-4 h-4 shrink-0" />
-                                        <span className="text-[11px] font-medium tracking-wide">
-                                            {categoryInfo.label}
-                                        </span>
+                                    {/* Cabecera de Tarjeta: Categoría y Código Normativo Oficial */}
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <div className={`flex items-center gap-1.5 ${categoryInfo.textClass}`}>
+                                            <Icon className="w-4 h-4 shrink-0" />
+                                            <span className="text-[11px] font-medium tracking-wide">
+                                                {categoryInfo.label}
+                                            </span>
+                                        </div>
+                                        {(tmpl.regulatoryCode || tmpl.regulatory_code) && (
+                                            <span className="font-mono text-[9.5px] font-semibold text-text-dim/80 bg-surface-hover/80 px-2 py-0.5 rounded border border-border-thin shrink-0 select-all" title="Código Normativo Oficial CACES / ISTPET">
+                                                {tmpl.regulatoryCode || tmpl.regulatory_code}
+                                            </span>
+                                        )}
                                     </div>
 
                                     {/* Título */}

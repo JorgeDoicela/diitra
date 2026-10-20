@@ -14,6 +14,8 @@ public class DocumentInstanceConfiguration : IEntityTypeConfiguration<Diitra.Dom
         entity.HasIndex(e => e.Uuid).IsUnique();
         entity.Property(e => e.TemplateCode).HasColumnName("template_code").HasMaxLength(100).IsRequired();
         entity.Property(e => e.TemplateVersion).HasColumnName("template_version").IsRequired();
+        entity.Property(e => e.RegulatoryCode).HasColumnName("regulatory_code").HasMaxLength(100);
+        entity.HasIndex(e => e.RegulatoryCode);
         entity.Property(e => e.EntityUuid).HasColumnName("entity_uuid").HasMaxLength(36).IsRequired();
         entity.Property(e => e.EntityType).HasColumnName("entity_type").HasMaxLength(50).IsRequired().HasDefaultValue("Proyecto");
         entity.Property(e => e.Title).HasColumnName("titulo_instancia").HasMaxLength(255);
@@ -40,6 +42,8 @@ public class DocumentTemplateConfiguration : IEntityTypeConfiguration<Diitra.Dom
         entity.ToTable("inv_document_templates");
         entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(100).IsRequired();
         entity.HasIndex(e => e.Code).IsUnique();
+        entity.Property(e => e.RegulatoryCode).HasColumnName("regulatory_code").HasMaxLength(100);
+        entity.HasIndex(e => e.RegulatoryCode);
         entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).IsRequired();
         entity.Property(e => e.Description).HasColumnName("description");
         entity.Property(e => e.HtmlContent).HasColumnName("html_content").HasColumnType("longtext").IsRequired();
