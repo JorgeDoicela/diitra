@@ -14,8 +14,22 @@ Este archivo almacena el contexto operativo, decisiones arquitectónicas consoli
   - Paginación y Maquetación Editorial (W3C Paged Media / SSOT):
     - Única Fuente de Verdad (SSOT): La orientación reside exclusivamente a nivel de documento en `themeConfig.layout.pageOrientation` ('portrait' | 'landscape') y sus excepciones por página en `themeConfig.layout.sectionOrientations` (`Record<string, 'portrait' | 'landscape'>` indexado por el ID del primer bloque de la página). Cero dispersión en bloques de contenido (`BlockConfig` no contiene propiedades de orientación, respetando SRP).
     - Alternancia Directa en Canvas: El usuario puede alternar la orientación de cualquier página individual directamente desde el encabezado/separador de página (`PÁGINA X`) en `BlockCanvas.tsx`.
-    - Lienzo Unificado y Altura Proporcional: Para evitar desbordamientos horizontales o interferencia con hojas adyacentes en pantallas estándar, el lienzo web mantiene un ancho unificado de columna (`w-[794px] max-w-[794px]`). Las páginas horizontales se diferencian visualmente por su altura apaisada proporcional (`min-h-[561px]`) y el selector segmentado de alta visibilidad, sin leyendas ni pies de página auxiliares redundantes en el lienzo. El backend (`ITextHtmlPdfRenderer.cs`) genera las dimensiones físicas reales de rotación (`PageSize.A4.Rotate()`).
-    - Cronograma Gantt: Por su naturaleza matricial de 48 columnas, se maqueta en su propia sección horizontal (`min-h-[561px]` en lienzo y A4 horizontal rotado físico en PDF vía `SplitDocumentParts`).
+    - Dimensiones Físicas y Orientación Real A4 en Canvas (WYSIWYG 1:1):
+      - Geometría A4 Real (96 DPI):
+        * Vertical (Portrait): `w-[794px] min-w-[794px] max-w-[794px] min-h-[1123px]`.
+        * Horizontal (Landscape): `w-[1123px] min-w-[1123px] max-w-[1123px] min-h-[794px]`.
+      - Altura de Portada (Cover Page): En la portada (`RenderCover`), la altura se adapta estrictamente a la orientación (`h-[794px]` en horizontal vs `h-[1123px]` en vertical), eliminando el fallo donde un valor fijo de 1123px forzaba una proporción cuadrada (1123x1123).
+      - Tanto el contenedor de página (`PageSheetWrapper`) como los separadores de página (`PageBreakIndicator` y cabecera de Página 1) adaptan su ancho dinámicamente a 1123px en páginas apaisadas, reflejando de forma inmediata y clara la rotación del papel.
+      - Escalado Proporcional y Responsivo del Lienzo (Fit-to-Width & Zoom Engine):
+        * Mecanismo de Escalado CSS `zoom`: Utiliza `style={{ zoom: effectiveZoom }}` para escalar el árbol DOM recalculando las cajas de flujo, manteniendo el scroll vertical 100% natural y la exactitud de arrastre en `useFreeFormDrag.ts`.
+        * ResizeObserver Automático (Modo Fit): `BlockCanvas.tsx` detecta si el documento contiene páginas horizontales (`maxSheetWidth = hasLandscapePage ? 1123 : 794`). Si el ancho disponible en pantalla es inferior a `maxSheetWidth + 32px`, calcula automáticamente el ratio de escala para que la hoja quepa completa en pantalla sin desbordamiento horizontal.
+        * Controles de Zoom en Lienzo: Iconos SVG puros (`ZoomOut` y `ZoomIn`) ubicados inmediatamente a la derecha del título de la plantilla en la barra superior del canvas, sin cajas contenedoras ni números de porcentaje. Soporta:
+          - `Ctrl + Rueda del ratón` (Wheel Up/Down): Zoom in/out fluido en incrementos de 5%, capturando el evento nativo con `preventDefault()` para evitar el zoom del navegador.
+          - `Ctrl + +` / `Ctrl + -`: Zoom in/out por teclado en pasos de 10%.
+          - `Ctrl + 0` o doble clic en los iconos: Restablecimiento instantáneo a escala ajustada (*Scale-to-Fit*).
+          - Rango de zoom: 35% a 200%.
+        * Columnas Laterales Flexibles: En `DocumentTemplatesPage.tsx`, el catálogo y el panel de propiedades adoptan anchos adaptativos (`w-72 xl:w-80` y `w-80 xl:w-96` respectivamente), otorgando hasta 96px adicionales de holgura en pantallas de computadoras portátiles (1366px - 1440px).
+    - Cronograma Gantt: Por su naturaleza matricial de 48 columnas, se maqueta en su propia sección horizontal (`w-[1123px] min-h-[794px]` en lienzo y A4 horizontal rotado físico en PDF vía `SplitDocumentParts`).
     - `HtmlGenerator.ts`: Envuelve secciones con orientación divergente en `<!-- START_LANDSCAPE_SECTION -->` / `<!-- START_PORTRAIT_SECTION -->` con contenedores CSS dedicados.
     - Backend iText 7 (`ITextHtmlPdfRenderer.cs`): Detecta `isDocumentGloballyLandscape` y ejecuta `SplitDocumentParts` con soporte bidireccional para secciones Landscape y Portrait, renderizando cada parte en su tamaño de página real (`PageSize.A4` o `PageSize.A4.Rotate()`) y fusionándolas con numeración continua de páginas.
     - Soporta salto semántico directo `pageBreakBefore: true` a nivel de bloque sin necesidad de inyectar bloques auxiliares descartables de tipo `page_break`.

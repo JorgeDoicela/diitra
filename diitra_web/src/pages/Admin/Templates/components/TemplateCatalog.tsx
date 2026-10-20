@@ -111,14 +111,9 @@ const TemplateItem: React.FC<TemplateItemProps> = ({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                        <span className={`text-[11px] leading-snug transition-colors break-words ${isSelected ? 'font-bold text-text-main' : 'font-medium text-text-main/80'}`}>
-                            {template.name}
-                        </span>
-                        <span className="text-[8px] bg-surface-hover/60 px-1.5 py-0.5 rounded font-mono border border-border-thin/10 shrink-0 text-text-dim">
-                            v{template.version}
-                        </span>
-                    </div>
+                    <span className={`text-[11px] leading-snug transition-colors break-words block ${isSelected ? 'font-bold text-text-main' : 'font-medium text-text-main/80'}`}>
+                        {template.name}
+                    </span>
                     {(cat === 'INNOVACION' || cat === 'CERTIFICADOS') && (
                         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                             {cat === 'INNOVACION' && (
@@ -402,9 +397,6 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                                             <FlaskConical size={11} className="text-text-dim" />
                                             Investigación (I+D+i)
                                         </span>
-                                        <span className="text-[9px] font-mono text-text-dim/60">
-                                            {investigacionTemplates.length}
-                                        </span>
                                     </div>
                                     <div className="divide-y divide-border-thin/30">
                                         {investigacionTemplates.map(t => (
@@ -428,9 +420,6 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                                         <span className="text-[9px] font-mono font-bold tracking-wider text-text-dim uppercase flex items-center gap-1.5">
                                             <Sparkles size={11} className="text-text-dim" />
                                             Innovación & i+TT
-                                        </span>
-                                        <span className="text-[9px] font-mono text-text-dim/60">
-                                            {innovacionTemplates.length}
                                         </span>
                                     </div>
                                     <div className="divide-y divide-border-thin/30">
@@ -456,9 +445,6 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                                             <Award size={11} className="text-text-dim" />
                                             Certificados Oficiales
                                         </span>
-                                        <span className="text-[9px] font-mono text-text-dim/60">
-                                            {certificadosTemplates.length}
-                                        </span>
                                     </div>
                                     <div className="divide-y divide-border-thin/30">
                                         {certificadosTemplates.map(t => (
@@ -482,9 +468,6 @@ export const TemplateCatalog: React.FC<TemplateCatalogProps> = ({
                                         <span className="text-[9px] font-mono font-bold tracking-wider text-text-dim uppercase flex items-center gap-1.5">
                                             <BarChart3 size={11} className="text-text-dim" />
                                             Reportes & Analíticas
-                                        </span>
-                                        <span className="text-[9px] font-mono text-text-dim/60">
-                                            {reportesTemplates.length}
                                         </span>
                                     </div>
                                     <div className="divide-y divide-border-thin/30">

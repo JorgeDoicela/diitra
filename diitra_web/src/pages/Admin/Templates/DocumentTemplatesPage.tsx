@@ -277,7 +277,7 @@ export const DocumentTemplatesPage: React.FC = () => {
             <div className="flex-1 flex gap-4 min-h-0 overflow-hidden relative">
                 <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd}>
                     {/* Columna Izquierda: Catálogo */}
-                    <div className={`w-80 shrink-0 flex-col min-h-0 md:flex ${activeMobileTab === 'catalog' ? 'flex w-full md:w-80' : 'hidden'}`}>
+                    <div className={`w-72 xl:w-80 shrink-0 flex-col min-h-0 md:flex ${activeMobileTab === 'catalog' ? 'flex w-full md:w-72 xl:w-80' : 'hidden'}`}>
                         <TemplateCatalog
                             templates={templates}
                             selectedTemplate={selectedTemplate}
@@ -319,7 +319,7 @@ export const DocumentTemplatesPage: React.FC = () => {
                     </div>
 
                     {/* Columna Derecha: Panel de Propiedades y Tema */}
-                    <div className={`w-96 shrink-0 flex-col min-h-0 md:flex ${activeMobileTab === 'properties' ? 'flex w-full md:w-96' : 'hidden'}`}>
+                    <div className={`w-80 xl:w-96 shrink-0 flex-col min-h-0 md:flex ${activeMobileTab === 'properties' ? 'flex w-full md:w-80 xl:w-96' : 'hidden'}`}>
                         <BlockProperties
                             selectedTemplate={selectedTemplate}
                             activeBlock={activeBlock}

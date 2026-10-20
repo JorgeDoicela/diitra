@@ -102,6 +102,7 @@ interface RenderCoverProps {
     blockId?: string;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
     themeConfig?: any;
+    isLandscape?: boolean;
 }
 
 export const RenderCover: React.FC<RenderCoverProps> = ({
@@ -109,7 +110,8 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
     coverImage,
     blockId,
     onUpdateConfig,
-    themeConfig
+    themeConfig,
+    isLandscape = false
 }) => {
     const gCover = themeConfig?.brand?.coverConfig || {};
     const activeCoverImage = coverImage || config.coverImage || gCover.coverImage || themeConfig?.brand?.coverImage;
@@ -144,8 +146,6 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
 
     const institutionFontSize = Number(config.institutionFontSize || gCover.institutionFontSize || 11);
     const institutionItalica = Boolean(config.institutionItalica ?? gCover.institutionItalica);
-
-    const isWhite = (colorStr?: string) => !colorStr || colorStr.toLowerCase() === '#ffffff' || colorStr.toLowerCase() === '#fff' || colorStr.toLowerCase() === 'white';
 
     const rawColorInst = config.colorInstitution || gCover.colorInstitution;
     const rawColorTema = config.colorTemaProyecto || gCover.colorTemaProyecto;
@@ -253,8 +253,7 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
                 key={id}
                 style={style}
                 {...handlers}
-                onClick={(e) => {
-                    handlers.onClick?.(e);
+                onClick={() => {
                     handleSelectSubtab();
                 }}
                 onPointerDown={(e) => {
@@ -336,7 +335,9 @@ export const RenderCover: React.FC<RenderCoverProps> = ({
         <div
             ref={containerRef}
             style={activeCoverImage ? { backgroundImage: `url(${activeCoverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-            className="relative w-full min-h-[1123px] flex-1 overflow-hidden bg-white select-none"
+            className={`relative w-full flex-1 overflow-hidden bg-white select-none ${
+                isLandscape ? 'min-h-[794px] h-[794px]' : 'min-h-[1123px] h-[1123px]'
+            }`}
         >
             <GuideGrid />
 

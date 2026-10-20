@@ -83,6 +83,7 @@ interface SortableBlockItemProps {
     onDuplicateBlock: (id: string) => void;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
     themeConfig?: any;
+    isLandscape?: boolean;
 }
 
 export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
@@ -96,6 +97,7 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
     onDuplicateBlock,
     onUpdateConfig,
     themeConfig,
+    isLandscape,
 }) => {
     const {
         attributes,
@@ -123,7 +125,7 @@ export const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
 
         switch (block.type) {
             case 'cover':
-                return <RenderCover config={block.config} coverImage={coverImage} blockId={block.id} onUpdateConfig={onUpdateConfig} themeConfig={themeConfig} />;
+                return <RenderCover config={block.config} coverImage={coverImage} blockId={block.id} onUpdateConfig={onUpdateConfig} themeConfig={themeConfig} isLandscape={isLandscape} />;
             case 'title':
                 return <RenderTitle config={block.config} themeConfig={themeConfig} />;
             case 'rich_text':

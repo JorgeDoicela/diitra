@@ -9,9 +9,9 @@
  * e integra la lista ordenable mediante `SortableBlockItem` y `@dnd-kit/sortable`.
  */
 
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Layers, Trash2, FileText } from 'lucide-react';
+import { Layers, Trash2, FileText, ZoomIn, ZoomOut } from 'lucide-react';
 import type { DocumentBlock } from '../types';
 import { SortableBlockItem } from './SortableBlockItem';
 import { DYN_COLORS, HEADER_STYLE_OPTIONS, getHeaderStylePair } from './canvasRenderers/RenderCover';
@@ -84,6 +84,14 @@ const PageOrientationSegmentedControl: React.FC<{
     );
 };
 
+interface CanvasPage {
+    pageNum: number;
+    blocks: { block: DocumentBlock; originalIndex: number }[];
+    orientation: 'portrait' | 'landscape';
+    pageBreakBlockId?: string;
+    firstBlockId?: string;
+}
+
 const PageBreakIndicator: React.FC<{
     pageNum: number;
     pageBreakBlockId?: string;
@@ -92,7 +100,7 @@ const PageBreakIndicator: React.FC<{
     onToggleOrientation?: () => void;
 }> = ({ pageNum, pageBreakBlockId, isLandscape = false, onDeleteBlock, onToggleOrientation }) => {
     return (
-        <div className="w-[794px] max-w-[794px] flex items-center justify-between my-4 select-none group transition-all">
+        <div className={`${isLandscape ? 'w-[1123px] max-w-[1123px]' : 'w-[794px] max-w-[794px]'} flex items-center justify-between my-4 select-none group transition-all`}>
             <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
             <div className="mx-3 inline-flex items-center gap-2.5 px-3 py-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xs text-zinc-900 dark:text-zinc-100">
                 <span className="font-mono text-[10.5px] font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
@@ -146,6 +154,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     selectedTemplate,
 }) => {
     const activeRef = useRef<HTMLDivElement>(null);
+    const viewportRef = useRef<HTMLDivElement>(null);
     const toggleHeaderFn = onToggleHeader || onToggleHeaderCollapse;
 
     // Obtener la configuración del tema visual unificada (prop directa o extraída de selectedTemplate)
@@ -166,7 +175,6 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
             getOfficialDocumentCode(selectedTemplate?.code)
         );
     }, [selectedTemplate?.regulatoryCode, selectedTemplate?.regulatory_code, themeConfig?.brand?.documentCode, themeConfig?.brand?.document_code, selectedTemplate?.code]);
-
 
     // Actualización de colores e identidad tipográfica del canvas en base a themeConfig
     if (themeConfig?.colors) {
@@ -209,68 +217,191 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     };
 
     // Agrupación dinámica de bloques en páginas A4 bajo la orientación del documento y sus secciones
-    interface CanvasPage {
-        pageNum: number;
-        blocks: { block: DocumentBlock; originalIndex: number }[];
-        orientation: 'portrait' | 'landscape';
-        pageBreakBlockId?: string;
-        firstBlockId?: string;
-    }
+    const pages = useMemo<CanvasPage[]>(() => {
+        const result: CanvasPage[] = [];
+        let currentPageBlocks: { block: DocumentBlock; originalIndex: number }[] = [];
+        let currentPageNum = 1;
+        let pendingPageBreakBlockId: string | undefined = undefined;
 
-    const pages: CanvasPage[] = [];
-    let currentPageBlocks: { block: DocumentBlock; originalIndex: number }[] = [];
-    let currentPageNum = 1;
-    let pendingPageBreakBlockId: string | undefined = undefined;
+        const pushPage = () => {
+            if (currentPageBlocks.length === 0) return;
+            const firstBlockId = currentPageBlocks[0]?.block?.id;
+            const isGantt = currentPageBlocks.some(b => b.block.type === 'gantt');
+            const orientation: 'portrait' | 'landscape' = 
+                (firstBlockId && sectionOverrides[firstBlockId])
+                    ? sectionOverrides[firstBlockId]
+                    : (isGantt ? 'landscape' : docOrientation);
 
-    const pushPage = () => {
-        if (currentPageBlocks.length === 0) return;
-        const firstBlockId = currentPageBlocks[0]?.block?.id;
-        const isGantt = currentPageBlocks.some(b => b.block.type === 'gantt');
-        const orientation: 'portrait' | 'landscape' = 
-            (firstBlockId && sectionOverrides[firstBlockId])
-                ? sectionOverrides[firstBlockId]
-                : (isGantt ? 'landscape' : docOrientation);
+            result.push({
+                pageNum: currentPageNum,
+                blocks: currentPageBlocks,
+                orientation,
+                firstBlockId,
+                pageBreakBlockId: pendingPageBreakBlockId,
+            });
 
-        pages.push({
-            pageNum: currentPageNum,
-            blocks: currentPageBlocks,
-            orientation,
-            firstBlockId,
-            pageBreakBlockId: pendingPageBreakBlockId,
+            currentPageBlocks = [];
+            pendingPageBreakBlockId = undefined;
+            currentPageNum++;
+        };
+
+        blocks.forEach((block, idx) => {
+            const hasBreakBefore = (block.config as any)?.pageBreakBefore === true;
+            const isGantt = block.type === 'gantt';
+            const isCover = block.type === 'cover';
+            const isPageBreak = block.type === 'page_break';
+            const hasOrientationOverride = !!sectionOverrides[block.id];
+
+            if (isPageBreak) {
+                pushPage();
+                pendingPageBreakBlockId = block.id;
+            } else if (isCover) {
+                pushPage();
+                currentPageBlocks = [{ block, originalIndex: idx }];
+                pushPage();
+            } else if (isGantt) {
+                pushPage();
+                currentPageBlocks = [{ block, originalIndex: idx }];
+                pushPage();
+            } else if ((hasBreakBefore || hasOrientationOverride) && currentPageBlocks.length > 0) {
+                pushPage();
+                currentPageBlocks = [{ block, originalIndex: idx }];
+            } else {
+                currentPageBlocks.push({ block, originalIndex: idx });
+            }
         });
 
-        currentPageBlocks = [];
-        pendingPageBreakBlockId = undefined;
-        currentPageNum++;
+        pushPage();
+        return result;
+    }, [blocks, sectionOverrides, docOrientation]);
+
+    const hasLandscapePage = useMemo(() => {
+        return pages.some(p => p.orientation === 'landscape');
+    }, [pages]);
+
+    const maxSheetWidth = hasLandscapePage ? 1123 : 794;
+
+    // Control de escalado proporcional (Scale-to-Fit) y Zoom interactivo
+    const [zoomMode, setZoomMode] = useState<'fit' | 'custom'>('fit');
+    const [customZoom, setCustomZoom] = useState<number>(1);
+    const [containerWidth, setContainerWidth] = useState<number>(850);
+
+    useEffect(() => {
+        const el = viewportRef.current;
+        if (!el) return;
+
+        const updateWidth = () => {
+            if (el) {
+                setContainerWidth(el.clientWidth);
+            }
+        };
+
+        updateWidth();
+        const ro = new ResizeObserver(() => {
+            updateWidth();
+        });
+        ro.observe(el);
+
+        return () => ro.disconnect();
+    }, []);
+
+    // Cálculo del zoom efectivo: escala proporcionalmente si el ancho necesario excede el contenedor
+    const effectiveZoom = useMemo(() => {
+        if (zoomMode === 'custom') {
+            return customZoom;
+        }
+        const available = containerWidth - 32;
+        if (available <= 0) return 1;
+        if (available >= maxSheetWidth) {
+            return 1;
+        }
+        const fitRatio = Math.max(0.35, Math.min(1, available / maxSheetWidth));
+        return Math.round(fitRatio * 100) / 100;
+    }, [zoomMode, customZoom, containerWidth, maxSheetWidth]);
+
+    // Control de zoom interactivo con Ctrl + Rueda del ratón
+    useEffect(() => {
+        const el = viewportRef.current;
+        if (!el) return;
+
+        const handleWheel = (e: WheelEvent) => {
+            if (!e.ctrlKey && !e.metaKey) return;
+            e.preventDefault();
+
+            const step = e.deltaY < 0 ? 0.05 : -0.05;
+            setZoomMode('custom');
+            setCustomZoom(prev => {
+                const base = zoomMode === 'fit' ? effectiveZoom : prev;
+                const next = Math.round((base + step) * 100) / 100;
+                return Math.max(0.35, Math.min(2.0, next));
+            });
+        };
+
+        el.addEventListener('wheel', handleWheel, { passive: false });
+        return () => el.removeEventListener('wheel', handleWheel);
+    }, [effectiveZoom, zoomMode]);
+
+    // Control de zoom interactivo con atajos de teclado (Ctrl + +, Ctrl + -, Ctrl + 0)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!e.ctrlKey && !e.metaKey) return;
+
+            // Zoom In: Ctrl + / Ctrl = / Numpad +
+            if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') {
+                e.preventDefault();
+                setZoomMode('custom');
+                setCustomZoom(prev => {
+                    const base = zoomMode === 'fit' ? effectiveZoom : prev;
+                    return Math.min(2.0, Math.round((base + 0.1) * 10) / 10);
+                });
+            }
+            // Zoom Out: Ctrl - / Numpad -
+            else if (e.key === '-' || e.key === '_' || e.code === 'NumpadSubtract') {
+                e.preventDefault();
+                setZoomMode('custom');
+                setCustomZoom(prev => {
+                    const base = zoomMode === 'fit' ? effectiveZoom : prev;
+                    return Math.max(0.35, Math.round((base - 0.1) * 10) / 10);
+                });
+            }
+            // Reset Fit: Ctrl 0
+            else if (e.key === '0' || e.code === 'Numpad0') {
+                e.preventDefault();
+                setZoomMode('fit');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [effectiveZoom, zoomMode]);
+
+    const handleZoomIn = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setZoomMode('custom');
+        setCustomZoom(prev => {
+            const base = zoomMode === 'fit' ? effectiveZoom : prev;
+            return Math.min(2.0, Math.round((base + 0.1) * 10) / 10);
+        });
     };
 
-    blocks.forEach((block, idx) => {
-        const hasBreakBefore = (block.config as any)?.pageBreakBefore === true;
-        const isGantt = block.type === 'gantt';
-        const isCover = block.type === 'cover';
-        const isPageBreak = block.type === 'page_break';
-        const hasOrientationOverride = !!sectionOverrides[block.id];
+    const handleZoomOut = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setZoomMode('custom');
+        setCustomZoom(prev => {
+            const base = zoomMode === 'fit' ? effectiveZoom : prev;
+            return Math.max(0.35, Math.round((base - 0.1) * 10) / 10);
+        });
+    };
 
-        if (isPageBreak) {
-            pushPage();
-            pendingPageBreakBlockId = block.id;
-        } else if (isCover) {
-            pushPage();
-            currentPageBlocks = [{ block, originalIndex: idx }];
-            pushPage();
-        } else if (isGantt) {
-            pushPage();
-            currentPageBlocks = [{ block, originalIndex: idx }];
-            pushPage();
-        } else if ((hasBreakBefore || hasOrientationOverride) && currentPageBlocks.length > 0) {
-            pushPage();
-            currentPageBlocks = [{ block, originalIndex: idx }];
+    const handleToggleFit = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (zoomMode === 'fit') {
+            setZoomMode('custom');
+            setCustomZoom(1);
         } else {
-            currentPageBlocks.push({ block, originalIndex: idx });
+            setZoomMode('fit');
         }
-    });
-
-    pushPage();
+    };
 
     const docTitle = selectedTemplate?.name || templateName || 'Documento';
 
@@ -278,42 +409,67 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
         <div className="flex-1 flex flex-col min-h-0 bg-bg-deep border border-border-thin rounded-md overflow-hidden">
             {/* Header del panel alineado con el sistema de diseño Vercel Geist */}
             <div className="h-11 px-3.5 border-b border-border-thin bg-surface flex items-center justify-between shrink-0 select-none">
-                <div className="flex items-center gap-2 min-w-0 max-w-[60%]">
+                <div className="flex items-center gap-2 min-w-0 max-w-[65%]">
                     <FileText className="w-3.5 h-3.5 text-text-main shrink-0" />
                     <span className="text-xs font-semibold text-text-main truncate" title={docTitle}>
                         {docTitle}
                     </span>
+                    <div className="flex items-center gap-0.5 shrink-0 ml-1 text-text-dim">
+                        <button
+                            type="button"
+                            onClick={handleZoomOut}
+                            onDoubleClick={handleToggleFit}
+                            title="Reducir zoom (Ctrl + - o Ctrl + Rueda abajo)"
+                            disabled={effectiveZoom <= 0.35}
+                            className="p-1 text-text-dim hover:text-text-main hover:bg-surface-hover rounded transition-colors disabled:opacity-30 cursor-pointer"
+                        >
+                            <ZoomOut className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleZoomIn}
+                            onDoubleClick={handleToggleFit}
+                            title="Aumentar zoom (Ctrl + + o Ctrl + Rueda arriba)"
+                            disabled={effectiveZoom >= 2.0}
+                            className="p-1 text-text-dim hover:text-text-main hover:bg-surface-hover rounded transition-colors disabled:opacity-30 cursor-pointer"
+                        >
+                            <ZoomIn className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
+                    {toggleHeaderFn && (
+                        <button
+                            type="button"
+                            onClick={toggleHeaderFn}
+                            className="px-2 py-1 rounded hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-medium"
+                            title={headerCollapsed ? "Mostrar cabecera de la página" : "Ocultar cabecera (Modo Enfoque)"}
+                        >
+                            {headerCollapsed ? (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="m18 15-6-6-6 6" /></svg>
+                                    <span className="text-[9px] uppercase tracking-wider font-bold">Mostrar Cabecera</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="m6 9 6 6 6-6" /></svg>
+                                    <span className="text-[9px] uppercase tracking-wider font-bold text-text-dim/60">Ocultar Cabecera</span>
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                    {toggleHeaderFn && <div className="w-px h-3.5 bg-border-thin" />}
+
                     <span className="text-[10px] text-text-dim font-medium">
                         {activeCount} / {blocks.length} visibles
                     </span>
 
-                    {rightActions && <div className="w-px h-3.5 bg-border-thin" />}
-                    {rightActions}
-
-                    {toggleHeaderFn && (
+                    {rightActions && (
                         <>
                             <div className="w-px h-3.5 bg-border-thin" />
-                            <button
-                                type="button"
-                                onClick={toggleHeaderFn}
-                                className="px-2 py-1 rounded hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer flex items-center gap-1 text-[10px] font-medium"
-                                title={headerCollapsed ? "Mostrar cabecera de la página" : "Ocultar cabecera (Modo Enfoque)"}
-                            >
-                                {headerCollapsed ? (
-                                    <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="m18 15-6-6-6 6" /></svg>
-                                        <span className="text-[9px] uppercase tracking-wider font-bold">Mostrar Cabecera</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="m6 9 6 6 6-6" /></svg>
-                                        <span className="text-[9px] uppercase tracking-wider font-bold text-text-dim/60">Ocultar Cabecera</span>
-                                    </>
-                                )}
-                            </button>
+                            {rightActions}
                         </>
                     )}
 
@@ -338,12 +494,16 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
 
             {/* Scroll del lienzo */}
             <div
+                ref={viewportRef}
                 onClick={() => onSelectBlock(null)}
-                className="flex-1 overflow-y-auto p-8 pb-32 bg-bg-deep cursor-default"
+                className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 pb-32 bg-bg-deep cursor-default"
                 style={{ scrollbarWidth: 'thin' }}
             >
                 {!selectedTemplate ? (
-                    <div className="force-light-theme w-[794px] max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-start pt-48 items-center text-center">
+                    <div 
+                        style={{ zoom: effectiveZoom }}
+                        className="force-light-theme w-[794px] max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-start pt-48 items-center text-center origin-top"
+                    >
                         <FileText className="w-12 h-12 text-slate-300 mb-3 animate-pulse" />
                         <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">Sin plantilla seleccionada</h3>
                         <p className="text-[10px] text-slate-400 max-w-[230px] mt-1.5 leading-normal">
@@ -351,7 +511,10 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                         </p>
                     </div>
                 ) : blocks.length === 0 ? (
-                    <div className="force-light-theme w-[794px] max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-start pt-48 items-center text-center">
+                    <div 
+                        style={{ zoom: effectiveZoom }}
+                        className="force-light-theme w-[794px] max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-start pt-48 items-center text-center origin-top"
+                    >
                         <Layers className="w-12 h-12 text-slate-300 mb-3 animate-pulse" />
                         <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">El documento está vacío</h3>
                         <p className="text-[10px] text-slate-400 max-w-[200px] mt-1 leading-normal">
@@ -360,7 +523,10 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                     </div>
                 ) : (
                     <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                        <div className="flex flex-col items-center mx-auto space-y-8">
+                        <div 
+                            style={{ zoom: effectiveZoom }}
+                            className="flex flex-col items-center mx-auto space-y-8 origin-top transition-transform duration-100"
+                        >
                             {pages.map((page, pIdx) => {
                                 const isCoverPage = page.blocks.some(b => b.block.type === 'cover');
                                 const isLandscapePage = page.orientation === 'landscape';
@@ -375,7 +541,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                 return (
                                     <React.Fragment key={pIdx}>
                                         {pIdx === 0 && (
-                                            <div className="w-[794px] max-w-[794px] flex items-center justify-between mb-2 select-none group transition-all">
+                                            <div className={`${isLandscapePage ? 'w-[1123px] max-w-[1123px]' : 'w-[794px] max-w-[794px]'} flex items-center justify-between mb-2 select-none group transition-all`}>
                                                 <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
                                                 <div className="mx-3 inline-flex items-center gap-2.5 px-3 py-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xs text-zinc-900 dark:text-zinc-100">
                                                     <span className="font-mono text-[10.5px] font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
@@ -507,12 +673,12 @@ const PageSheetWrapper: React.FC<PageSheetWrapperProps> = ({
                 paddingLeft: isCoverPage ? '0' : marginLeft,
                 paddingRight: isCoverPage ? '0' : marginRight,
             }}
-            className={`force-light-theme w-[794px] min-w-[794px] max-w-[794px] ${
+            className={`force-light-theme ${
                 isLandscapePage 
-                    ? 'min-h-[561px]' 
-                    : 'min-h-[1123px]'
+                    ? `w-[1123px] min-w-[1123px] max-w-[1123px] ${isCoverPage ? 'h-[794px] min-h-[794px]' : 'min-h-[794px]'}`
+                    : `w-[794px] min-w-[794px] max-w-[794px] ${isCoverPage ? 'h-[1123px] min-h-[1123px]' : 'min-h-[1123px]'}`
             } bg-white text-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 rounded-sm relative flex flex-col transition-all cursor-default ${
-                isCoverPage ? 'gap-0' : 'gap-2'
+                isCoverPage ? 'gap-0 overflow-hidden' : 'gap-2'
             }`}
         >
             {bgImg && (
@@ -562,6 +728,7 @@ const PageSheetWrapper: React.FC<PageSheetWrapperProps> = ({
                                 onDuplicateBlock={onDuplicateBlock}
                                 onUpdateConfig={onUpdateConfig}
                                 themeConfig={themeConfig}
+                                isLandscape={isLandscapePage}
                             />
                         </div>
                     );
