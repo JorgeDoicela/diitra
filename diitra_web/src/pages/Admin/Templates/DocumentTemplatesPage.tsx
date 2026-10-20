@@ -303,6 +303,7 @@ export const DocumentTemplatesPage: React.FC = () => {
                             onDeleteBlock={handleDeleteBlock}
                             onToggleActive={handleToggleActive}
                             onUpdateConfig={handleUpdateConfig}
+                            onUpdateThemeConfig={handleUpdateThemeConfig}
                             onCellChange={handleCellChange}
                             onAddRow={handleAddRow}
                             onRemoveRow={handleRemoveRow}

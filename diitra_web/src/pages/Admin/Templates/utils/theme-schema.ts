@@ -30,6 +30,14 @@ export const THEME_SCHEMA: ThemeToken[] = [
     { key: 'base_size', camelKey: 'baseSize', label: 'Tamaño de Fuente Base', type: 'text', category: 'typography', defaultValue: '10pt', unit: 'pt' },
     { key: 'line_height', camelKey: 'lineHeight', label: 'Interlineado', type: 'text', category: 'typography', defaultValue: '1.4' },
     // LAYOUT
+    {
+        key: 'page_orientation', camelKey: 'pageOrientation', label: 'Orientación Predeterminada del Documento', type: 'select', category: 'layout', defaultValue: 'portrait',
+        options: [
+            { label: 'Vertical (A4 Portrait - Estándar)', value: 'portrait' },
+            { label: 'Horizontal (A4 Landscape - Apaisado)', value: 'landscape' },
+        ],
+        description: 'Define la orientación base de las hojas del documento.'
+    },
     { key: 'margin_top', camelKey: 'marginTop', label: 'Margen Superior', type: 'text', category: 'layout', defaultValue: '3cm', unit: 'cm' },
     { key: 'margin_bottom', camelKey: 'marginBottom', label: 'Margen Inferior', type: 'text', category: 'layout', defaultValue: '2cm', unit: 'cm' },
     { key: 'margin_left', camelKey: 'marginLeft', label: 'Margen Izquierdo', type: 'text', category: 'layout', defaultValue: '2cm', unit: 'cm' },
@@ -60,7 +68,7 @@ export const THEME_SCHEMA: ThemeToken[] = [
 ];
 
 export function buildDefaultTheme(): Record<string, Record<string, any>> {
-    const theme: Record<string, Record<string, any>> = { colors: {}, typography: {}, layout: {}, brand: {} };
+    const theme: Record<string, Record<string, any>> = { colors: {}, typography: {}, layout: { sectionOrientations: {} }, brand: {} };
     for (const token of THEME_SCHEMA) {
         theme[token.category][token.camelKey] = token.defaultValue;
     }
@@ -101,7 +109,14 @@ export function mergeWithDefaults(partial: any, templateCode?: string): Record<s
         result = {
             colors: { ...defaults.colors, ...(parsed.colors || {}) },
             typography: { ...defaults.typography, ...(parsed.typography || {}) },
-            layout: { ...defaults.layout, ...(parsed.layout || {}) },
+            layout: { 
+                ...defaults.layout, 
+                ...(parsed.layout || {}),
+                sectionOrientations: {
+                    ...(defaults.layout.sectionOrientations || {}),
+                    ...(parsed.layout?.sectionOrientations || parsed.layout?.section_orientations || {})
+                }
+            },
             brand: { ...defaults.brand, ...(parsed.brand || {}) },
         };
     }

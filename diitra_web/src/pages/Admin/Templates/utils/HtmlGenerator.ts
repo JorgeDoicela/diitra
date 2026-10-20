@@ -49,133 +49,185 @@ export { renderSection };
  * Genera el documento HTML completo delegando el renderizado de cada bloque
  * a su estrategia correspondiente.
  */
-export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?: any): string => {
-    let html = `${BASE_STYLES}\n<div class="doc-container">`;
+const renderSingleBlockHtml = (block: DocumentBlock, themeConfig?: any, docCode?: string): string => {
+    switch (block.type) {
+        case 'title':
+            return generateTitleHtml(block);
+        case 'rich_text':
+            return generateRichTextHtml(block);
+        case 'advanced_table':
+            return generateAdvancedTableHtml(block);
+        case 'multi_section_table':
+            return generateMultiSectionTableHtml(block);
+        case 'two_column':
+            return generateTwoColumnHtml(block);
+        case 'page_break': {
+            let pb = generatePageBreakHtml();
+            if (docCode) {
+                pb += `\n<div class="doc-normative-code">${docCode}</div>`;
+            }
+            return pb;
+        }
+        case 'gantt':
+            return generateGanttHtml(block);
+        case 'researchers_table':
+            return generateResearchersTableHtml(block);
+        case 'rubric_table':
+            return generateRubricTableHtml(block);
+        case 'signatures':
+            return generateSignaturesHtml(block);
+        case 'project_general_section':
+            return generateProjectGeneralHtml(block);
+        case 'project_technical_section':
+            return generateProjectTechnicalHtml(block);
+        case 'project_budget_section':
+        case 'resources':
+            return generateResourcesHtml(block);
+        case 'project_progress_report':
+            return generateProjectProgressHtml(block);
+        case 'progress_header_section':
+            return generateProgressHeaderHtml(block);
+        case 'progress_activity_section':
+            return generateProgressActivityHtml(block);
+        case 'progress_status_section':
+            return generateProgressStatusHtml(block);
+        case 'expected_products':
+            return generateExpectedProductsHtml(block);
+        case 'impacts':
+            return generateImpactsHtml(block);
+        case 'project_approval_notice':
+            return generateProjectApprovalNoticeHtml(block);
+        case 'arbitration_dictamen_section':
+            return generateArbitrationDictamenHtml(block);
+        case 'final_report_header_section':
+            return generateFinalReportHeaderHtml(block);
+        case 'final_report_writing_section':
+            return generateFinalReportWritingHtml(block);
+        case 'learning_plan_header_section':
+            return generateLearningPlanHeaderHtml(block);
+        case 'learning_plan_eval_parameters_section':
+            return generateLearningPlanEvalParametersHtml(block);
+        case 'learning_plan_prerequisites_section':
+            return generateLearningPlanPrerequisitesHtml(block);
+        case 'learning_plan_activities_section':
+            return generateLearningPlanActivitiesHtml(block);
+        case 'learning_plan_evaluation_table':
+            return generateLearningPlanEvaluationHtml(block);
+        case 'certificate_header':
+            return generateCertificateHeaderHtml(block, themeConfig);
+        case 'certificate_recipient_badge':
+            return generateCertificateRecipientBadgeHtml(block);
+        case 'certificate_body':
+            return generateCertificateBodyHtml(block);
+        default:
+            return '';
+    }
+};
 
+export const generateHtmlFromBlocks = (blockList: DocumentBlock[], themeConfig?: any): string => {
+    const globalDocOrientation = (themeConfig?.layout?.pageOrientation || themeConfig?.layout?.page_orientation || 'portrait') as 'portrait' | 'landscape';
+    const sectionOverrides = (themeConfig?.layout?.sectionOrientations || themeConfig?.layout?.section_orientations || {}) as Record<string, 'portrait' | 'landscape'>;
     const docCode = themeConfig?.brand?.documentCode || themeConfig?.brand?.document_code || '';
-    let isFirstNonCoverBlock = true;
+
+    // Agrupación de bloques en páginas lógicas consistente con BlockCanvas
+    interface LogicalPage {
+        blocks: DocumentBlock[];
+        orientation: 'portrait' | 'landscape';
+        hasExplicitPageBreakBefore: boolean;
+        isCover: boolean;
+        isGantt: boolean;
+    }
+
+    const pages: LogicalPage[] = [];
+    let currentBlocks: DocumentBlock[] = [];
+    let pendingExplicitBreak = false;
+
+    const pushPage = (isCover = false, isGantt = false) => {
+        if (currentBlocks.length === 0) return;
+        const firstBlock = currentBlocks[0];
+        const orientation: 'portrait' | 'landscape' = 
+            (firstBlock?.id && sectionOverrides[firstBlock.id])
+                ? sectionOverrides[firstBlock.id]
+                : (isGantt ? 'landscape' : globalDocOrientation);
+
+        pages.push({
+            blocks: currentBlocks,
+            orientation,
+            hasExplicitPageBreakBefore: pendingExplicitBreak,
+            isCover,
+            isGantt,
+        });
+
+        currentBlocks = [];
+        pendingExplicitBreak = false;
+    };
 
     for (const block of blockList) {
         if (!block.isActive) continue;
 
-        if (block.type === 'cover') {
-            html += generateCoverHtml(block, themeConfig);
+        const hasBreakBefore = (block.config as any)?.pageBreakBefore === true;
+        const isGantt = block.type === 'gantt';
+        const isCover = block.type === 'cover';
+        const isPageBreak = block.type === 'page_break';
+        const hasOrientationOverride = !!sectionOverrides[block.id];
+
+        if (isPageBreak) {
+            pushPage();
+            pendingExplicitBreak = true;
+        } else if (isCover) {
+            pushPage();
+            currentBlocks = [block];
+            pushPage(true, false);
+        } else if (isGantt) {
+            pushPage();
+            currentBlocks = [block];
+            pushPage(false, true);
+        } else if ((hasBreakBefore || hasOrientationOverride) && currentBlocks.length > 0) {
+            pushPage();
+            currentBlocks = [block];
+            if (hasBreakBefore) pendingExplicitBreak = true;
+        } else {
+            currentBlocks.push(block);
+        }
+    }
+    pushPage();
+
+    let html = `${BASE_STYLES}\n<div class="doc-container" data-document-orientation="${globalDocOrientation}">`;
+    let isFirstNonCoverBlock = true;
+
+    for (const page of pages) {
+        if (page.isCover) {
+            html += generateCoverHtml(page.blocks[0], themeConfig);
             continue;
         }
 
-        if (isFirstNonCoverBlock && docCode) {
-            html += `\n<div class="doc-normative-code">${docCode}</div>`;
-            isFirstNonCoverBlock = false;
-        } else if ((block.config as any)?.pageBreakBefore === true && block.type !== 'page_break') {
-            html += generatePageBreakHtml();
-            if (docCode) {
-                html += `\n<div class="doc-normative-code">${docCode}</div>`;
+        let pageHtml = '';
+        for (const block of page.blocks) {
+            if (isFirstNonCoverBlock && docCode) {
+                pageHtml += `\n<div class="doc-normative-code">${docCode}</div>`;
+                isFirstNonCoverBlock = false;
+            } else if (page.hasExplicitPageBreakBefore && block === page.blocks[0] && pageHtml === '') {
+                pageHtml += generatePageBreakHtml();
+                if (docCode) {
+                    pageHtml += `\n<div class="doc-normative-code">${docCode}</div>`;
+                }
             }
+
+            pageHtml += renderSingleBlockHtml(block, themeConfig, docCode);
         }
 
-        switch (block.type) {
-            case 'cover':
-                html += generateCoverHtml(block, themeConfig);
-                break;
-            case 'title':
-                html += generateTitleHtml(block);
-                break;
-            case 'rich_text':
-                html += generateRichTextHtml(block);
-                break;
-            case 'advanced_table':
-                html += generateAdvancedTableHtml(block);
-                break;
-            case 'multi_section_table':
-                html += generateMultiSectionTableHtml(block);
-                break;
-            case 'two_column':
-                html += generateTwoColumnHtml(block);
-                break;
-            case 'page_break':
-                html += generatePageBreakHtml();
-                if (docCode) {
-                    html += `\n<div class="doc-normative-code">${docCode}</div>`;
-                }
-                break;
-            case 'gantt':
-                html += generateGanttHtml(block);
-                break;
-            case 'researchers_table':
-                html += generateResearchersTableHtml(block);
-                break;
-            case 'rubric_table':
-                html += generateRubricTableHtml(block);
-                break;
-            case 'signatures':
-                html += generateSignaturesHtml(block);
-                break;
-            case 'project_general_section':
-                html += generateProjectGeneralHtml(block);
-                break;
-            case 'project_technical_section':
-                html += generateProjectTechnicalHtml(block);
-                break;
-            case 'project_budget_section':
-            case 'resources':
-                html += generateResourcesHtml(block);
-                break;
-            case 'project_progress_report':
-                html += generateProjectProgressHtml(block);
-                break;
-            case 'progress_header_section':
-                html += generateProgressHeaderHtml(block);
-                break;
-            case 'progress_activity_section':
-                html += generateProgressActivityHtml(block);
-                break;
-            case 'progress_status_section':
-                html += generateProgressStatusHtml(block);
-                break;
-            case 'expected_products':
-                html += generateExpectedProductsHtml(block);
-                break;
-            case 'impacts':
-                html += generateImpactsHtml(block);
-                break;
-            case 'project_approval_notice':
-                html += generateProjectApprovalNoticeHtml(block);
-                break;
-            case 'arbitration_dictamen_section':
-                html += generateArbitrationDictamenHtml(block);
-                break;
-            case 'final_report_header_section':
-                html += generateFinalReportHeaderHtml(block);
-                break;
-            case 'final_report_writing_section':
-                html += generateFinalReportWritingHtml(block);
-                break;
-            case 'learning_plan_header_section':
-                html += generateLearningPlanHeaderHtml(block);
-                break;
-            case 'learning_plan_eval_parameters_section':
-                html += generateLearningPlanEvalParametersHtml(block);
-                break;
-            case 'learning_plan_prerequisites_section':
-                html += generateLearningPlanPrerequisitesHtml(block);
-                break;
-            case 'learning_plan_activities_section':
-                html += generateLearningPlanActivitiesHtml(block);
-                break;
-            case 'learning_plan_evaluation_table':
-                html += generateLearningPlanEvaluationHtml(block);
-                break;
-            case 'certificate_header':
-                html += generateCertificateHeaderHtml(block, themeConfig);
-                break;
-            case 'certificate_recipient_badge':
-                html += generateCertificateRecipientBadgeHtml(block);
-                break;
-            case 'certificate_body':
-                html += generateCertificateBodyHtml(block);
-                break;
-            default:
-                break;
+        // Si la página es Gantt, ya incluye internamente el wrapper START_LANDSCAPE_SECTION
+        if (page.isGantt) {
+            html += pageHtml;
+        } else if (page.orientation !== globalDocOrientation) {
+            // Sección con orientación personalizada diferente a la predeterminada del documento
+            if (page.orientation === 'landscape') {
+                html += `\n<!-- START_LANDSCAPE_SECTION -->\n<div class="landscape-section" data-page-orientation="landscape" style="page-break-before: always; page-break-after: always; width: 100%;">\n${pageHtml}\n</div>\n<!-- END_LANDSCAPE_SECTION -->`;
+            } else {
+                html += `\n<!-- START_PORTRAIT_SECTION -->\n<div class="portrait-section" data-page-orientation="portrait" style="page-break-before: always; page-break-after: always; width: 100%;">\n${pageHtml}\n</div>\n<!-- END_PORTRAIT_SECTION -->`;
+            }
+        } else {
+            html += pageHtml;
         }
     }
 

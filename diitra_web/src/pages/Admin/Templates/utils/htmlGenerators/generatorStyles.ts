@@ -43,6 +43,25 @@ export const BASE_STYLES = `
       margin-bottom: {{default theme.layout.margin_bottom "1.5cm"}};
       margin-left: {{default theme.layout.margin_left "2cm"}};
       margin-right: {{default theme.layout.margin_right "2cm"}};
+      size: A4 {{default theme.layout.page_orientation "portrait"}};
+  }
+
+  @page landscape-page {
+      size: A4 landscape;
+  }
+
+  .landscape-section {
+      page: landscape-page;
+      width: 100%;
+  }
+
+  @page portrait-page {
+      size: A4 portrait;
+  }
+
+  .portrait-section {
+      page: portrait-page;
+      width: 100%;
   }
 
   /* Reset y Core del Documento con Tematización Dinámica */

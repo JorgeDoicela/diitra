@@ -34,6 +34,7 @@ interface BlockCanvasProps {
     onToggleHeader?: () => void;
     rightActions?: React.ReactNode;
     themeConfig?: any;
+    onUpdateThemeConfig?: (newThemeJson: string) => void;
     onUpdateConfig?: (blockId: string, key: string, value: any) => void;
     selectedTemplate?: any;
     onSaveTemplate?: () => void;
@@ -45,29 +46,80 @@ interface BlockCanvasProps {
     onToggleHeaderCollapse?: () => void;
 }
 
-/** Indicador visual de salto de página A4 con opción de eliminación directa */
+/** Indicador visual de salto de página A4 con opción de cambio de orientación y eliminación */
+/** Indicador visual de salto de página A4 con opción de cambio de orientación y eliminación bajo estándar Vercel Geist */
+const PageOrientationSegmentedControl: React.FC<{
+    isLandscape: boolean;
+    onToggle: () => void;
+}> = ({ isLandscape, onToggle }) => {
+    return (
+        <div className="inline-flex items-center p-0.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-md text-[10px] select-none">
+            <button
+                type="button"
+                onClick={isLandscape ? onToggle : undefined}
+                className={`px-2.5 py-0.5 rounded-[4px] text-[10px] transition-all ${
+                    !isLandscape
+                        ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 font-semibold shadow-xs cursor-default'
+                        : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-200/50 dark:hover:bg-zinc-800/60 font-medium cursor-pointer'
+                }`}
+                title="Página en orientación Vertical (A4 Portrait)"
+            >
+                Vertical
+            </button>
+            <button
+                type="button"
+                onClick={!isLandscape ? onToggle : undefined}
+                className={`px-2.5 py-0.5 rounded-[4px] text-[10px] transition-all ${
+                    isLandscape
+                        ? 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 font-semibold shadow-xs cursor-default'
+                        : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-200/50 dark:hover:bg-zinc-800/60 font-medium cursor-pointer'
+                }`}
+                title="Página en orientación Horizontal (A4 Landscape)"
+            >
+                Horizontal
+            </button>
+        </div>
+    );
+};
+
 const PageBreakIndicator: React.FC<{
     pageNum: number;
     pageBreakBlockId?: string;
+    isLandscape?: boolean;
     onDeleteBlock: (id: string) => void;
-}> = ({ pageNum, pageBreakBlockId, onDeleteBlock }) => {
+    onToggleOrientation?: () => void;
+}> = ({ pageNum, pageBreakBlockId, isLandscape = false, onDeleteBlock, onToggleOrientation }) => {
     return (
-        <div className="w-full flex items-center justify-between my-4 select-none group">
-            <div className="flex-1 border-t-2 border-dashed border-slate-300 dark:border-slate-700" />
-            <div className="mx-4 flex items-center gap-2 px-3 py-1 bg-slate-800 text-white rounded-full text-[10px] font-bold shadow-sm">
-                <span>PÁGINA {pageNum}</span>
+        <div className="w-[794px] max-w-[794px] flex items-center justify-between my-4 select-none group transition-all">
+            <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+            <div className="mx-3 inline-flex items-center gap-2.5 px-3 py-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xs text-zinc-900 dark:text-zinc-100">
+                <span className="font-mono text-[10.5px] font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
+                    PÁGINA {pageNum}
+                </span>
+                {onToggleOrientation && (
+                    <>
+                        <div className="w-px h-3.5 bg-zinc-200 dark:bg-zinc-800" />
+                        <PageOrientationSegmentedControl
+                            isLandscape={isLandscape}
+                            onToggle={onToggleOrientation}
+                        />
+                    </>
+                )}
                 {pageBreakBlockId && (
-                    <button
-                        type="button"
-                        onClick={() => onDeleteBlock(pageBreakBlockId)}
-                        className="p-0.5 hover:bg-white/20 rounded text-slate-300 hover:text-red-300 transition-colors cursor-pointer"
-                        title="Eliminar salto de página"
-                    >
-                        <Trash2 className="w-3 h-3" />
-                    </button>
+                    <>
+                        <div className="w-px h-3.5 bg-zinc-200 dark:bg-zinc-800" />
+                        <button
+                            type="button"
+                            onClick={() => onDeleteBlock(pageBreakBlockId)}
+                            className="p-1 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors cursor-pointer"
+                            title="Eliminar salto de página"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                    </>
                 )}
             </div>
-            <div className="flex-1 border-t-2 border-dashed border-slate-300 dark:border-slate-700" />
+            <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
         </div>
     );
 };
@@ -86,6 +138,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
     onToggleHeaderCollapse,
     rightActions,
     themeConfig: propsThemeConfig,
+    onUpdateThemeConfig,
     onUpdateConfig,
     selectedTemplate,
 }) => {
@@ -120,48 +173,90 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
 
     const activeCount = blocks.filter(b => b.isActive).length;
 
-    // Agrupación dinámica de bloques en páginas A4 lógicas
-    const pages: { pageNum: number; blocks: { block: DocumentBlock; originalIndex: number }[]; pageBreakBlockId?: string }[] = [];
+    // Única fuente de verdad: Orientación oficial del documento definida en Estilos (themeConfig)
+    const docOrientation = (themeConfig?.layout?.pageOrientation || themeConfig?.layout?.page_orientation || 'portrait') as 'portrait' | 'landscape';
+    const sectionOverrides = (themeConfig?.layout?.sectionOrientations || themeConfig?.layout?.section_orientations || {}) as Record<string, 'portrait' | 'landscape'>;
+
+    const handleTogglePageOrientation = (firstBlockId?: string, currentOrientation?: 'portrait' | 'landscape') => {
+        if (!firstBlockId || !onUpdateThemeConfig) return;
+        const nextOrientation: 'portrait' | 'landscape' = currentOrientation === 'landscape' ? 'portrait' : 'landscape';
+
+        const updatedTheme = JSON.parse(JSON.stringify(themeConfig || {}));
+        if (!updatedTheme.layout) updatedTheme.layout = {};
+        if (!updatedTheme.layout.sectionOrientations) updatedTheme.layout.sectionOrientations = {};
+
+        if (nextOrientation === docOrientation) {
+            delete updatedTheme.layout.sectionOrientations[firstBlockId];
+        } else {
+            updatedTheme.layout.sectionOrientations[firstBlockId] = nextOrientation;
+        }
+
+        onUpdateThemeConfig(JSON.stringify(updatedTheme));
+    };
+
+    // Agrupación dinámica de bloques en páginas A4 bajo la orientación del documento y sus secciones
+    interface CanvasPage {
+        pageNum: number;
+        blocks: { block: DocumentBlock; originalIndex: number }[];
+        orientation: 'portrait' | 'landscape';
+        pageBreakBlockId?: string;
+        firstBlockId?: string;
+    }
+
+    const pages: CanvasPage[] = [];
     let currentPageBlocks: { block: DocumentBlock; originalIndex: number }[] = [];
     let currentPageNum = 1;
+    let pendingPageBreakBlockId: string | undefined = undefined;
+
+    const pushPage = () => {
+        if (currentPageBlocks.length === 0) return;
+        const firstBlockId = currentPageBlocks[0]?.block?.id;
+        const isGantt = currentPageBlocks.some(b => b.block.type === 'gantt');
+        const orientation: 'portrait' | 'landscape' = 
+            (firstBlockId && sectionOverrides[firstBlockId])
+                ? sectionOverrides[firstBlockId]
+                : (isGantt ? 'landscape' : docOrientation);
+
+        pages.push({
+            pageNum: currentPageNum,
+            blocks: currentPageBlocks,
+            orientation,
+            firstBlockId,
+            pageBreakBlockId: pendingPageBreakBlockId,
+        });
+
+        currentPageBlocks = [];
+        pendingPageBreakBlockId = undefined;
+        currentPageNum++;
+    };
 
     blocks.forEach((block, idx) => {
         const hasBreakBefore = (block.config as any)?.pageBreakBefore === true;
-        const isLandscape = block.type === 'gantt';
+        const isGantt = block.type === 'gantt';
+        const isCover = block.type === 'cover';
+        const isPageBreak = block.type === 'page_break';
+        const hasOrientationOverride = !!sectionOverrides[block.id];
 
-        if (block.type === 'page_break') {
-            pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks, pageBreakBlockId: block.id });
-            currentPageBlocks = [];
-            currentPageNum++;
-        } else if (block.type === 'cover') {
-            if (currentPageBlocks.length > 0) {
-                pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
-                currentPageNum++;
-            }
-            pages.push({ pageNum: currentPageNum, blocks: [{ block, originalIndex: idx }] });
-            currentPageBlocks = [];
-            currentPageNum++;
-        } else if (isLandscape) {
-            // El bloque de cronograma horizontal (Landscape) reside en su propia página exclusiva
-            if (currentPageBlocks.length > 0) {
-                pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
-                currentPageNum++;
-            }
-            pages.push({ pageNum: currentPageNum, blocks: [{ block, originalIndex: idx }] });
-            currentPageBlocks = [];
-            currentPageNum++;
-        } else if (hasBreakBefore && currentPageBlocks.length > 0) {
-            // Salto de página semántico solicitado en la configuración del bloque
-            pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
+        if (isPageBreak) {
+            pushPage();
+            pendingPageBreakBlockId = block.id;
+        } else if (isCover) {
+            pushPage();
             currentPageBlocks = [{ block, originalIndex: idx }];
-            currentPageNum++;
+            pushPage();
+        } else if (isGantt) {
+            pushPage();
+            currentPageBlocks = [{ block, originalIndex: idx }];
+            pushPage();
+        } else if ((hasBreakBefore || hasOrientationOverride) && currentPageBlocks.length > 0) {
+            pushPage();
+            currentPageBlocks = [{ block, originalIndex: idx }];
         } else {
             currentPageBlocks.push({ block, originalIndex: idx });
         }
     });
-    if (currentPageBlocks.length > 0 || pages.length === 0) {
-        pages.push({ pageNum: currentPageNum, blocks: currentPageBlocks });
-    }
+
+    pushPage();
 
     const docTitle = selectedTemplate?.name || templateName || 'Documento';
 
@@ -234,7 +329,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                 style={{ scrollbarWidth: 'thin' }}
             >
                 {!selectedTemplate ? (
-                    <div className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-start pt-48 items-center text-center">
+                    <div className="force-light-theme w-[794px] max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-start pt-48 items-center text-center">
                         <FileText className="w-12 h-12 text-slate-300 mb-3 animate-pulse" />
                         <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">Sin plantilla seleccionada</h3>
                         <p className="text-[10px] text-slate-400 max-w-[230px] mt-1.5 leading-normal">
@@ -242,7 +337,7 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                         </p>
                     </div>
                 ) : blocks.length === 0 ? (
-                    <div className="force-light-theme max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-start pt-48 items-center text-center">
+                    <div className="force-light-theme w-[794px] max-w-[794px] mx-auto bg-white text-slate-950 p-12 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 min-h-[1123px] rounded-sm relative flex flex-col justify-start pt-48 items-center text-center">
                         <Layers className="w-12 h-12 text-slate-300 mb-3 animate-pulse" />
                         <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">El documento está vacío</h3>
                         <p className="text-[10px] text-slate-400 max-w-[200px] mt-1 leading-normal">
@@ -251,10 +346,10 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                     </div>
                 ) : (
                     <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                        <div className="space-y-8 flex flex-col items-center">
+                        <div className="flex flex-col items-center mx-auto space-y-8">
                             {pages.map((page, pIdx) => {
                                 const isCoverPage = page.blocks.some(b => b.block.type === 'cover');
-                                const isLandscapePage = page.blocks.some(b => b.block.type === 'gantt');
+                                const isLandscapePage = page.orientation === 'landscape';
                                 const docCode = themeConfig?.brand?.documentCode || themeConfig?.brand?.document_code || getOfficialDocumentCode(selectedTemplate?.code);
                                 const bgImg = !isCoverPage && themeConfig?.brand?.backgroundImage;
                                 const bgOpacity = parseFloat(themeConfig?.brand?.backgroundOpacity ?? '0.12');
@@ -266,11 +361,37 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
 
                                 return (
                                     <React.Fragment key={pIdx}>
+                                        {pIdx === 0 && (
+                                            <div className="w-[794px] max-w-[794px] flex items-center justify-between mb-2 select-none group transition-all">
+                                                <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+                                                <div className="mx-3 inline-flex items-center gap-2.5 px-3 py-1 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-xs text-zinc-900 dark:text-zinc-100">
+                                                    <span className="font-mono text-[10.5px] font-bold text-zinc-800 dark:text-zinc-200 uppercase tracking-wider">
+                                                        PÁGINA 1
+                                                    </span>
+                                                    {onUpdateThemeConfig && page.firstBlockId && (
+                                                        <>
+                                                            <div className="w-px h-3.5 bg-zinc-200 dark:bg-zinc-800" />
+                                                            <PageOrientationSegmentedControl
+                                                                isLandscape={isLandscapePage}
+                                                                onToggle={() => handleTogglePageOrientation(page.firstBlockId, page.orientation)}
+                                                            />
+                                                        </>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+                                            </div>
+                                        )}
                                         {pIdx > 0 && (
                                             <PageBreakIndicator
                                                 pageNum={page.pageNum}
-                                                pageBreakBlockId={pages[pIdx - 1]?.pageBreakBlockId}
+                                                isLandscape={isLandscapePage}
+                                                pageBreakBlockId={page.pageBreakBlockId}
                                                 onDeleteBlock={onDeleteBlock}
+                                                onToggleOrientation={
+                                                    onUpdateThemeConfig && page.firstBlockId
+                                                        ? () => handleTogglePageOrientation(page.firstBlockId, page.orientation)
+                                                        : undefined
+                                                }
                                             />
                                         )}
                                         <div
@@ -284,8 +405,13 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                                 paddingLeft: isCoverPage ? '0' : marginLeft,
                                                 paddingRight: isCoverPage ? '0' : marginRight,
                                             }}
-                                            className={`force-light-theme ${isLandscapePage ? 'max-w-[1123px] min-h-[794px]' : 'max-w-[794px] min-h-[1123px]'} w-full bg-white text-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 rounded-sm relative flex flex-col transition-all cursor-default ${isCoverPage ? 'gap-0' : 'gap-2'
-                                                }`}
+                                            className={`force-light-theme w-[794px] min-w-[794px] max-w-[794px] ${
+                                                isLandscapePage 
+                                                    ? 'min-h-[561px]' 
+                                                    : 'min-h-[1123px]'
+                                            } bg-white text-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-zinc-200 rounded-sm relative flex flex-col transition-all cursor-default ${
+                                                isCoverPage ? 'gap-0' : 'gap-2'
+                                            }`}
                                         >
                                             {bgImg && (
                                                 <div
@@ -335,16 +461,6 @@ export const BlockCanvas: React.FC<BlockCanvasProps> = ({
                                                         </div>
                                                     );
                                                 })
-                                            )}
-
-                                            {/* Pie de página A4 con numeración oficial del documento */}
-                                            {!isCoverPage && (
-                                                <div className="mt-auto pt-6 pb-1 flex items-center justify-between text-[8pt] text-slate-400 font-sans select-none pointer-events-none border-t border-slate-100 dark:border-slate-800/40 relative z-10">
-                                                    <span className="truncate max-w-[360px] text-slate-400 font-medium">{docTitle}</span>
-                                                    <span className="font-mono text-slate-400 font-semibold tracking-wider">
-                                                        Página {page.pageNum} de {pages.length}
-                                                    </span>
-                                                </div>
                                             )}
                                         </div>
                                     </React.Fragment>

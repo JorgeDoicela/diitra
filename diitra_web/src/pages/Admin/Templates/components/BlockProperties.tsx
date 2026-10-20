@@ -142,7 +142,7 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                             })()}
 
                             {/* Control Universal de Paginación Editorial */}
-                            {activeBlock.type !== 'cover' && activeBlock.type !== 'page_break' && activeBlock.type !== 'gantt' && (
+                            {activeBlock.type !== 'cover' && activeBlock.type !== 'page_break' && (
                                 <div className="flex items-center justify-between p-2.5 bg-surface-hover/30 border border-border-thin rounded-md select-none">
                                     <div className="pr-2">
                                         <label className="text-[11px] font-semibold text-text-main block">

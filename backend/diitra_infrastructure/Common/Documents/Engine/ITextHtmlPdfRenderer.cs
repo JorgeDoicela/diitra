@@ -226,13 +226,23 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
             string mergedCss = (string.IsNullOrEmpty(customCss) ? "" : customCss + "\n") + extractedStyles.ToString();
 
-            // ── Segmentación dinámica desacoplada para secciones horizontales (Landscape) ──
-            var docParts = SplitDocumentParts(cleanedHtmlContent);
-            if (docParts.Any(p => p.IsLandscape))
+            // ── Detección de orientación global del documento (A4 Landscape) ──
+            bool isDocumentGloballyLandscape = 
+                mergedCss.Contains("size: A4 landscape", StringComparison.OrdinalIgnoreCase) ||
+                cleanedHtmlContent.Contains("data-document-orientation=\"landscape\"", StringComparison.OrdinalIgnoreCase) ||
+                cleanedHtmlContent.Contains("data-document-orientation='landscape'", StringComparison.OrdinalIgnoreCase);
+
+            var defaultDocumentPageSize = isDocumentGloballyLandscape ? PageSize.A4.Rotate() : PageSize.A4;
+
+            // ── Segmentación dinámica desacoplada para secciones con orientación mixta ──
+            var docParts = SplitDocumentParts(cleanedHtmlContent, isDocumentGloballyLandscape);
+            bool hasMixedOrientations = docParts.Any(p => p.IsLandscape != isDocumentGloballyLandscape);
+
+            if (hasMixedOrientations)
             {
                 try
                 {
-                    Console.WriteLine($"[DIITRA Renderer] Detected {docParts.Count} document part(s) with landscape section(s). Rendering in dynamic multi-part mode.");
+                    Console.WriteLine($"[DIITRA Renderer] Detected {docParts.Count} document part(s) with mixed orientation section(s). Rendering in dynamic multi-part mode.");
 
                     var renderedParts = new List<byte[]>();
                     int accumulatedPages = 0;
@@ -276,7 +286,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     {
                         using (var tempPdf = new PdfDocument(tempWriter))
                         {
-                            tempPdf.SetDefaultPageSize(PageSize.A4);
+                            tempPdf.SetDefaultPageSize(defaultDocumentPageSize);
                             using (var tempDoc = HtmlConverter.ConvertToDocument(fullHtml, tempPdf, CreateConverterProperties()))
                             {
                                 int numPages = tempPdf.GetNumberOfPages();
@@ -311,7 +321,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             using var outputStream = new MemoryStream();
             using var pdfWriter = new PdfWriter(outputStream);
             using var pdfDocument = new PdfDocument(pdfWriter);
-            pdfDocument.SetDefaultPageSize(PageSize.A4);
+            pdfDocument.SetDefaultPageSize(defaultDocumentPageSize);
 
             bool hasCoverPage = cleanedHtmlContent.Contains("class=\"cover-page\"") || cleanedHtmlContent.Contains("class='cover-page'") || cleanedHtmlContent.Contains("class=\"cover-page ");
 
@@ -355,7 +365,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         {
             if (pageOffset > 0)
             {
-                // Eliminar la regla @page:first de la portada para evitar que las partes 2 y 3 (Gantt y Bibliografía) se rendericen sin márgenes (pegados al borde)
+                // Eliminar la regla @page:first de la portada para evitar que las partes subsiguientes se rendericen sin márgenes
                 customCss = System.Text.RegularExpressions.Regex.Replace(
                     customCss ?? "",
                     @"@page\s*:\s*first\s*\{[^}]*\}",
@@ -363,6 +373,18 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline
                 );
             }
+
+            // Sincronizar regla @page size en CSS con la orientación explícita de esta parte
+            bool isPartLandscape = defaultPageSize.GetWidth() > defaultPageSize.GetHeight();
+            string targetOrientation = isPartLandscape ? "landscape" : "portrait";
+            string oppositeOrientation = isPartLandscape ? "portrait" : "landscape";
+
+            customCss = System.Text.RegularExpressions.Regex.Replace(
+                customCss ?? "",
+                $@"size\s*:\s*A4\s+{oppositeOrientation}",
+                $"size: A4 {targetOrientation}",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+            );
 
             var fullHtml = WrapInFullHtmlDocument(htmlPart, customCss);
 
@@ -545,35 +567,40 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             public bool IsLandscape { get; set; }
         }
 
-        private static List<HtmlDocumentPart> SplitDocumentParts(string cleanedHtmlContent)
+        private static List<HtmlDocumentPart> SplitDocumentParts(string cleanedHtmlContent, bool isDocumentGloballyLandscape = false)
         {
             var parts = new List<HtmlDocumentPart>();
             int currentIndex = 0;
 
             while (currentIndex < cleanedHtmlContent.Length)
             {
-                int markerStart = cleanedHtmlContent.IndexOf("<!-- START_LANDSCAPE_SECTION -->", currentIndex, StringComparison.OrdinalIgnoreCase);
-                int tagStart = cleanedHtmlContent.IndexOf("<div class=\"landscape-section\"", currentIndex, StringComparison.OrdinalIgnoreCase);
-                if (tagStart == -1)
-                {
-                    tagStart = cleanedHtmlContent.IndexOf("<div class='landscape-section'", currentIndex, StringComparison.OrdinalIgnoreCase);
-                }
+                // Detección de sección landscape
+                int landscapeMarker = cleanedHtmlContent.IndexOf("<!-- START_LANDSCAPE_SECTION -->", currentIndex, StringComparison.OrdinalIgnoreCase);
+                int landscapeDiv = cleanedHtmlContent.IndexOf("<div class=\"landscape-section\"", currentIndex, StringComparison.OrdinalIgnoreCase);
+                if (landscapeDiv == -1) landscapeDiv = cleanedHtmlContent.IndexOf("<div class='landscape-section'", currentIndex, StringComparison.OrdinalIgnoreCase);
 
-                int landscapeStart = -1;
-                int landscapeContentStart = -1;
+                int nextLandscapeStart = -1;
+                if (landscapeMarker != -1 && (landscapeDiv == -1 || landscapeMarker <= landscapeDiv))
+                    nextLandscapeStart = landscapeMarker;
+                else if (landscapeDiv != -1)
+                    nextLandscapeStart = landscapeDiv;
 
-                if (markerStart != -1 && (tagStart == -1 || markerStart <= tagStart))
-                {
-                    landscapeStart = markerStart;
-                    landscapeContentStart = markerStart;
-                }
-                else if (tagStart != -1)
-                {
-                    landscapeStart = tagStart;
-                    landscapeContentStart = tagStart;
-                }
+                // Detección de sección portrait
+                int portraitMarker = cleanedHtmlContent.IndexOf("<!-- START_PORTRAIT_SECTION -->", currentIndex, StringComparison.OrdinalIgnoreCase);
+                int portraitDiv = cleanedHtmlContent.IndexOf("<div class=\"portrait-section\"", currentIndex, StringComparison.OrdinalIgnoreCase);
+                if (portraitDiv == -1) portraitDiv = cleanedHtmlContent.IndexOf("<div class='portrait-section'", currentIndex, StringComparison.OrdinalIgnoreCase);
 
-                if (landscapeStart == -1)
+                int nextPortraitStart = -1;
+                if (portraitMarker != -1 && (portraitDiv == -1 || portraitMarker <= portraitDiv))
+                    nextPortraitStart = portraitMarker;
+                else if (portraitDiv != -1)
+                    nextPortraitStart = portraitDiv;
+
+                // Determinar si hay alguna sección especial
+                bool hasLandscape = nextLandscapeStart != -1;
+                bool hasPortrait = nextPortraitStart != -1;
+
+                if (!hasLandscape && !hasPortrait)
                 {
                     string remaining = cleanedHtmlContent.Substring(currentIndex).Trim();
                     if (!string.IsNullOrWhiteSpace(remaining))
@@ -582,51 +609,85 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                         {
                             remaining = $"<div class=\"doc-container\">{remaining}";
                         }
-                        parts.Add(new HtmlDocumentPart { Html = remaining, IsLandscape = false });
+                        parts.Add(new HtmlDocumentPart { Html = remaining, IsLandscape = isDocumentGloballyLandscape });
                     }
                     break;
                 }
 
-                if (landscapeStart > currentIndex)
-                {
-                    string portraitPart = cleanedHtmlContent.Substring(currentIndex, landscapeStart - currentIndex).Trim();
-                    if (!string.IsNullOrWhiteSpace(portraitPart))
-                    {
-                        if (portraitPart.Contains("doc-container", StringComparison.OrdinalIgnoreCase) && !portraitPart.EndsWith("</div>", StringComparison.OrdinalIgnoreCase))
-                        {
-                            portraitPart = $"{portraitPart}</div>";
-                        }
-                        parts.Add(new HtmlDocumentPart { Html = portraitPart, IsLandscape = false });
-                    }
-                }
+                bool isNextSectionLandscape = false;
+                int sectionStart = -1;
 
-                int markerEnd = cleanedHtmlContent.IndexOf("<!-- END_LANDSCAPE_SECTION -->", landscapeContentStart, StringComparison.OrdinalIgnoreCase);
-                int landscapeEnd = -1;
-
-                if (markerEnd != -1)
+                if (hasLandscape && hasPortrait)
                 {
-                    landscapeEnd = markerEnd + "<!-- END_LANDSCAPE_SECTION -->".Length;
-                }
-                else
-                {
-                    int closeDiv = cleanedHtmlContent.IndexOf("</div>", landscapeContentStart, StringComparison.OrdinalIgnoreCase);
-                    if (closeDiv != -1)
+                    if (nextLandscapeStart <= nextPortraitStart)
                     {
-                        landscapeEnd = closeDiv + 6;
+                        isNextSectionLandscape = true;
+                        sectionStart = nextLandscapeStart;
                     }
                     else
                     {
-                        landscapeEnd = cleanedHtmlContent.Length;
+                        isNextSectionLandscape = false;
+                        sectionStart = nextPortraitStart;
+                    }
+                }
+                else if (hasLandscape)
+                {
+                    isNextSectionLandscape = true;
+                    sectionStart = nextLandscapeStart;
+                }
+                else
+                {
+                    isNextSectionLandscape = false;
+                    sectionStart = nextPortraitStart;
+                }
+
+                // Contenido previo a la sección (hereda la orientación global del documento)
+                if (sectionStart > currentIndex)
+                {
+                    string priorPart = cleanedHtmlContent.Substring(currentIndex, sectionStart - currentIndex).Trim();
+                    if (!string.IsNullOrWhiteSpace(priorPart))
+                    {
+                        if (currentIndex > 0 && !priorPart.Contains("doc-container", StringComparison.OrdinalIgnoreCase) && cleanedHtmlContent.Contains("doc-container", StringComparison.OrdinalIgnoreCase))
+                        {
+                            priorPart = $"<div class=\"doc-container\">{priorPart}";
+                        }
+                        if (priorPart.Contains("doc-container", StringComparison.OrdinalIgnoreCase) && !priorPart.EndsWith("</div>", StringComparison.OrdinalIgnoreCase))
+                        {
+                            priorPart = $"{priorPart}</div>";
+                        }
+                        parts.Add(new HtmlDocumentPart { Html = priorPart, IsLandscape = isDocumentGloballyLandscape });
                     }
                 }
 
-                string landscapePart = cleanedHtmlContent.Substring(landscapeStart, landscapeEnd - landscapeStart).Trim();
-                if (!string.IsNullOrWhiteSpace(landscapePart))
+                // Localizar el cierre de la sección
+                string endMarkerText = isNextSectionLandscape ? "<!-- END_LANDSCAPE_SECTION -->" : "<!-- END_PORTRAIT_SECTION -->";
+                int markerEnd = cleanedHtmlContent.IndexOf(endMarkerText, sectionStart, StringComparison.OrdinalIgnoreCase);
+                int sectionEnd = -1;
+
+                if (markerEnd != -1)
                 {
-                    parts.Add(new HtmlDocumentPart { Html = landscapePart, IsLandscape = true });
+                    sectionEnd = markerEnd + endMarkerText.Length;
+                }
+                else
+                {
+                    int closeDiv = cleanedHtmlContent.IndexOf("</div>", sectionStart, StringComparison.OrdinalIgnoreCase);
+                    if (closeDiv != -1)
+                    {
+                        sectionEnd = closeDiv + 6;
+                    }
+                    else
+                    {
+                        sectionEnd = cleanedHtmlContent.Length;
+                    }
                 }
 
-                currentIndex = landscapeEnd;
+                string sectionHtml = cleanedHtmlContent.Substring(sectionStart, sectionEnd - sectionStart).Trim();
+                if (!string.IsNullOrWhiteSpace(sectionHtml))
+                {
+                    parts.Add(new HtmlDocumentPart { Html = sectionHtml, IsLandscape = isNextSectionLandscape });
+                }
+
+                currentIndex = sectionEnd;
             }
 
             return parts;
