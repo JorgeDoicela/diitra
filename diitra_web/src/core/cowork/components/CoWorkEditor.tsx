@@ -356,9 +356,47 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 }
                 .cowork-editor-content .ProseMirror h5::after { content: '.'; }
 
-                .cowork-editor-content .ProseMirror ul,
-                .cowork-editor-content .ProseMirror ol { padding-left: 1.27cm; margin: 0; }
-                .cowork-editor-content .ProseMirror li { text-indent: 0; }
+                /* Listas con viñetas y numeradas APA 7 */
+                .cowork-editor-content .ProseMirror ul {
+                    list-style-type: disc !important;
+                    padding-left: 2.5rem !important;
+                    margin: 0.5rem 0 !important;
+                }
+                .cowork-editor-content .ProseMirror ul ul {
+                    list-style-type: circle !important;
+                    padding-left: 1.5rem !important;
+                    margin: 0.25rem 0 !important;
+                }
+                .cowork-editor-content .ProseMirror ul ul ul {
+                    list-style-type: square !important;
+                    padding-left: 1.5rem !important;
+                    margin: 0.25rem 0 !important;
+                }
+                .cowork-editor-content .ProseMirror ol {
+                    list-style-type: decimal !important;
+                    padding-left: 2.5rem !important;
+                    margin: 0.5rem 0 !important;
+                }
+                .cowork-editor-content .ProseMirror ol ol {
+                    list-style-type: lower-alpha !important;
+                    padding-left: 1.5rem !important;
+                    margin: 0.25rem 0 !important;
+                }
+                .cowork-editor-content .ProseMirror ol ol ol {
+                    list-style-type: lower-roman !important;
+                    padding-left: 1.5rem !important;
+                    margin: 0.25rem 0 !important;
+                }
+                .cowork-editor-content .ProseMirror li {
+                    display: list-item !important;
+                    text-indent: 0 !important;
+                    margin: 0.2rem 0 !important;
+                }
+                .cowork-editor-content .ProseMirror li p {
+                    text-indent: 0 !important;
+                    margin: 0 !important;
+                    display: inline !important;
+                }
                 .cowork-editor-content .ProseMirror strong { font-weight: 700; }
                 .cowork-editor-content .ProseMirror em { font-style: italic; }
 

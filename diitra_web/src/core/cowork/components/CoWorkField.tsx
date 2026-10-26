@@ -15,11 +15,13 @@ interface CoWorkFieldProps {
     placeholder?: string;
     className?: string;
     label?: string;
-    type?: 'text' | 'textarea' | 'select' | 'checkbox';
+    type?: 'text' | 'textarea' | 'select' | 'checkbox' | 'number';
+    min?: number;
+    max?: number;
     onValueChange?: (value: any, meta?: { source?: 'local' | 'remote' }) => void;
     children?: React.ReactNode;
     readOnly?: boolean;
-    mask?: 'date';
+    mask?: 'date' | 'number';
     uppercase?: boolean;
     minDate?: string;
     maxDate?: string;
@@ -220,6 +222,8 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     readOnly,
     mask,
     uppercase,
+    min,
+    max,
     minDate,
     maxDate,
     options,
@@ -386,9 +390,12 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         };
     }, [cowork.awareness, name]);
 
-    const handleFocus = () => {
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (cowork.awareness) {
             cowork.awareness.setLocalStateField('focusedField', name);
+        }
+        if (type === 'number' || mask === 'number') {
+            e.currentTarget.select();
         }
     };
 
@@ -399,6 +406,20 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
                 cowork.awareness.setLocalStateField('focusedField', null);
             }
         }
+        if ((type === 'number' || mask === 'number') && (displayValue === '' || displayValue === undefined)) {
+            const defaultVal = min !== undefined ? String(min) : '0';
+            setDisplayValue(defaultVal);
+            onValueChange?.(defaultVal, { source: 'local' });
+            if (ydoc) {
+                const ytext = ydoc.getText(name);
+                if (ytext.toString() !== defaultVal) {
+                    ydoc.transact(() => {
+                        ytext.delete(0, ytext.length);
+                        ytext.insert(0, defaultVal);
+                    }, 'local-input');
+                }
+            }
+        }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -407,6 +428,18 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
             const isDelete = newValue.length < (displayValue || '').length;
             const deletedSlash = isDelete && (displayValue || '').endsWith('/') && !newValue.endsWith('/');
             newValue = maskDate(newValue, deletedSlash);
+        }
+        if ((type === 'number' || mask === 'number') && typeof newValue === 'string') {
+            newValue = newValue.replace(/\D/g, '');
+            if (newValue.length > 1 && newValue.startsWith('0')) {
+                newValue = newValue.replace(/^0+/, '') || '0';
+            }
+            if (max !== undefined && newValue !== '') {
+                const parsed = parseInt(newValue, 10);
+                if (parsed > max) {
+                    newValue = String(max);
+                }
+            }
         }
         if (uppercase && typeof newValue === 'string') {
             newValue = newValue.toUpperCase();
@@ -520,7 +553,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
             : `${className} ${isDateField ? (displayValue ? 'pr-16' : 'pr-10') + ' cursor-pointer select-none' : ''} ${isDateField && isCalendarOpen ? 'border-text-main' : ''} ${type === 'select' ? (isFieldReadOnly ? 'appearance-none pr-10' : 'cursor-pointer') : ''} ${isFieldReadOnly && !isDateField ? 'pr-10 cursor-default bg-surface/30 opacity-90 select-none' : ''} transition-all duration-200 focus:border-text-main focus:ring-0 outline-none`,
         disabled: cowork.session.readOnly || isFieldReadOnly,
         readOnly: isFieldReadOnly || isDateField,
-        onClick: isDateField ? toggleCalendar : undefined,
+        onClick: isDateField ? toggleCalendar : (type === 'number' || mask === 'number' ? ((e: any) => (e.currentTarget as HTMLInputElement).select()) : undefined),
         onFocus: isDateField ? undefined : handleFocus,
         onBlur: isDateField ? undefined : handleBlur,
         style: borderStyle
@@ -560,7 +593,43 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
                         ))}
                     </div>
                 )}
-                {type === 'text' && <input {...commonProps} type="text" value={displayValue} onChange={handleChange} />}
+                {(type === 'text' || type === 'number') && (
+                    <input
+                        {...commonProps}
+                        type="text"
+                        inputMode={type === 'number' || mask === 'number' ? 'numeric' : undefined}
+                        pattern={type === 'number' || mask === 'number' ? '[0-9]*' : undefined}
+                        value={displayValue}
+                        onChange={handleChange}
+                        onFocus={(e) => {
+                            commonProps.onFocus?.(e);
+                            if (type === 'number' || mask === 'number') {
+                                e.currentTarget.select();
+                            }
+                        }}
+                        onClick={(e) => {
+                            commonProps.onClick?.(e);
+                            if (type === 'number' || mask === 'number') {
+                                (e.currentTarget as HTMLInputElement).select();
+                            }
+                        }}
+                        onKeyDown={(e) => {
+                            if (type === 'number' || mask === 'number') {
+                                const allowedKeys = [
+                                    'Backspace', 'Tab', 'Enter', 'Escape', 
+                                    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 
+                                    'Delete', 'Home', 'End'
+                                ];
+                                if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) {
+                                    return;
+                                }
+                                if (!/^[0-9]$/.test(e.key)) {
+                                    e.preventDefault();
+                                }
+                            }
+                        }}
+                    />
+                )}
                 {type === 'textarea' && <textarea {...commonProps} value={displayValue} onChange={handleChange} />}
                 {type === 'select' && (
                     <GeistSelect

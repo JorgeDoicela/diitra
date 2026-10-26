@@ -290,16 +290,19 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                                     value={activeBlock.config.toolbarMode || 'apa_full'}
                                                     onChange={e => onUpdateConfig(activeBlock.id, 'toolbarMode', e.target.value)}
                                                 >
+                                                    <option value="none">Sin barra (Ocultar herramientas)</option>
                                                     <option value="apa_full">Completo APA 7 (Niveles, Tablas, Figuras, Citas y Refs)</option>
                                                     <option value="standard">Redacción Estándar (Formato, Listas y Citas en Bloque)</option>
                                                     <option value="compact">Compacto / Texto Directo (Solo Negrita, Cursiva y Listas)</option>
                                                 </select>
                                                 <span className="text-[8px] text-text-dim block leading-tight">
-                                                    {activeBlock.config.toolbarMode === 'compact'
-                                                        ? 'Solo herramientas esenciales de redacción para textos cortos o justificaciones.'
-                                                        : activeBlock.config.toolbarMode === 'standard'
-                                                            ? 'Formato enriquecido y listas sin componentes complejos de tablas o citas.'
-                                                            : 'Suite académica completa: Niveles APA, tablas con numeración, figuras, citas y referencias.'}
+                                                    {activeBlock.config.toolbarMode === 'none'
+                                                        ? 'El editor se mostrará limpio sin barra superior de herramientas.'
+                                                        : activeBlock.config.toolbarMode === 'compact'
+                                                            ? 'Solo herramientas esenciales de redacción para textos cortos o justificaciones.'
+                                                            : activeBlock.config.toolbarMode === 'standard'
+                                                                ? 'Formato enriquecido y listas sin componentes complejos de tablas o citas.'
+                                                                : 'Suite académica completa: Niveles APA, tablas con numeración, figuras, citas y referencias.'}
                                                 </span>
                                             </div>
                                         )}
@@ -653,6 +656,24 @@ export const BlockProperties: React.FC<BlockPropertiesProps> = ({
                                         value={activeBlock.config.writingHeaderColor || '#222c57'}
                                         onChange={val => onUpdateConfig(activeBlock.id, 'writingHeaderColor', val)}
                                     />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9.5px] font-black text-text-main uppercase tracking-wider block">
+                                            Herramientas de Redacción (Normas APA)
+                                        </label>
+                                        <select
+                                            className={selectCls}
+                                            value={activeBlock.config.toolbarMode || 'apa_full'}
+                                            onChange={e => onUpdateConfig(activeBlock.id, 'toolbarMode', e.target.value)}
+                                        >
+                                            <option value="none">Sin barra (Ocultar herramientas)</option>
+                                            <option value="apa_full">Completo APA 7 (Niveles, Tablas, Figuras, Citas y Refs)</option>
+                                            <option value="standard">Redacción Estándar (Formato, Listas y Citas en Bloque)</option>
+                                            <option value="compact">Compacto / Texto Directo (Solo Negrita, Cursiva y Listas)</option>
+                                        </select>
+                                        <span className="text-[8px] text-text-dim block leading-tight">
+                                            Configura las herramientas visibles en las 15 sub-secciones del informe final.
+                                        </span>
+                                    </div>
                                     <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
                                         <p className="text-xs font-semibold text-indigo-400">Sub-Secciones de Redacción Pre-Cargadas (15)</p>
                                         <p className="text-[10px] text-text-dim mt-1">Este bloque unificado administra automáticamente las 15 sub-secciones científicas con editores Tiptap colaborativos en tiempo real.</p>

@@ -90,4 +90,4 @@ export interface CoWorkHandle {
  * - 'standard': Redacción estándar (Formato básico B/I/S, listas, citas en bloque y deshacer/rehacer).
  * - 'compact': Texto directo (Solo negrita, cursiva, listas simples y deshacer/rehacer).
  */
-export type ToolbarMode = 'apa_full' | 'standard' | 'compact';
+export type ToolbarMode = 'none' | 'apa_full' | 'standard' | 'compact';

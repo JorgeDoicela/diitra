@@ -50,6 +50,7 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
         enabled: true,
         colSpan: 2,
         variant: 'standard',
+        toolbarMode: 'apa_full',
         pageBreakBefore: false,
         avoidBreakInside: true,
     });
@@ -160,6 +161,7 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
             colSpan: newForm.colSpan || 2,
             variant: newForm.variant || (isBanner ? 'banner_gold' : 'standard'),
             hasContent: !isBanner && newForm.hasContent !== false,
+            toolbarMode: !isBanner && newForm.hasContent !== false ? (newForm.toolbarMode || 'apa_full') : undefined,
             isGroupHeader: isBanner || Boolean(newForm.isGroupHeader),
             pageBreakBefore: Boolean(newForm.pageBreakBefore),
             avoidBreakInside: newForm.avoidBreakInside !== false,
@@ -177,6 +179,7 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
             enabled: true,
             colSpan: 2,
             variant: 'standard',
+            toolbarMode: 'apa_full',
             pageBreakBefore: false,
             avoidBreakInside: true,
         });
@@ -232,6 +235,25 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                     onBorderColorChange={col => onUpdateConfig(block.id, 'technicalBorderColor', col)}
                     onBorderWidthChange={w => onUpdateConfig(block.id, 'technicalBorderWidth', w)}
                 />
+
+                <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">
+                        Herramientas del Editor por Defecto del Bloque
+                    </label>
+                    <select
+                        value={config.toolbarMode || 'apa_full'}
+                        onChange={e => onUpdateConfig(block.id, 'toolbarMode', e.target.value)}
+                        className="w-full text-xs px-2.5 py-1.5 bg-surface border border-border-thin rounded-xl focus:outline-none focus:border-text-main text-text-main cursor-pointer"
+                    >
+                        <option value="none">Sin barra (Ocultar herramientas por defecto)</option>
+                        <option value="apa_full">Completo APA 7 (Niveles, Tablas, Figuras, Citas y Refs)</option>
+                        <option value="standard">Redacción Estándar (Formato, Listas y Citas en Bloque)</option>
+                        <option value="compact">Compacto / Texto Directo (Solo Negrita, Cursiva y Listas)</option>
+                    </select>
+                    <span className="text-[8.5px] text-text-dim block">
+                        Aplica a todas las sub-secciones técnicas que no tengan una configuración específica.
+                    </span>
+                </div>
             </div>
 
             {/* SECCIÓN 2: GESTIÓN DIRECTA DE SUB-SECCIONES */}
@@ -375,6 +397,7 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                                     onChange={e => setEditForm(prev => ({ ...prev, toolbarMode: e.target.value as any }))}
                                                     className="w-full text-xs px-2.5 py-1.5 bg-surface border border-border-thin rounded-xl focus:outline-none focus:border-text-main text-text-main cursor-pointer"
                                                 >
+                                                    <option value="none">Sin barra (Ocultar herramientas)</option>
                                                     <option value="apa_full">Completo APA 7 (Niveles, Tablas, Figuras, Citas y Refs)</option>
                                                     <option value="standard">Redacción Estándar (Formato, Listas y Citas en Bloque)</option>
                                                     <option value="compact">Compacto / Texto Directo (Solo Negrita, Cursiva y Listas)</option>
@@ -426,6 +449,9 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                                     )}
                                                     {sec.variant === 'banner_navy' && (
                                                         <span className="badge-vercel-info text-[8px] px-1.5 py-0.2">Azul</span>
+                                                    )}
+                                                    {sec.toolbarMode === 'none' && (
+                                                        <span className="badge-vercel-neutral text-[7.5px] px-1.5 py-0.2">Sin barra</span>
                                                     )}
                                                 </div>
                                                 {sec.requirementText && (
@@ -531,6 +557,22 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                             />
                         </div>
 
+                        {newForm.hasContent !== false && (
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-bold text-text-dim uppercase tracking-wide block mb-1">Herramientas del Editor (Normas APA / Formato)</label>
+                                <select
+                                    value={newForm.toolbarMode || 'apa_full'}
+                                    onChange={e => setNewForm(prev => ({ ...prev, toolbarMode: e.target.value as any }))}
+                                    className="w-full text-xs px-2.5 py-1.5 bg-surface border border-border-thin rounded-xl focus:outline-none focus:border-text-main text-text-main cursor-pointer"
+                                >
+                                    <option value="none">Sin barra (Ocultar herramientas)</option>
+                                    <option value="apa_full">Completo APA 7 (Niveles, Tablas, Figuras, Citas y Refs)</option>
+                                    <option value="standard">Redacción Estándar (Formato, Listas y Citas en Bloque)</option>
+                                    <option value="compact">Compacto / Texto Directo (Solo Negrita, Cursiva y Listas)</option>
+                                </select>
+                            </div>
+                        )}
+
                         <div className="flex justify-end gap-2 pt-1.5 border-t border-border-thin/20">
                             <button
                                 type="button"
@@ -588,6 +630,7 @@ export const ProjectTechnicalProperties: React.FC<ProjectTechnicalPropertiesProp
                                     enabled: true,
                                     colSpan: 2,
                                     variant: 'standard',
+                                    toolbarMode: 'apa_full',
                                     hasContent: true,
                                     isGroupHeader: false,
                                     pageBreakBefore: false,

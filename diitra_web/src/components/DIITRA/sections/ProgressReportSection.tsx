@@ -17,6 +17,7 @@ import api from '../../../api/axios_config';
 import { generatePresupuestoEjecutadoList } from '../../../modules/budget/utils/budgetReportFormatter';
 import { generateActividadesEjecutadasList } from '../../../modules/schedule/utils/scheduleReportFormatter';
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
+import type { ToolbarMode } from '../../../core/cowork/types';
 import { GeistDatePicker } from '../../Common/GeistDatePicker';
 import { fetchCatalogCached } from '../../../api/catalogsCache';
 import { BlockClipboardWrapper } from '../../../core/clipboard/components/BlockClipboardWrapper';
@@ -69,6 +70,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
     tiposInvestigacion: initialTiposInvestigacion = [],
     config
 }) => {
+    const toolbarMode: ToolbarMode = (config?.toolbarMode as ToolbarMode) || 'standard';
     const [tiposInvestigacionList, setTiposInvestigacionList] = React.useState<any[]>(
         initialTiposInvestigacion && initialTiposInvestigacion.length > 0 ? initialTiposInvestigacion : DEFAULT_TIPOS_INVESTIGACION
     );
@@ -958,7 +960,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                     <CoWorkEditor
                                         field="DescripcionFaseActual"
                                         cowork={cowork}
-                                        toolbarMode="standard"
+                                        toolbarMode={toolbarMode}
                                         onChange={(html, meta) => onUpdate('DescripcionFaseActual', html, meta)}
                                     />
                                 </div>
@@ -1056,7 +1058,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                 <CoWorkEditor
                                     field="ObservacionesDirector"
                                     cowork={cowork}
-                                    toolbarMode="standard"
+                                    toolbarMode={toolbarMode}
                                     onChange={(html, meta) => onUpdate('ObservacionesDirector', html, meta)}
                                 />
                             </div>
@@ -1072,7 +1074,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                                 <CoWorkEditor
                                     field="ObservacionesCoordinador"
                                     cowork={cowork}
-                                    toolbarMode="standard"
+                                    toolbarMode={toolbarMode}
                                     onChange={(html, meta) => onUpdate('ObservacionesCoordinador', html, meta)}
                                 />
                             </div>

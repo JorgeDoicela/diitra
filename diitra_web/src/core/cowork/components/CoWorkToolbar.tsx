@@ -40,7 +40,7 @@ export const CoWorkToolbar: React.FC<CoWorkToolbarProps> = ({
     const [citationYear, setCitationYear] = useState('');
     const [citationPage, setCitationPage] = useState('');
 
-    if (!editor || readonly) return null;
+    if (!editor || readonly || toolbarMode === 'none') return null;
 
     const isApaFull = toolbarMode === 'apa_full';
     const isStandard = toolbarMode === 'standard';

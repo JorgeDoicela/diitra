@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
-import type { CoWorkHandle } from '../../../core/cowork/types';
+import type { CoWorkHandle, ToolbarMode } from '../../../core/cowork/types';
 import { SectionBlockGuard } from '../../DIITRA/SectionBlockGuard';
 import api from '../../../api/axios_config';
 import { fetchCatalogCached } from '../../../api/catalogsCache';
@@ -47,6 +47,7 @@ interface TechnicalSubTab {
     isGroupHeader?: boolean;
     parentId?: string;
     icon: React.ComponentType<any>;
+    toolbarMode?: ToolbarMode;
 }
 
 export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
@@ -102,7 +103,8 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                         hasContent: sec.hasContent !== false && !isGroupHeader,
                         isGroupHeader,
                         parentId,
-                        icon: Icon
+                        icon: Icon,
+                        toolbarMode: (sec.toolbarMode as ToolbarMode) ?? (config?.toolbarMode as ToolbarMode) ?? 'apa_full'
                     };
                 });
         }
@@ -220,7 +222,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
 
                     const fieldName = currentTab.fieldKey || currentTab.id;
                     const reqText = currentTab.requirementText;
-                    const toolbarMode = (currentTab as any)?.toolbarMode || 'apa_full';
+                    const toolbarMode: ToolbarMode = currentTab.toolbarMode ?? (config?.toolbarMode as ToolbarMode) ?? 'apa_full';
 
                     // 0. Renderizado para Encabezado de Categoría / Grupo Unificado (isGroupHeader o hasContent: false)
                     // Manejo especial de Banner/Grupo de Objetivos (3.4)
@@ -259,7 +261,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <CoWorkEditor
                                                 field="ObjetivoGeneral"
                                                 cowork={cowork}
-                                                toolbarMode="standard"
+                                                toolbarMode={toolbarMode}
                                                 onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
                                                 placeholder="El objetivo general del proyecto de investigación consiste en..."
                                                 className="min-h-[260px] border-none"
@@ -285,7 +287,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <CoWorkEditor
                                                 field="ObjetivosEspecificos"
                                                 cowork={cowork}
-                                                toolbarMode="standard"
+                                                toolbarMode={toolbarMode}
                                                 onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
                                                 placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
                                                 className="min-h-[300px] border-none"
@@ -446,7 +448,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                         <CoWorkEditor
                                             field="ObjetivoGeneral"
                                             cowork={cowork}
-                                            toolbarMode="standard"
+                                            toolbarMode={toolbarMode}
                                             onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
                                             placeholder="El objetivo general del proyecto de investigación consiste en..."
                                             className="min-h-[400px] border-none"
@@ -483,7 +485,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                         <CoWorkEditor
                                             field="ObjetivosEspecificos"
                                             cowork={cowork}
-                                            toolbarMode="standard"
+                                            toolbarMode={toolbarMode}
                                             onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
                                             placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
                                             className="min-h-[400px] border-none"
@@ -523,7 +525,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <CoWorkEditor
                                                 field="ObjetivoGeneral"
                                                 cowork={cowork}
-                                                toolbarMode="standard"
+                                                toolbarMode={toolbarMode}
                                                 onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
                                                 placeholder="El objetivo general del proyecto de investigación consiste en..."
                                                 className="min-h-[260px] border-none"
@@ -549,7 +551,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <CoWorkEditor
                                                 field="ObjetivosEspecificos"
                                                 cowork={cowork}
-                                                toolbarMode="standard"
+                                                toolbarMode={toolbarMode}
                                                 onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
                                                 placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
                                                 className="min-h-[300px] border-none"
@@ -698,7 +700,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                             <CoWorkEditor
                                                 field={currentTab.fieldKey || "ObjetivosDesarrolloSostenible"}
                                                 cowork={cowork}
-                                                toolbarMode="standard"
+                                                toolbarMode={toolbarMode}
                                                 onChange={(html, meta) => onUpdate(currentTab.fieldKey || 'ObjetivosDesarrolloSostenible', html, meta)}
                                                 placeholder="Describa la articulación de la propuesta con los ODS seleccionados, metas específicas e impacto esperado..."
                                                 className="min-h-[240px] border-none"

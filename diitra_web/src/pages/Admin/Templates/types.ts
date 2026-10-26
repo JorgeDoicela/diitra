@@ -1,4 +1,4 @@
-export type ToolbarMode = 'apa_full' | 'standard' | 'compact';
+export type ToolbarMode = 'none' | 'apa_full' | 'standard' | 'compact';
 export type SignaturesMode = 'team_dynamic' | 'institutional_chain' | 'custom_manual';
 
 export interface DocumentTemplateDto {
